@@ -1,0 +1,29 @@
+{
+  "name": "RC3-NFT",
+  "version": "1.0.0",
+  "description": "This repository contains the NFT smart contract for a Rarecandy3D",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RareCandy3D/RC3-NFT.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RareCandy3D/RC3-NFT/issues"
+  },
+  "homepage": "https://github.com/RareCandy3D/RC3-NFT#readme",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.2.0",
+    "@truffle/hdwallet-provider": "^1.4.1",
+    "dotenv": "^10.0.0",
+    "truffle-plugin-verify": "^0.5.10"
+  }
+}
