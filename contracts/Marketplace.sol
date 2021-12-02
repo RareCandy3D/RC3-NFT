@@ -1,29 +1,41 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
+//"SPDX-License-Identifier: MIT"
 pragma solidity 0.8.6;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "./RCDYRouter.sol";
 
-contract Marketplace {
+contract Marketplace is RCDYRouter, Ownable {
   using Counters for Counters.Counter;
   
   Counters.Counter private _itemIds;
   Counters.Counter private _itemsSold;
 
-  uint listingFee = 0.1 ether;
-  address payable admin;
+  uint public listingFee;
 
   constructor(
+    address _uniswapV2RouterAddress,
+    address _rcdy,
+    address _feeCollector,
+    uint _listingFee) 
+    
+    RCDYRouter(
+      _uniswapV2RouterAddress,
+      _rcdy,
+      _feeCollector
     ) {
-    admin = payable(msg.sender);
+
+    listingFee = _listingFee;
   }
 
   struct MarketItem {
     uint itemId;
     address nftContract;
     uint tokenId;
-    address payable seller;
-    address payable owner;
+    address seller;
+    address owner;
     uint price;
   }
 
@@ -50,15 +62,21 @@ contract Marketplace {
   function createMarketItem(
     address _nftContract,
     uint _tokenId,
-    uint _price
-    ) external payable returns(bool marketItemCreated) {
+    uint _price) 
+    external returns(bool marketItemCreated) {
+    
     require(
       _price > 0, 
       "Price must be more than 0"
     );
+
     require(
-      msg.value == listingFee, 
-      "Fee must be equal to listing fee"
+      rcdy.transferFrom(
+        msg.sender,
+        address(this),
+        listingFee
+      ), 
+      "Failed to collect listing fee"
     );
 
     IERC721(_nftContract).transferFrom(
@@ -74,8 +92,8 @@ contract Marketplace {
       itemId,
       _nftContract,
       _tokenId,
-      payable(msg.sender),
-      payable(address(0)),
+      msg.sender,
+      address(0),
       _price
     );
 
@@ -91,37 +109,38 @@ contract Marketplace {
     return true;
   }
 
-  function createMarketSale(
-    address _nftContract,
+  function buyMarketItem(
     uint256 _itemId
-    ) external payable returns(bool bought) {
+    ) external returns(bool bought) {
     
-    uint price = idToMarketItem[_itemId].price;
-    uint tokenId = idToMarketItem[_itemId].tokenId;
+    MarketItem storage item = idToMarketItem[_itemId];
     
     require(
-      msg.value == price, 
-      "Must send the asking price"
+      rcdy.transferFrom(
+        msg.sender,
+        item.seller,
+        item.price
+      ), 
+      "Error in collecting the asking price"
     );
+    
+    rcdy.transfer(feeCollector, listingFee);
 
-    idToMarketItem[_itemId].seller.transfer(msg.value);
-    payable(admin).transfer(listingFee);
-
-    idToMarketItem[_itemId].owner = payable(msg.sender);
-    IERC721(_nftContract).transferFrom(
+    item.owner = msg.sender;
+    IERC721(item.nftContract).transferFrom(
       address(this), 
       msg.sender, 
-      tokenId
+      item.tokenId
     );
     _itemsSold.increment();
     
     emit MarketSale(
       _itemId,
-      _nftContract,
-      tokenId,
+      item.nftContract,
+      item.tokenId,
       msg.sender,
-      idToMarketItem[_itemId].seller,
-      price
+      item.seller,
+      item.price
     );
 
     return true;
@@ -148,7 +167,7 @@ contract Marketplace {
       if (idToMarketItem[i + 1].owner == address(0)) {
         
         uint currentId = idToMarketItem[i + 1].itemId;
-        MarketItem storage currentItem = idToMarketItem[currentId];
+        MarketItem memory currentItem = idToMarketItem[currentId];
         items[currentIndex] = currentItem;
         currentIndex++;
       }
@@ -164,11 +183,7 @@ contract Marketplace {
     uint currentIndex;
 
     for (uint i = 0; i < totalItemCount; i++) {
-      
-      if (idToMarketItem[i + 1].owner == msg.sender) {
-        
-        itemCount++;
-      }
+      if (idToMarketItem[i + 1].owner == msg.sender) itemCount++;
     }
 
     MarketItem[] memory items = new MarketItem[](itemCount);
@@ -178,7 +193,7 @@ contract Marketplace {
       if (idToMarketItem[i + 1].owner == msg.sender) {
         
         uint currentId = idToMarketItem[i + 1].itemId;
-        MarketItem storage currentItem = idToMarketItem[currentId];
+        MarketItem memory currentItem = idToMarketItem[currentId];
         items[currentIndex] = currentItem;
         currentIndex++;
       }
