@@ -25,18 +25,27 @@ contract RCDYStaking is ReentrancyGuard, Ownable {
 
     mapping(address => User) public users;
 
+   /**
+    * @dev Emitted when RCDY is staked 
+    */
     event NewStake(
         address indexed user,
         uint amount,
         uint timestamp
     );
 
+   /**
+    * @dev Emitted when RCDY is unstaked 
+    */
     event NewUnstake(
         address indexed user,
         uint amount,
         uint timestamp
     );
 
+   /**
+    * @dev Emitted when rewards are distributed 
+    */
     event NewClaim(
         address indexed user,
         uint amount
@@ -50,6 +59,9 @@ contract RCDYStaking is ReentrancyGuard, Ownable {
         ratePerDay = _ratePerDay;
     }
     
+   /**
+    * @dev Stakes RCDY to contract
+    */
     function stakeRCDY(
         uint amount)
         external returns(bool staked) {
@@ -76,6 +88,9 @@ contract RCDYStaking is ReentrancyGuard, Ownable {
         return true;
     }
 
+   /**
+    * @dev Unstakes RCDY from contract
+    */
     function unstakeRCDY(
         uint amount)
         external nonReentrant returns(bool unstaked) {
@@ -106,7 +121,10 @@ contract RCDYStaking is ReentrancyGuard, Ownable {
         );
         return true;
     }
-
+   
+   /**
+    * @dev Claim rewards
+    */
     function claim(
         ) external returns(bool success) {
 
@@ -119,6 +137,9 @@ contract RCDYStaking is ReentrancyGuard, Ownable {
         return true;
     }
 
+   /**
+    * @dev Returns the rewards claimable by a staker
+    */
     function claimableRewards(
         address _user)
         public view returns(uint rewards) {
@@ -131,7 +152,10 @@ contract RCDYStaking is ReentrancyGuard, Ownable {
             / (BLOCKS_PER_DAY * 100 * 1000)
         );
     }
-
+    
+   /**
+    * @dev Distribute rewards
+    */
     function _distribute(
         address _user) 
         private {
