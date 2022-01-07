@@ -4,46 +4,49 @@ pragma solidity 0.8.6;
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "./RCDYRouter.sol";
 
-contract Marketplace is RCDYRouter, Ownable {
+contract RarecandyMall is RCDYRouter {
   using Counters for Counters.Counter;
   
   Counters.Counter private _itemIds;
   Counters.Counter private _itemsSold;
 
-  uint public listingFee;
+  IERC721 private rc3;
+  uint public listingFee;               //1000 = 1%
+  address public feeCollector;
 
   constructor(
     address _uniswapV2RouterAddress,
     address _rcdy,
+    address _rc3,
     address _feeCollector,
-    uint _listingFee) 
+    uint _listingFee,
+    uint _swapFee) 
     
     RCDYRouter(
       _uniswapV2RouterAddress,
       _rcdy,
-      _feeCollector
+      _swapFee
     ) {
-
+      
+    rc3 = IERC721(_rc3);
     listingFee = _listingFee;
+    feeCollector = _feeCollector;
   }
 
   struct MarketItem {
     uint itemId;
-    address nftContract;
     uint tokenId;
     address seller;
-    address owner;
-    uint price;
+    address owner;                      //buyer
+    uint price;                         //in RCDY
   }
 
   mapping(uint => MarketItem) private idToMarketItem;
 
   event MarketItemCreated (
     uint indexed itemId,
-    address indexed nftContract,
     uint indexed tokenId,
     address seller,
     address owner,
@@ -52,15 +55,13 @@ contract Marketplace is RCDYRouter, Ownable {
 
   event MarketSale(
       uint indexed itemId,
-      address indexed nftContract,
       uint indexed tokenId,
       address buyer,
       address seller,
       uint price
   );
 
-  function createMarketItem(
-    address _nftContract,
+  function listItem(
     uint _tokenId,
     uint _price) 
     external returns(bool marketItemCreated) {
@@ -70,16 +71,7 @@ contract Marketplace is RCDYRouter, Ownable {
       "Price must be more than 0"
     );
 
-    require(
-      rcdy.transferFrom(
-        msg.sender,
-        address(this),
-        listingFee
-      ), 
-      "Failed to collect listing fee"
-    );
-
-    IERC721(_nftContract).transferFrom(
+    rc3.transferFrom(
       msg.sender, 
       address(this), 
       _tokenId
@@ -90,7 +82,6 @@ contract Marketplace is RCDYRouter, Ownable {
 
     idToMarketItem[itemId] =  MarketItem(
       itemId,
-      _nftContract,
       _tokenId,
       msg.sender,
       address(0),
@@ -99,7 +90,6 @@ contract Marketplace is RCDYRouter, Ownable {
 
     emit MarketItemCreated(
       itemId,
-      _nftContract,
       _tokenId,
       msg.sender,
       address(0),
@@ -109,34 +99,42 @@ contract Marketplace is RCDYRouter, Ownable {
     return true;
   }
 
-  function buyMarketItem(
+  function buyItem(
     uint256 _itemId
     ) external returns(bool bought) {
     
     MarketItem storage item = idToMarketItem[_itemId];
-    
+    uint fee = (listingFee * item.price) / 100000;
+    require(
+      rcdy.transferFrom(
+        msg.sender,
+        feeCollector,
+        fee
+      ), 
+      "Error in collecting the fee"
+    );
+
     require(
       rcdy.transferFrom(
         msg.sender,
         item.seller,
-        item.price
+        item.price - fee
       ), 
       "Error in collecting the asking price"
     );
-    
-    rcdy.transfer(feeCollector, listingFee);
 
     item.owner = msg.sender;
-    IERC721(item.nftContract).transferFrom(
+    rc3.transferFrom(
       address(this), 
       msg.sender, 
       item.tokenId
     );
+    
     _itemsSold.increment();
+    
     
     emit MarketSale(
       _itemId,
-      item.nftContract,
       item.tokenId,
       msg.sender,
       item.seller,
@@ -146,7 +144,7 @@ contract Marketplace is RCDYRouter, Ownable {
     return true;
   }
 
-  function getMarketItem(
+  function getItem(
     uint _marketItemId
     ) external view returns(MarketItem memory) {
 
@@ -200,4 +198,5 @@ contract Marketplace is RCDYRouter, Ownable {
     }
     return items;
   }
+
 }

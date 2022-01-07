@@ -3,6 +3,7 @@
 pragma solidity 0.8.6;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 interface IUniswapV2Router01 {
     function WETH() external pure returns (address);
@@ -31,13 +32,13 @@ interface IUniswapV2Router01 {
         ) external returns (uint[] memory amounts);
 }
 
-contract RCDYRouter {
+contract RCDYRouter is Ownable {
     
     IERC20 internal rcdy;
     IUniswapV2Router01 private _iUni;
     
-    address public feeCollector;
-    uint public swappingFee;
+    uint public swapfee;        //100 = 1%
+    uint public claimableFee;
     
     event EthToTokenSwap(
         address indexed user, 
@@ -45,10 +46,9 @@ contract RCDYRouter {
         uint tokenReceived
     );
 
-    event TokenToEthSwap(
-        address indexed user, 
-        uint tokenSpent, 
-        uint ethReceived
+    event ClaimedFee(
+        address indexed receiver, 
+        uint amount
     );
 
     event TokenToTokenSwap(
@@ -62,11 +62,26 @@ contract RCDYRouter {
     constructor(
         address _uniswapV2RouterAddress,
         address _rcdy,
-        address _feeCollector)  {
+        uint _swapfee)  {
         //0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D ropsten address
         _iUni = IUniswapV2Router01(_uniswapV2RouterAddress);
         rcdy = IERC20(_rcdy);
-        feeCollector = _feeCollector;
+        swapfee = _swapfee;
+    }
+
+    function checkTokenBalance(
+        address _token,
+        address _user
+        ) external view returns(uint balance) {
+        
+        balance = IERC20(_token).balanceOf(_user);
+    }
+
+    function checkEthBalance(
+        address _user
+        ) external view returns(uint balance) {
+        
+        balance = _user.balance;
     }
     
     function swapETHForRCDY(
@@ -85,14 +100,18 @@ contract RCDYRouter {
         uint[] memory amounts = _iUni.swapExactETHForTokens{ value: msg.value }(
             _amountOutMin, 
             path, 
-            msg.sender, 
+            address(this), 
             block.timestamp
         );
+
+        uint fee = (swapfee * amounts[1]) / 10000;
+        rcdy.transfer(msg.sender, amounts[1] - fee);
+        claimableFee += fee;
 
         emit EthToTokenSwap(
             msg.sender, 
             amounts[0], 
-            amounts[1]
+            amounts[1] - fee
         );
     }
     
@@ -107,7 +126,7 @@ contract RCDYRouter {
                 msg.sender, 
                 address(this) 
             ) >= _amountIn, 
-            "must approve contract"
+            "Must approve contract"
         );
 
         require(
@@ -115,7 +134,7 @@ contract RCDYRouter {
                 address(_iUni), 
                 _amountIn
             ), 
-            "approve failed"
+            "Approval failed"
         );
 
         address[] memory path = new address[](2);
@@ -126,17 +145,46 @@ contract RCDYRouter {
             _amountIn, 
             _amountOutMin, 
             path, 
-            msg.sender, 
+            address(this), 
             block.timestamp
         );
+
+        uint fee = (swapfee * amounts[1]) / 10000;
+        rcdy.transfer(msg.sender, amounts[1] - fee);
+        claimableFee += fee;
 
         emit TokenToTokenSwap(
             msg.sender, 
             _tokenIn, 
             address(rcdy), 
             amounts[0], 
-            amounts[1]
+            amounts[1] - fee
         );
+    }
+
+    function claimFee(
+        address _receiver,
+        uint _amount)
+        external onlyOwner() returns(bool success) {
+
+        require(
+            _amount <= claimableFee,
+            "Not enough available"
+        );
+
+        claimableFee -= _amount;
+        require(
+            rcdy.transfer(
+                _receiver, 
+                _amount
+            ), "Error in sending tokens"
+        );
+
+        emit ClaimedFee(
+            _receiver, _amount
+        );
+
+        return true;
     }
 }
 
