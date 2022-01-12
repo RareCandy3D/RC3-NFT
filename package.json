@@ -7,6 +7,8 @@
     "test": "test"
   },
   "scripts": {
+    "prettier": "prettier --write 'contracts/**/*.sol'",
+    "lint": "prettier --list-different 'contracts/**/*.sol'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -25,5 +27,11 @@
     "@truffle/hdwallet-provider": "^1.4.1",
     "dotenv": "^10.0.0",
     "truffle-plugin-verify": "^0.5.10"
+  },
+  "devDependencies": {
+    "prettier": "^2.5.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.19",
+    "solhint": "^3.3.6",
+    "solhint-plugin-prettier": "^0.0.5"
   }
 }
