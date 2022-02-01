@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "prettier": "prettier --write 'contracts/**/*.sol'",
+    "lint": "prettier --list-different 'contracts/**/*.sol'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -25,9 +27,22 @@
     "hardhat": "^2.8.3"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@nomiclabs/hardhat-etherscan": "^3.0.0",
     "@openzeppelin/contracts": "^4.4.2",
     "@openzeppelin/test-helpers": "^0.5.15",
     "dotenv": "^14.3.0"
+=======
+    "@openzeppelin/contracts": "^4.2.0",
+    "@truffle/hdwallet-provider": "^1.4.1",
+    "dotenv": "^10.0.0",
+    "truffle-plugin-verify": "^0.5.10"
+  },
+  "devDependencies": {
+    "prettier": "^2.5.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.19",
+    "solhint": "^3.3.6",
+    "solhint-plugin-prettier": "^0.0.5"
+>>>>>>> 7e26100c14ba83eedf257f716385a9cd0487770d
   }
 }

@@ -1,2 +1,7 @@
 .env
+<<<<<<< HEAD
+=======
+.vscode
+truffle-config.js
+>>>>>>> 7e26100c14ba83eedf257f716385a9cd0487770d
 node_modules
