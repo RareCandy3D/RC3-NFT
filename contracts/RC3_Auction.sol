@@ -7,16 +7,17 @@ import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract RC3Auction is Ownable, ERC721Holder, ReentrancyGuard {
+contract RC3_Auction is Ownable, ERC721Holder, ReentrancyGuard {
     //state variables
     IERC721 private rc3;
     IERC20 private rcdy;
     uint256 public feePercentage; // 1% = 1000
-    uint256 private DIVISOR;
+    uint256 private immutable DIVISOR;
     address public feeReceipient;
 
     //struct
     struct Auction {
+        address creator;
         address seller;
         address highestBidder;
         uint256 initialBidAmount;
@@ -68,6 +69,7 @@ contract RC3Auction is Ownable, ERC721Holder, ReentrancyGuard {
     //Deployer
     constructor(
         address _rc3,
+        address _rcdy,
         address _feeReceipient,
         uint256 _fee
     ) {
@@ -75,6 +77,7 @@ contract RC3Auction is Ownable, ERC721Holder, ReentrancyGuard {
         _setFeePercentage(_fee);
 
         rc3 = IERC721(_rc3);
+        rcdy = IERC20(_rcdy);
         DIVISOR = 100 * 1000;
     }
 
@@ -89,7 +92,21 @@ contract RC3Auction is Ownable, ERC721Holder, ReentrancyGuard {
             auction.startPeriod <= block.timestamp,
             "Error: auction has not started"
         );
-        require(endPeriod > block.timestamp, "Error: auction has ended");
+        require(
+            endPeriod > block.timestamp, 
+            "Error: auction has ended"
+        );
+
+        _;
+    }
+
+    modifier onlyValid() {
+        Auction memory auction = auctions[_tokenId];
+
+        require(
+            auction.creator == msg.sender, 
+            "Error: only creator can call"
+        );
 
         _;
     }
@@ -126,6 +143,7 @@ contract RC3Auction is Ownable, ERC721Holder, ReentrancyGuard {
         uint256 startsIn = block.timestamp + _startsIn;
         uint256 period = startsIn + _lastsFor;
 
+        auction.creator = msg.sender;
         auction.startPeriod = startsIn;
         auction.endPeriod = period;
         auction.seller = nftOwner;
@@ -186,12 +204,10 @@ contract RC3Auction is Ownable, ERC721Holder, ReentrancyGuard {
     function closeBid(uint256 _tokenId)
         external
         nonReentrant
-        onlyOwner
+        onlyValid
         returns (bool closed)
     {
         Auction storage auction = auctions[_tokenId];
-
-        require(auction.seller != address(0), "Error: auction does not exist");
 
         (uint256 startTime, uint256 timeLeft) = _bidTimeRemaining(_tokenId);
         require(startTime == 0, "Error: auction has not started");
@@ -223,6 +239,25 @@ contract RC3Auction is Ownable, ERC721Holder, ReentrancyGuard {
         return true;
     }
 
+    function updateEndTime(uint256 _tokenId, uint256 _endsIn)
+        external
+        onlyValid
+        returns (bool updated)
+    {
+        Auction memory auction = auctions[_tokenId];
+
+        require(
+            auction.startPeriod <= block.timestamp,
+            "Error: auction has not started"
+        );
+
+        auction.endPeriod = block.timestamp + _endsIn;
+
+        emit EndTimeUpdated(msg.sender, _tokenId, auction.endPeriod);
+
+        return true;
+    }
+
     ///-----------------///
     /// ADMIN FUNCTIONS ///
     ///-----------------///
@@ -246,25 +281,6 @@ contract RC3Auction is Ownable, ERC721Holder, ReentrancyGuard {
         _setFeeReceipient(_newFeeReceipient);
 
         emit FeeReceipientSet(msg.sender, _newFeeReceipient);
-        return true;
-    }
-
-    function updateEndTime(uint256 _tokenId, uint256 _endsIn)
-        external
-        onlyOwner
-        returns (bool updated)
-    {
-        Auction memory auction = auctions[_tokenId];
-
-        require(
-            auction.startPeriod <= block.timestamp,
-            "Error: auction has not started"
-        );
-
-        auction.endPeriod = block.timestamp + _endsIn;
-
-        emit EndTimeUpdated(msg.sender, _tokenId, auction.endPeriod);
-
         return true;
     }
 
@@ -309,20 +325,18 @@ contract RC3Auction is Ownable, ERC721Holder, ReentrancyGuard {
      * returns the remaining seconds.
      * returns 0 if auction isn't open.
      */
-    function _bidTimeRemaining(uint256 _tokenId)
-        private
-        view
-        returns (uint256 startsIn, uint256 endsIn)
-    {
+    function _bidTimeRemaining(
+        uint256 _tokenId)
+        private view returns (uint256 startsIn, uint256 endsIn) {
         Auction memory auction = auctions[_tokenId];
 
-        auction.startPeriod > block.timestamp
-            ? startsIn = auction.startPeriod - block.timestamp
-            : startsIn = 0;
+        startsIn = auction.startPeriod > block.timestamp
+            ? auction.startPeriod - block.timestamp
+            : 0;
 
-        auction.endPeriod > block.timestamp
-            ? endsIn = auction.endPeriod - block.timestamp
-            : endsIn = 0;
+        endsIn = auction.endPeriod > block.timestamp
+            ? auction.endPeriod - block.timestamp
+            : 0;
     }
 
     function _nextBidAmount(uint256 _tokenId)

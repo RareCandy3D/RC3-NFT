@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-contract RC3Staking is Ownable, ReentrancyGuard {
+contract RC3_Staking is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     IERC721 private immutable rc3;

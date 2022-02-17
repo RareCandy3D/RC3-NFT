@@ -4,27 +4,27 @@ pragma solidity 0.8.6;
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "./RCDYRouter.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract RarecandyMall is RCDYRouter {
+contract RarecandyMall {
     using Counters for Counters.Counter;
 
     Counters.Counter private _itemIds;
     Counters.Counter private _itemsSold;
 
     IERC721 private rc3;
+    IERC20 private rcdy;
     uint256 public listingFee; //1000 = 1%
     address public feeCollector;
 
     constructor(
-        address _uniswapV2RouterAddress,
         address _rcdy,
         address _rc3,
         address _feeCollector,
-        uint256 _listingFee,
-        uint256 _swapFee
-    ) RCDYRouter(_uniswapV2RouterAddress, _rcdy, _swapFee) {
+        uint256 _listingFee
+    ) {
         rc3 = IERC721(_rc3);
+        rcdy = IERC20(_rcdy);
         listingFee = _listingFee;
         feeCollector = _feeCollector;
     }

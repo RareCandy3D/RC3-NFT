@@ -12,7 +12,7 @@ module.exports = {
 
   networks: {
     rinkeby: {
-      url: process.env.INFURA_URL_rinkeby,
+      url: "process.env.INFURA_URL_rinkeby",
       accounts: [process.env.PRIVATE_KEY]
     }
   },
