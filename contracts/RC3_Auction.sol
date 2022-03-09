@@ -100,7 +100,7 @@ contract RC3_Auction is Ownable, ERC721Holder, ReentrancyGuard {
         _;
     }
 
-    modifier onlyValid() {
+    modifier onlyValid(uint _tokenId) {
         Auction memory auction = auctions[_tokenId];
 
         require(
@@ -204,7 +204,7 @@ contract RC3_Auction is Ownable, ERC721Holder, ReentrancyGuard {
     function closeBid(uint256 _tokenId)
         external
         nonReentrant
-        onlyValid
+        onlyValid(_tokenId)
         returns (bool closed)
     {
         Auction storage auction = auctions[_tokenId];
@@ -241,7 +241,7 @@ contract RC3_Auction is Ownable, ERC721Holder, ReentrancyGuard {
 
     function updateEndTime(uint256 _tokenId, uint256 _endsIn)
         external
-        onlyValid
+        onlyValid(_tokenId)
         returns (bool updated)
     {
         Auction memory auction = auctions[_tokenId];

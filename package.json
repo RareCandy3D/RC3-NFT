@@ -6,7 +6,7 @@
   "scripts": {
     "prettier": "prettier --write 'contracts/**/*.sol'",
     "lint": "prettier --list-different 'contracts/**/*.sol'",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npx hardhat test test/RCDY_Router.js"
   },
   "repository": {
     "type": "git",
@@ -20,14 +20,13 @@
   },
   "homepage": "https://github.com/RareCandy3D/RC3-NFT#readme",
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.4",
+    "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-waffle": "^2.0.2",
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.5.3",
     "hardhat": "^2.8.3"
   },
   "dependencies": {
-
     "@nomiclabs/hardhat-etherscan": "^3.0.0",
     "@openzeppelin/contracts": "^4.4.2",
     "@openzeppelin/test-helpers": "^0.5.15",

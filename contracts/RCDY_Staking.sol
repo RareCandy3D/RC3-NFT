@@ -12,7 +12,7 @@ contract RCDY_Staking is ReentrancyGuard, Ownable {
     IERC20 private immutable rcdy;
     uint256 public ratePerDay; //1000 = 1%
     uint256 private totalStakes;
-    uint256 public constant BLOCKS_PER_DAY = 1 days / 15; //5760;
+    uint256 private immutable BLOCKS_PER_DAY = 1 days / 15; //5760;
 
     struct User {
         uint256 stakes;
@@ -37,9 +37,7 @@ contract RCDY_Staking is ReentrancyGuard, Ownable {
      */
     event NewClaim(address indexed user, uint256 amount);
 
-    constructor(
-        address _rcdy, 
-        uint256 _ratePerDay) {
+    constructor(address _rcdy, uint256 _ratePerDay) {
         rcdy = IERC20(_rcdy);
         ratePerDay = _ratePerDay;
     }
@@ -79,7 +77,8 @@ contract RCDY_Staking is ReentrancyGuard, Ownable {
     function unstakeRCDY(uint256 amount)
         external
         nonReentrant
-        returns (bool unstaked) {
+        returns (bool unstaked)
+    {
         User storage user = users[msg.sender];
 
         require(user.stakes >= amount, "You do not have enough stakes");
@@ -100,12 +99,8 @@ contract RCDY_Staking is ReentrancyGuard, Ownable {
     /**
      * @dev Claim rewards
      */
-    function claim() external returns(bool claimed) { 
-
-        require(
-            claimableRewards(msg.sender) > 0,
-            "You do not have any stakes"
-        );
+    function claim() external returns (bool claimed) {
+        require(claimableRewards(msg.sender) > 0, "You do not have any stakes");
 
         _distribute(msg.sender);
         return true;
@@ -114,24 +109,29 @@ contract RCDY_Staking is ReentrancyGuard, Ownable {
     /**
      * @dev Returns the rewards claimable by a staker
      */
-    function claimableRewards(
-        address _user) public view returns(uint256 rewards) {
-        
+    function claimableRewards(address _user)
+        public
+        view
+        returns (uint256 rewards)
+    {
         User memory user = users[_user];
 
-        uint256 blockRate = (block.number - user.checkpoint) * ratePerDay * user.stakes;
+        uint256 blockRate = (block.number - user.checkpoint) *
+            ratePerDay *
+            user.stakes;
         uint256 allOver = BLOCKS_PER_DAY * 100 * 1000;
         rewards = blockRate > allOver ? blockRate / allOver : 0;
     }
 
-    function getUserInfo(
-        address _user) external view returns (User memory userInfo) {
+    function getUserInfo(address _user)
+        external
+        view
+        returns (User memory userInfo)
+    {
         return users[_user];
     }
 
-    function getTotalStakes(
-        ) external view returns(uint256 totalstakes) {
-
+    function getTotalStakes() external view returns (uint256 totalstakes) {
         return totalStakes;
     }
 
@@ -141,7 +141,6 @@ contract RCDY_Staking is ReentrancyGuard, Ownable {
         uint256 rewards = claimableRewards(_user);
 
         if (rewards > 0) {
-            
             require(
                 rcdy.balanceOf(address(this)) - totalStakes >= rewards,
                 "Error: No available reward in smart contract"
@@ -149,7 +148,7 @@ contract RCDY_Staking is ReentrancyGuard, Ownable {
 
             user.checkpoint = block.number;
             user.claimed += rewards;
-            rcdy.safeTransfer(_user, rewards/2);
+            rcdy.safeTransfer(_user, rewards / 2);
             emit NewClaim(msg.sender, rewards);
         }
     }
