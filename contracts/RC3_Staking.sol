@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
+//compound rewards to rcdy staking
 contract RC3_Staking is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 

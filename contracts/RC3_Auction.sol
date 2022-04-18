@@ -1,113 +1,127 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.6;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract RC3_Auction is Ownable, ERC721Holder, ReentrancyGuard {
+contract RC3_Auction is Ownable, ReentrancyGuard {
+    using Counters for Counters.Counter;
+
     //state variables
-    IERC721 private rc3;
-    IERC20 private rcdy;
-    uint256 public feePercentage; // 1% = 1000
-    uint256 private immutable DIVISOR;
-    address public feeReceipient;
+    IERC20 internal rcdy;
+    Counters.Counter public auctionId;
+    Counters.Counter public auctionsClosed;
+    uint96 public feePercentage; // 1% = 1000
+    uint96 private immutable DIVISOR;
+    address payable public feeReceipient;
+
+    enum TokenType {
+        ERC_721,
+        ERC_1155
+    }
+
+    enum State {
+        UNLISTED,
+        LISTED,
+        DELISTED,
+        SOLD
+    }
 
     //struct
     struct Auction {
-        address creator;
-        address seller;
-        address highestBidder;
+        address payable seller;
+        address payable highestBidder;
+        address nifty;
+        uint256 tokenId;
+        uint256 tokenAmount;
         uint256 initialBidAmount;
         uint256 highestBidAmount;
         uint256 startPeriod;
         uint256 endPeriod;
         uint256 bidCount;
-        bool started;
+        TokenType tokenType;
+        State state;
     }
 
-    //NFT address to token id to Auction struct
+    //auction id to Auction
     mapping(uint256 => Auction) private auctions;
 
-    //Events
-    event AuctionUpdated(uint256 indexed _tokenId, uint256 newEndPeriod);
+    event AuctionUpdated(
+        address indexed caller,
+        address indexed nft,
+        uint256 indexed auctionId,
+        uint256 _tokenId,
+        uint256 newEndPeriod
+    );
 
-    event AuctionCancelled(uint256 indexed tokenID);
+    event AuctionCancelled(
+        address indexed caller,
+        address indexed nft,
+        uint256 indexed auctionId,
+        uint256 tokenID
+    );
 
     event AuctionResulted(
-        address indexed highestBidder,
-        uint256 indexed tokenId,
-        uint256 highestBidAmount
+        address indexed caller,
+        address seller,
+        address highestBidder,
+        address indexed nft,
+        uint256 indexed auctionId,
+        uint256 tokenId,
+        uint256 amount,
+        uint256 winPrice
     );
 
     event EndTimeUpdated(
         address indexed creator,
-        uint256 indexed tokenId,
+        address indexed nft,
+        uint256 indexed auctionId,
+        uint256 tokenId,
         uint256 newEndTime
     );
 
     event NewAuction(
-        uint256 indexed tokenId,
-        uint256 price,
+        address indexed seller,
+        address indexed nft,
+        uint256 indexed auctionId,
+        uint256 tokenId,
+        uint256 amount,
+        uint256 floorPrice,
         uint256 startPeriod,
         uint256 endPeriod,
-        address indexed seller
+        TokenType tokenType
     );
 
     event NewBid(
         address indexed bidder,
-        uint256 indexed tokenId,
+        address indexed nft,
+        uint256 indexed auctionId,
+        uint256 tokenId,
         uint256 price
     );
 
-    event FeePercentageSet(address indexed sender, uint256 feePercentage);
-
-    event FeeReceipientSet(address indexed sender, address feeReceipient);
-
     //Deployer
-    constructor(
-        address _rc3,
-        address _rcdy,
-        address _feeReceipient,
-        uint256 _fee
-    ) {
-        _setFeeReceipient(_feeReceipient);
-        _setFeePercentage(_fee);
-
-        rc3 = IERC721(_rc3);
+    constructor(address _rcdy) {
         rcdy = IERC20(_rcdy);
         DIVISOR = 100 * 1000;
+        transferOwnership(msg.sender);
     }
 
     //Modifier to check all conditions are met before bid
-    modifier bidCheck(uint256 _tokenId) {
-        Auction memory auction = auctions[_tokenId];
+    modifier bidCheck(uint256 _auctionId) {
+        Auction memory auction = auctions[_auctionId];
         uint256 endPeriod = auction.endPeriod;
-
-        require(auction.seller != msg.sender, "Error: cannot bid own auction");
-        require(endPeriod != 0, "Error: auction does not exist");
-        require(
-            auction.startPeriod <= block.timestamp,
-            "Error: auction has not started"
-        );
-        require(
-            endPeriod > block.timestamp, 
-            "Error: auction has ended"
-        );
-
-        _;
-    }
-
-    modifier onlyValid(uint _tokenId) {
-        Auction memory auction = auctions[_tokenId];
-
-        require(
-            auction.creator == msg.sender, 
-            "Error: only creator can call"
-        );
-
+        require(auction.state == State.LISTED, "AUCTION_NOT_LISTED");
+        require(auction.seller != msg.sender, "OWNER_CANNOT_BID");
+        require(endPeriod != 0, "AUCTION_NOT_EXIST");
+        require(auction.startPeriod <= block.timestamp, "AUCTION_NOT_STARTED");
+        require(endPeriod > block.timestamp, "AUCTION_ENDED");
         _;
     }
 
@@ -115,172 +129,205 @@ contract RC3_Auction is Ownable, ERC721Holder, ReentrancyGuard {
     /// WRITE FUNCTIONS ///
     ///-----------------///
 
-    function newAuction(
+    function listAuction(
+        address nifty,
         uint256 _tokenId,
+        uint256 amount,
         uint256 _startsIn,
         uint256 _lastsFor,
-        uint256 _initialBidAmount
-    ) external returns (bool created) {
-        Auction storage auction = auctions[_tokenId];
-        require(auction.seller == address(0), "Error: auction already exist");
+        uint256 _initialBidAmount,
+        TokenType _type
+    ) external returns (uint256 auctionId_) {
+        auctionId.increment();
+        auctionId_ = auctionId.current();
+        require(_lastsFor != 0, "INVALID_DURATION");
 
-        require(_lastsFor != 0, "Error: must last for more than 0 seconds");
+        if (_type == TokenType.ERC_721) {
+            IERC721 nft = IERC721(nifty);
+            address nftOwner = nft.ownerOf(_tokenId);
+            require(nftOwner == msg.sender, "INVALID_OPERATOR");
+            nft.safeTransferFrom(nftOwner, address(this), _tokenId);
 
-        address nftOwner = rc3.ownerOf(_tokenId);
-        if (!auction.started) {
-            require(owner() == msg.sender, "Error: only admin can call");
-
-            rc3.safeTransferFrom(nftOwner, address(this), _tokenId);
-
-            auction.started = true;
+            _registerAuction(
+                nifty,
+                auctionId_,
+                _tokenId,
+                1,
+                _startsIn,
+                _lastsFor,
+                _initialBidAmount,
+                TokenType.ERC_721
+            );
         } else {
-            require(nftOwner == msg.sender, "Error: only NFT owner can call");
+            require(amount > 0, "INVALID_AMOUNT");
+            IERC1155 nft = IERC1155(nifty);
+            require(
+                nft.balanceOf(msg.sender, _tokenId) >= amount,
+                "INSUFFICIENT_BALANCE"
+            );
+            nft.safeTransferFrom(
+                msg.sender,
+                address(this),
+                _tokenId,
+                amount,
+                "0x0"
+            );
 
-            rc3.safeTransferFrom(msg.sender, address(this), _tokenId);
+            _registerAuction(
+                nifty,
+                auctionId_,
+                _tokenId,
+                amount,
+                _startsIn,
+                _lastsFor,
+                _initialBidAmount,
+                TokenType.ERC_1155
+            );
         }
-
-        //create auction
-        uint256 startsIn = block.timestamp + _startsIn;
-        uint256 period = startsIn + _lastsFor;
-
-        auction.creator = msg.sender;
-        auction.startPeriod = startsIn;
-        auction.endPeriod = period;
-        auction.seller = nftOwner;
-        auction.initialBidAmount = _initialBidAmount;
-
-        emit NewAuction(
-            _tokenId,
-            _initialBidAmount,
-            startsIn,
-            period,
-            nftOwner
-        );
-
-        return true;
     }
 
-    function bid(uint256 _tokenId, uint256 _bidAmount)
+    function bid(uint256 _auctionId, uint256 _bidAmount)
         external
         nonReentrant
-        bidCheck(_tokenId)
+        bidCheck(_auctionId)
         returns (bool bidded)
     {
-        Auction storage auction = auctions[_tokenId];
+        Auction storage auction = auctions[_auctionId];
 
-        require(
-            _bidAmount > 0 && _bidAmount == _nextBidAmount(_tokenId),
-            "Error: must bid with valid input. see nextBidAmount."
-        );
+        require(_bidAmount >= _nextBidAmount(_auctionId), "INVALID_INPUT");
 
         rcdy.transferFrom(msg.sender, address(this), _bidAmount);
 
-        if (auction.bidCount != 0)
+        if (auction.bidCount != 0) {
             //return token to the prevous highest bidder
             rcdy.transfer(auction.highestBidder, auction.highestBidAmount);
+        }
 
         //update data
-        auction.highestBidder = msg.sender;
+        auction.highestBidder = payable(msg.sender);
         auction.highestBidAmount = _bidAmount;
         auction.bidCount++;
 
-        emit NewBid(msg.sender, _tokenId, _bidAmount);
+        emit NewBid(
+            msg.sender,
+            auction.nifty,
+            _auctionId,
+            auction.tokenId,
+            _bidAmount
+        );
 
         //increase countdown clock
-        (, uint256 timeLeft) = _bidTimeRemaining(_tokenId);
+        (, uint256 timeLeft) = _bidTimeRemaining(_auctionId);
         if (timeLeft < 1 hours) {
             timeLeft + 10 minutes <= 1 hours
                 ? auction.endPeriod += 10 minutes
                 : auction.endPeriod += (1 hours - timeLeft);
 
-            (, uint256 newTimeLeft) = _bidTimeRemaining(_tokenId);
+            (, uint256 newTimeLeft) = _bidTimeRemaining(_auctionId);
 
-            emit AuctionUpdated(_tokenId, block.timestamp + newTimeLeft);
+            emit AuctionUpdated(
+                msg.sender,
+                auction.nifty,
+                _auctionId,
+                auction.tokenId,
+                block.timestamp + newTimeLeft
+            );
         }
 
         return true;
     }
 
-    function closeBid(uint256 _tokenId)
+    function closeBid(uint256 _auctionId)
         external
         nonReentrant
-        onlyValid(_tokenId)
-        returns (bool closed)
+        returns (State status)
     {
-        Auction storage auction = auctions[_tokenId];
+        Auction storage auction = auctions[_auctionId];
+        require(auction.state == State.LISTED, "AUCTION_NOT_LISTED");
 
-        (uint256 startTime, uint256 timeLeft) = _bidTimeRemaining(_tokenId);
-        require(startTime == 0, "Error: auction has not started");
-        require(timeLeft == 0, "Error: auction has not ended");
+        (uint256 startTime, uint256 timeLeft) = _bidTimeRemaining(_auctionId);
+        require(startTime == 0, "AUCTION_NOT_STARTED");
+        require(timeLeft == 0, "AUCTION_NOT_ENDED");
 
         uint256 highestBidAmount = auction.highestBidAmount;
-        address highestBidder = auction.highestBidder;
 
         if (highestBidAmount == 0) {
-            //auction failed, no bidding occured
-            rc3.transferFrom(address(this), auction.seller, _tokenId);
-            emit AuctionCancelled(_tokenId);
+            auction.tokenType == TokenType.ERC_721
+                ? IERC721(auction.nifty).safeTransferFrom(
+                    address(this),
+                    auction.seller,
+                    auction.tokenId
+                )
+                : IERC1155(auction.nifty).safeTransferFrom(
+                    address(this),
+                    auction.seller,
+                    auction.tokenId,
+                    auction.tokenAmount,
+                    "0x0"
+                );
+            auction.state = State.DELISTED;
+            emit AuctionCancelled(
+                msg.sender,
+                auction.nifty,
+                _auctionId,
+                auction.tokenId
+            );
         } else {
             //auction succeeded, pay fee, send money to seller, and token to buyer
             uint256 fee = (feePercentage * highestBidAmount) / DIVISOR;
+            address highestBidder = auction.highestBidder;
+
             rcdy.transfer(feeReceipient, fee);
             rcdy.transfer(auction.seller, highestBidAmount - fee);
-            rc3.transferFrom(address(this), highestBidder, _tokenId);
 
-            emit AuctionResulted(highestBidder, _tokenId, highestBidAmount);
+            auction.tokenType == TokenType.ERC_721
+                ? IERC721(auction.nifty).safeTransferFrom(
+                    address(this),
+                    highestBidder,
+                    auction.tokenId
+                )
+                : IERC1155(auction.nifty).safeTransferFrom(
+                    address(this),
+                    highestBidder,
+                    auction.tokenId,
+                    auction.tokenAmount,
+                    "0x0"
+                );
+            auction.state = State.SOLD;
+            emit AuctionResulted(
+                msg.sender,
+                auction.seller,
+                highestBidder,
+                auction.nifty,
+                _auctionId,
+                auction.tokenId,
+                auction.tokenAmount,
+                highestBidAmount
+            );
         }
 
-        auction.seller = address(0);
-        auction.highestBidder = address(0);
-        auction.highestBidAmount = 0;
-        auction.startPeriod = 0;
-        auction.endPeriod = 0;
-        auction.bidCount = 0;
-        return true;
+        auctionsClosed.increment();
+        return auction.state;
     }
 
-    function updateEndTime(uint256 _tokenId, uint256 _endsIn)
+    function updateEndTime(uint256 _auctionId, uint256 _endsIn)
         external
-        onlyValid(_tokenId)
         returns (bool updated)
     {
-        Auction memory auction = auctions[_tokenId];
+        Auction storage auction = auctions[_auctionId];
 
-        require(
-            auction.startPeriod <= block.timestamp,
-            "Error: auction has not started"
-        );
+        require(auction.seller == msg.sender, "ONLY_SELLER");
+        require(auction.startPeriod <= block.timestamp, "AUCTION_NOT_STARTED");
 
         auction.endPeriod = block.timestamp + _endsIn;
 
-        emit EndTimeUpdated(msg.sender, _tokenId, auction.endPeriod);
-
-        return true;
-    }
-
-    ///-----------------///
-    /// ADMIN FUNCTIONS ///
-    ///-----------------///
-
-    function setFeePercentage(uint256 _newFeePercentage)
-        external
-        onlyOwner
-        returns (bool feePercentageSet)
-    {
-        _setFeePercentage(_newFeePercentage);
-
-        emit FeePercentageSet(msg.sender, _newFeePercentage);
-        return true;
-    }
-
-    function setFeeReceipient(address _newFeeReceipient)
-        external
-        onlyOwner
-        returns (bool feeReceipientSet)
-    {
-        _setFeeReceipient(_newFeeReceipient);
-
-        emit FeeReceipientSet(msg.sender, _newFeeReceipient);
+        emit EndTimeUpdated(
+            msg.sender,
+            auction.nifty,
+            _auctionId,
+            auction.tokenId,
+            auction.endPeriod
+        );
         return true;
     }
 
@@ -288,47 +335,79 @@ contract RC3_Auction is Ownable, ERC721Holder, ReentrancyGuard {
     /// READ FUNCTIONS ///
     ///-----------------///
 
-    function bidTimeRemaining(uint256 _tokenId)
+    function bidTimeRemaining(uint256 _auctionId)
         external
         view
         returns (uint256 startsIn, uint256 endsIn)
     {
-        return _bidTimeRemaining(_tokenId);
+        return _bidTimeRemaining(_auctionId);
     }
 
-    function nextBidAmount(uint256 _tokenId)
+    function nextBidAmount(uint256 _auctionId)
         external
         view
         returns (uint256 amount)
     {
-        return _nextBidAmount(_tokenId);
+        return _nextBidAmount(_auctionId);
     }
 
-    function getAuction(uint256 _tokenId)
+    function getAuction(uint256 _auctionId)
         external
         view
         returns (Auction memory)
     {
-        return auctions[_tokenId];
+        return auctions[_auctionId];
     }
 
     ///-----------------///
     /// PRIVATE FUNCTIONS ///
     ///-----------------///
 
-    /*
-     * @dev get the seconds left for an auction to end.
-     * ------------------------------------------------
-     * @param _token --> the address of the NFT.
-     * @param _tokenId --> the id of the NFT.
-     * ---------------------------------------
-     * returns the remaining seconds.
-     * returns 0 if auction isn't open.
-     */
-    function _bidTimeRemaining(
-        uint256 _tokenId)
-        private view returns (uint256 startsIn, uint256 endsIn) {
-        Auction memory auction = auctions[_tokenId];
+    function _registerAuction(
+        address nifty,
+        uint256 _auctionId,
+        uint256 _tokenId,
+        uint256 amount,
+        uint256 _startsIn,
+        uint256 _lastsFor,
+        uint256 _initialBidAmount,
+        TokenType _type
+    ) private {
+        Auction storage auction = auctions[_auctionId];
+
+        //create auction
+        uint256 startsIn = block.timestamp + _startsIn;
+        uint256 period = startsIn + _lastsFor;
+
+        auction.nifty = nifty;
+        auction.tokenId = _tokenId;
+        auction.startPeriod = startsIn;
+        auction.endPeriod = period;
+        auction.seller = payable(msg.sender);
+        auction.initialBidAmount = _initialBidAmount;
+        auction.tokenType = _type;
+        auction.tokenAmount = amount;
+        auction.state = State.LISTED;
+
+        emit NewAuction(
+            msg.sender,
+            nifty,
+            _auctionId,
+            _tokenId,
+            amount,
+            _initialBidAmount,
+            startsIn,
+            period,
+            _type
+        );
+    }
+
+    function _bidTimeRemaining(uint256 _auctionId)
+        private
+        view
+        returns (uint256 startsIn, uint256 endsIn)
+    {
+        Auction memory auction = auctions[_auctionId];
 
         startsIn = auction.startPeriod > block.timestamp
             ? auction.startPeriod - block.timestamp
@@ -339,12 +418,12 @@ contract RC3_Auction is Ownable, ERC721Holder, ReentrancyGuard {
             : 0;
     }
 
-    function _nextBidAmount(uint256 _tokenId)
+    function _nextBidAmount(uint256 _auctionId)
         private
         view
         returns (uint256 amount)
     {
-        Auction memory auction = auctions[_tokenId];
+        Auction memory auction = auctions[_auctionId];
         if (auction.seller != address(0)) {
             uint256 current = auction.highestBidAmount;
 
@@ -356,18 +435,5 @@ contract RC3_Auction is Ownable, ERC721Holder, ReentrancyGuard {
             }
         }
         return 0;
-    }
-
-    function _setFeePercentage(uint256 _newFee) private {
-        require(_newFee != feePercentage, "Error: already set");
-        feePercentage = _newFee;
-    }
-
-    function _setFeeReceipient(address _newFeeReceipient) private {
-        require(
-            _newFeeReceipient != feeReceipient,
-            "Error: already receipient"
-        );
-        feeReceipient = payable(_newFeeReceipient);
     }
 }
