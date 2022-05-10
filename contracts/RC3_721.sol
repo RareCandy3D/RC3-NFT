@@ -24,7 +24,8 @@ contract RC3_721 is
     string private _uri;
     address payable feeTaker;
 
-    mapping(address => bool) internal _markets;
+    mapping(address => bool) public isWhitelistedMarket;
+
     event MarketUpdated(address admin, address indexed market, bool ismarket);
 
     constructor(
@@ -41,10 +42,7 @@ contract RC3_721 is
     }
 
     modifier adminOnly() {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
-            "UNAUTHORIZED_CALLER"
-        );
+        _adminOnly();
         _;
     }
 
@@ -52,7 +50,7 @@ contract RC3_721 is
         return _uri;
     }
 
-    function baseTokenURI() external view returns (string memory) {
+    function baseURI() external view returns (string memory) {
         return _baseURI();
     }
 
@@ -63,15 +61,17 @@ contract RC3_721 is
         _setTokenURI(_tokenId, _newURI);
     }
 
-    function updateMarket(address market, bool isMarket) external adminOnly {
+    function setMarket(address market, bool isMarket) external adminOnly {
         require(market != address(0), "ZERO_ADDRESS");
 
-        _markets[market] = isMarket;
+        isWhitelistedMarket[market] = isMarket;
         emit MarketUpdated(msg.sender, market, isMarket);
     }
 
-    function mint(address to, uint256 id) public adminOnly {
-        _safeMint(to, id);
+    function mint(address to) public adminOnly returns (uint256 newItemId) {
+        _id.increment();
+        newItemId = _id.current();
+        _safeMint(to, newItemId);
     }
 
     function setFeeTaker(address payable _feeTaker) external adminOnly {
@@ -100,7 +100,7 @@ contract RC3_721 is
     }
 
     function calculateRoyalty(uint256 price) public view returns (uint256) {
-        return (price / 10000) * royalty;
+        return (price * royalty) / 10000;
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -120,7 +120,7 @@ contract RC3_721 is
         override
         returns (bool isOperator)
     {
-        if (_markets[operator]) return true;
+        if (isWhitelistedMarket[operator]) return true;
 
         return ERC721.isApprovedForAll(owner, operator);
     }
@@ -141,5 +141,12 @@ contract RC3_721 is
         uint256 id
     ) internal virtual override(ERC721, ERC721Enumerable) {
         super._beforeTokenTransfer(from, to, id);
+    }
+
+    function _adminOnly() private view {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
+            "UNAUTHORIZED_CALLER"
+        );
     }
 }

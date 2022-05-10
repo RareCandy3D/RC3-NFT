@@ -35,7 +35,7 @@ contract RC3_Originals is
     }
 
     mapping(uint256 => Info) internal _idToInfo;
-    mapping(address => bool) internal _markets;
+    mapping(address => bool) public isWhitelistedMarket;
 
     event Mint(
         address indexed admin,
@@ -76,52 +76,13 @@ contract RC3_Originals is
         _;
     }
 
-    modifier onlyCreated(bytes32 category) {
-        bool created = false;
-        uint256 len = categories.length;
-
-        for (uint256 i; i < len; i++) {
-            bytes32 cat = categories[i];
-            if (cat == category) {
-                created = true;
-            }
-        }
-        require(created == true, "CREATED_CATEGORY_ONLY");
+    modifier onlyCreated(bytes32 category, bytes32 nature) {
+        _onlyCreated(category, nature);
         _;
     }
 
-    function mint(
-        string memory _tokenURI,
-        address payable creator,
-        bytes32 category,
-        bytes32 nature
-    ) external onlyCreated(category) returns (uint256 newItemId) {
-        require(hasRole(MINTER_ROLE, _msgSender()), "MINTER_ONLY");
-
-        _tokenIds.increment();
-        newItemId = _tokenIds.current();
-
-        _safeMint(_msgSender(), newItemId);
-        _setTokenURI(newItemId, _tokenURI);
-        _setInfo(newItemId, creator, nature, category);
-
-        emit Mint(_msgSender(), newItemId, creator, category, nature);
-    }
-
-    function updateMarket(address market, bool isMarket) external adminOnly {
-        require(market != address(0), "ZERO_ADDRESS");
-
-        _markets[market] = isMarket;
-        emit MarketUpdated(market, isMarket);
-    }
-
-    function setRoyaltyInfo(address payable _receiver, uint256 _tokenId)
-        external
-    {
-        Info storage i = _idToInfo[_tokenId];
-        require(i.creator == msg.sender, "UNAUTHORIZED_CALLER");
-        i.creator = _receiver;
-        emit RoyaltyInfoUpdated(msg.sender, _receiver);
+    function baseTokenURI() public view virtual returns (string memory) {
+        return _baseURI();
     }
 
     function getInfo(uint256 tokenId) external view returns (Info memory info) {
@@ -132,38 +93,12 @@ contract RC3_Originals is
         return _idToInfo[tokenId];
     }
 
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        virtual
-        override(ERC721URIStorage, ERC721)
-        returns (string memory URI)
-    {
-        return super.tokenURI(tokenId);
-    }
-
-    function baseTokenURI() public view virtual returns (string memory) {
-        return _baseURI();
-    }
-
-    function _baseURI() internal view override returns (string memory) {
-        return _uri;
-    }
-
     function royaltyInfo(uint256 _tokenId, uint256 _salePrice)
         external
         view
         returns (address, uint256)
     {
         return (_idToInfo[_tokenId].creator, calculateRoyalty(_salePrice));
-    }
-
-    function calculateRoyalty(uint256 _salePrice)
-        private
-        view
-        returns (uint256)
-    {
-        return (_salePrice / 10000) * royalty;
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -177,6 +112,108 @@ contract RC3_Originals is
             interfaceId == 0x2a55205a || super.supportsInterface(interfaceId);
     }
 
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        virtual
+        override(ERC721URIStorage, ERC721)
+        returns (string memory URI)
+    {
+        return super.tokenURI(tokenId);
+    }
+
+    function mint(
+        string memory _tokenURI,
+        address payable creator,
+        bytes32 category,
+        bytes32 nature
+    ) external onlyCreated(category, nature) returns (uint256 newItemId) {
+        require(hasRole(MINTER_ROLE, _msgSender()), "MINTER_ONLY");
+
+        _tokenIds.increment();
+        newItemId = _tokenIds.current();
+
+        _safeMint(creator, newItemId);
+        _setTokenURI(newItemId, _tokenURI);
+        _setInfo(newItemId, creator, nature, category);
+
+        emit Mint(_msgSender(), newItemId, creator, category, nature);
+    }
+
+    function setRoyaltyInfo(uint256 _tokenId, address payable _receiver)
+        external
+    {
+        Info storage i = _idToInfo[_tokenId];
+        require(i.creator == msg.sender, "UNAUTHORIZED_CALLER");
+        i.creator = _receiver;
+        emit RoyaltyInfoUpdated(msg.sender, _receiver);
+    }
+
+    function setMarket(address market, bool isMarket) external adminOnly {
+        require(market != address(0), "ZERO_ADDRESS");
+
+        isWhitelistedMarket[market] = isMarket;
+        emit MarketUpdated(market, isMarket);
+    }
+
+    function _baseURI() internal view override returns (string memory) {
+        return _uri;
+    }
+
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal override(ERC721, ERC721Enumerable) {
+        super._beforeTokenTransfer(from, to, tokenId);
+    }
+
+    function _burn(uint256 tokenId)
+        internal
+        override(ERC721, ERC721URIStorage)
+    {
+        _delInfo(tokenId);
+        super._burn(tokenId);
+    }
+
+    function calculateRoyalty(uint256 _salePrice)
+        public
+        view
+        returns (uint256)
+    {
+        return (_salePrice / 10000) * royalty;
+    }
+
+    function _delInfo(uint256 id) internal {
+        delete _idToInfo[id];
+    }
+
+    function _onlyCreated(bytes32 category, bytes32 nature) private view {
+        bool natural = false;
+
+        for (uint256 i; i < 3; i++) {
+            bytes32 nat = natures[i];
+            if (nat == nature) {
+                natural = true;
+            }
+        }
+
+        if (!natural) {
+            revert("ONLY_VALID_NATURE");
+        } else {
+            bool categorized = false;
+            uint256 lenCat = categories.length;
+
+            for (uint256 i; i < lenCat; i++) {
+                bytes32 cat = categories[i];
+                if (cat == category) {
+                    categorized = true;
+                }
+            }
+            if (!categorized) revert("ONLY_CREATED_CATEGORY");
+        }
+    }
+
     function _setInfo(
         uint256 id,
         address payable creator,
@@ -187,18 +224,6 @@ contract RC3_Originals is
         i.creator = creator;
         i.nature = nature;
         i.category = category;
-    }
-
-    function _delInfo(uint256 id) internal {
-        delete _idToInfo[id];
-    }
-
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) internal override(ERC721, ERC721Enumerable) {
-        super._beforeTokenTransfer(from, to, tokenId);
     }
 
     function _isApprovedOrOwner(address spender, uint256 tokenId)
@@ -219,18 +244,31 @@ contract RC3_Originals is
         return (spender == owner ||
             getApproved(tokenId) == spender ||
             isApprovedForAll(owner, spender) ||
-            _markets[spender]);
-    }
-
-    function _burn(uint256 tokenId)
-        internal
-        override(ERC721, ERC721URIStorage)
-    {
-        _delInfo(tokenId);
-        super._burn(tokenId);
+            isWhitelistedMarket[spender]);
     }
 
     // STRING / BYTE CONVERSION
+    /**
+     * @dev Helper Function to convert bytes32 to string format
+     * @param _bytes32 is the bytes32 format which needs to be converted
+     * @return result is the string representation of that bytes32 string
+     */
+    function bytes32ToString(bytes32 _bytes32)
+        public
+        pure
+        returns (string memory result)
+    {
+        uint8 i = 0;
+        while (i < 32 && _bytes32[i] != 0) {
+            i++;
+        }
+        bytes memory bytesArray = new bytes(i);
+        for (i = 0; i < 32 && _bytes32[i] != 0; i++) {
+            bytesArray[i] = _bytes32[i];
+        }
+        result = string(bytesArray);
+    }
+
     /**
      * @dev Helper Function to convert string to bytes32 format
      * @param source is the string which needs to be converted
@@ -249,32 +287,5 @@ contract RC3_Originals is
         assembly {
             result := mload(add(source, 32))
         }
-    }
-
-    /**
-     * @dev Helper Function to convert bytes32 to string format
-     * @param _x is the bytes32 format which needs to be converted
-     * @return result is the string representation of that bytes32 string
-     */
-    function bytes32ToString(bytes32 _x)
-        public
-        pure
-        returns (string memory result)
-    {
-        bytes memory bytesString = new bytes(32);
-        uint256 charCount = 0;
-        for (uint256 j = 0; j < 32; j++) {
-            bytes1 char = bytes1(bytes32(uint256(_x) * 2**(8 * j)));
-            if (char != 0) {
-                bytesString[charCount] = char;
-                charCount++;
-            }
-        }
-        bytes memory bytesStringTrimmed = new bytes(charCount);
-        for (uint256 j = 0; j < charCount; j++) {
-            bytesStringTrimmed[j] = bytesString[j];
-        }
-
-        result = string(bytesStringTrimmed);
     }
 }

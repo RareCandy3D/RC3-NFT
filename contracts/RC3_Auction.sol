@@ -7,19 +7,19 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract RC3_Auction is Ownable, ReentrancyGuard {
+contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
     using Counters for Counters.Counter;
 
     //state variables
     IERC20 internal rcdy;
     Counters.Counter public auctionId;
     Counters.Counter public auctionsClosed;
+
     uint96 public feePercentage; // 1% = 1000
     uint96 private immutable DIVISOR;
-    address payable public feeReceipient;
+    address payable public feeRecipient;
 
     enum TokenType {
         ERC_721,
@@ -53,7 +53,7 @@ contract RC3_Auction is Ownable, ReentrancyGuard {
     mapping(uint256 => Auction) private auctions;
 
     event AuctionUpdated(
-        address indexed caller,
+        address indexed bidder,
         address indexed nft,
         uint256 indexed auctionId,
         uint256 _tokenId,
@@ -110,18 +110,11 @@ contract RC3_Auction is Ownable, ReentrancyGuard {
     constructor(address _rcdy) {
         rcdy = IERC20(_rcdy);
         DIVISOR = 100 * 1000;
-        transferOwnership(msg.sender);
     }
 
     //Modifier to check all conditions are met before bid
-    modifier bidCheck(uint256 _auctionId) {
-        Auction memory auction = auctions[_auctionId];
-        uint256 endPeriod = auction.endPeriod;
-        require(auction.state == State.LISTED, "AUCTION_NOT_LISTED");
-        require(auction.seller != msg.sender, "OWNER_CANNOT_BID");
-        require(endPeriod != 0, "AUCTION_NOT_EXIST");
-        require(auction.startPeriod <= block.timestamp, "AUCTION_NOT_STARTED");
-        require(endPeriod > block.timestamp, "AUCTION_ENDED");
+    modifier bidCheck(uint256 _auctionId, uint256 _bidAmount) {
+        _bidCheck(_auctionId, _bidAmount);
         _;
     }
 
@@ -145,7 +138,6 @@ contract RC3_Auction is Ownable, ReentrancyGuard {
         if (_type == TokenType.ERC_721) {
             IERC721 nft = IERC721(nifty);
             address nftOwner = nft.ownerOf(_tokenId);
-            require(nftOwner == msg.sender, "INVALID_OPERATOR");
             nft.safeTransferFrom(nftOwner, address(this), _tokenId);
 
             _registerAuction(
@@ -161,10 +153,6 @@ contract RC3_Auction is Ownable, ReentrancyGuard {
         } else {
             require(amount > 0, "INVALID_AMOUNT");
             IERC1155 nft = IERC1155(nifty);
-            require(
-                nft.balanceOf(msg.sender, _tokenId) >= amount,
-                "INSUFFICIENT_BALANCE"
-            );
             nft.safeTransferFrom(
                 msg.sender,
                 address(this),
@@ -189,12 +177,10 @@ contract RC3_Auction is Ownable, ReentrancyGuard {
     function bid(uint256 _auctionId, uint256 _bidAmount)
         external
         nonReentrant
-        bidCheck(_auctionId)
+        bidCheck(_auctionId, _bidAmount)
         returns (bool bidded)
     {
         Auction storage auction = auctions[_auctionId];
-
-        require(_bidAmount >= _nextBidAmount(_auctionId), "INVALID_INPUT");
 
         rcdy.transferFrom(msg.sender, address(this), _bidAmount);
 
@@ -277,7 +263,7 @@ contract RC3_Auction is Ownable, ReentrancyGuard {
             uint256 fee = (feePercentage * highestBidAmount) / DIVISOR;
             address highestBidder = auction.highestBidder;
 
-            rcdy.transfer(feeReceipient, fee);
+            rcdy.transfer(feeRecipient, fee);
             rcdy.transfer(auction.seller, highestBidAmount - fee);
 
             auction.tokenType == TokenType.ERC_721
@@ -435,5 +421,18 @@ contract RC3_Auction is Ownable, ReentrancyGuard {
             }
         }
         return 0;
+    }
+
+    function _bidCheck(uint256 _auctionId, uint256 _bidAmount) private view {
+        Auction memory auction = auctions[_auctionId];
+        uint256 endPeriod = auction.endPeriod;
+        require(auction.state == State.LISTED, "AUCTION_NOT_LISTED");
+        require(auction.seller != msg.sender, "OWNER_CANNOT_BID");
+        require(auction.startPeriod <= block.timestamp, "AUCTION_NOT_STARTED");
+        require(endPeriod > block.timestamp, "AUCTION_ENDED");
+        require(
+            _bidAmount >= _nextBidAmount(_auctionId),
+            "INVALID_INPUT_AMOUNT"
+        );
     }
 }

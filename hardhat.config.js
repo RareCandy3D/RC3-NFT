@@ -2,6 +2,7 @@
 require("@nomiclabs/hardhat-ethers");
 //require('@openzeppelin/hardhat-upgrades');
 require("@nomiclabs/hardhat-etherscan");
+require("hardhat-contract-sizer");
 require("dotenv").config();
 
 /**
@@ -9,10 +10,6 @@ require("dotenv").config();
  */
 module.exports = {
   solidity: {
-    optimizer: {
-      enabled: true,
-      runs: 1,
-    },
     compilers: [
       {
         version: "0.5.12",
@@ -31,7 +28,7 @@ module.exports = {
           },
           optimizer: {
             enabled: true,
-            runs: 1,
+            runs: 0,
           },
         },
       },
@@ -39,8 +36,8 @@ module.exports = {
   },
 
   networks: {
-    rinkeby: {
-      url: process.env.INFURA_URL_rinkeby,
+    kovan: {
+      url: process.env.INFURA_URL_KOVAN,
       accounts: [process.env.PRIVATE_KEY],
     },
 
@@ -55,5 +52,13 @@ module.exports = {
 
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
+  },
+
+  contractSizer: {
+    alphaSort: true,
+    disambiguatePaths: false,
+    runOnCompile: false,
+    strict: true,
+    only: [],
   },
 };

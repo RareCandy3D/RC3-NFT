@@ -1,20 +1,16 @@
 //"SPDX-License-Identifier: MIT"
 pragma solidity 0.8.6;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./RC3_1155.sol";
-import "./RC3_721.sol";
 import "./RC3_Auction.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract RC3_Mall is RC3_Auction {
+contract RC3_Mall is RC3_Auction, Ownable {
     using Counters for Counters.Counter;
 
     Counters.Counter public marketId;
     Counters.Counter public marketsSold;
     Counters.Counter public marketsDelisted;
 
-    address[] private _list;
     uint96 public ethFee; // 1% = 1000
 
     enum Asset {
@@ -28,7 +24,7 @@ contract RC3_Mall is RC3_Auction {
         address nifty;
         uint256 tokenId;
         uint256 tokenAmount;
-        uint256 price; //in RCDY
+        uint256 price; //in RCDY or ETH
         TokenType tokenType;
         State state;
         Asset asset;
@@ -63,34 +59,24 @@ contract RC3_Mall is RC3_Auction {
         uint256 tokenId
     );
 
-    event Created(
-        address indexed creator,
-        address token,
-        TokenType tokenType,
-        uint256 royalty
-    );
-
     event FeeSet(address indexed sender, uint256 feePercentage, Asset asset);
 
-    event FeeReceipientSet(address indexed sender, address feeReceipient);
+    event FeeRecipientSet(address indexed sender, address feeReceipient);
 
     constructor(
         address _rcdy,
         address payable _feeReceipient,
         uint96 _feeRCDY,
         uint96 _ethFee
-    ) RC3_Auction(_rcdy) {
-        _setFeeReceipient(_feeReceipient);
+    ) RC3_Auction(_rcdy) Ownable() {
+        _setFeeRecipient(_feeReceipient);
         _setFeePercentage(_feeRCDY);
         ethFee = _ethFee;
+        transferOwnership(msg.sender);
     }
 
-    modifier buyCheck(uint256 _marketId, Asset _asset) {
-        Market memory market = markets[_marketId];
-
-        require(market.state == State.LISTED, "MARKET_NOT_LISTED");
-        require(market.seller != msg.sender, "OWNER_CANNOT_BUY");
-        require(market.asset == _asset, "WRONG_BUY_ASSET");
+    modifier buyCheck(uint256 _marketId) {
+        _buyCheck(_marketId);
         _;
     }
 
@@ -98,12 +84,9 @@ contract RC3_Mall is RC3_Auction {
     /// ADMIN FUNCTIONS ///
     ///-----------------///
 
-    function setFeeReceipient(address payable _newReceipient)
-        external
-        onlyOwner
-    {
-        _setFeeReceipient(_newReceipient);
-        emit FeeReceipientSet(msg.sender, _newReceipient);
+    function setFeeRecipient(address payable _newRecipient) external onlyOwner {
+        _setFeeRecipient(_newRecipient);
+        emit FeeRecipientSet(msg.sender, _newRecipient);
     }
 
     function setFeeRCDY(uint96 _newFee) external onlyOwner {
@@ -118,36 +101,6 @@ contract RC3_Mall is RC3_Auction {
         emit FeeSet(msg.sender, _newFee, Asset.ETH);
     }
 
-    function createNFT(
-        TokenType _type,
-        string memory _name,
-        string memory _symbol,
-        string memory _uri,
-        uint96 _royalty
-    ) external returns (address createdAddr) {
-        if (_type == TokenType.ERC_1155) {
-            RC3_1155 token = new RC3_1155(_name, _symbol, _uri, _royalty);
-
-            createdAddr = address(token);
-            _list.push(createdAddr);
-
-            emit Created(_msgSender(), createdAddr, _type, _royalty);
-        } else {
-            RC3_721 token = new RC3_721(
-                _name,
-                _symbol,
-                _uri,
-                payable(msg.sender),
-                _royalty
-            );
-
-            createdAddr = address(token);
-            _list.push(createdAddr);
-
-            emit Created(_msgSender(), createdAddr, _type, _royalty);
-        }
-    }
-
     function listMarket(
         address nifty,
         uint256 _tokenId,
@@ -156,14 +109,13 @@ contract RC3_Mall is RC3_Auction {
         TokenType _type,
         Asset _asset
     ) external returns (uint256 marketId_) {
-        require(_price > 0, "Price must be more than 0");
+        require(_price > 0, "INVALID_PRICE");
         marketId.increment();
         marketId_ = marketId.current();
 
         if (_type == TokenType.ERC_721) {
             IERC721 nft = IERC721(nifty);
             address nftOwner = nft.ownerOf(_tokenId);
-            require(nftOwner == msg.sender, "INVALID_OPERATOR");
             nft.safeTransferFrom(nftOwner, address(this), _tokenId);
 
             _registerMarket(
@@ -178,10 +130,6 @@ contract RC3_Mall is RC3_Auction {
         } else {
             require(amount > 0, "INVALID_AMOUNT");
             IERC1155 nft = IERC1155(nifty);
-            require(
-                nft.balanceOf(msg.sender, _tokenId) >= amount,
-                "INSUFFICIENT_BALANCE"
-            );
             nft.safeTransferFrom(
                 msg.sender,
                 address(this),
@@ -239,31 +187,10 @@ contract RC3_Mall is RC3_Auction {
         return market.state;
     }
 
-    function buyWithRCDY(uint256 _marketId)
-        external
-        buyCheck(_marketId, markets[_marketId].asset)
-        returns (bool bought)
-    {
-        Market memory market = markets[_marketId];
-        uint96 feeRate = feePercentage;
-        uint256 fee = (feeRate * market.price) / 100000;
-        require(
-            rcdy.transferFrom(msg.sender, feeReceipient, fee),
-            "FEE_COLLECTION_ERROR"
-        );
-
-        require(
-            rcdy.transferFrom(msg.sender, market.seller, market.price - fee),
-            "ASKING_PRICE_COLLECTION_ERROR"
-        );
-        _buy(_marketId);
-        return true;
-    }
-
     function buyWithETH(uint256 _marketId)
         external
         payable
-        buyCheck(_marketId, markets[_marketId].asset)
+        buyCheck(_marketId)
         returns (bool bought)
     {
         Market memory market = markets[_marketId];
@@ -271,8 +198,24 @@ contract RC3_Mall is RC3_Auction {
         uint256 fee = (feeRate * market.price) / 100000;
         require(msg.value == market.price, "INVALID_PAYMENT_AMOUNT");
 
-        feeReceipient.transfer(fee);
+        feeRecipient.transfer(fee);
         market.seller.transfer(market.price - fee);
+        _buy(_marketId);
+        return true;
+    }
+
+    function buyWithRCDY(uint256 _marketId)
+        external
+        buyCheck(_marketId)
+        returns (bool bought)
+    {
+        Market memory market = markets[_marketId];
+        uint96 feeRate = feePercentage;
+        uint256 fee = (feeRate * market.price) / 100000;
+
+        rcdy.transferFrom(msg.sender, feeRecipient, fee);
+        rcdy.transferFrom(msg.sender, market.seller, market.price - fee);
+
         _buy(_marketId);
         return true;
     }
@@ -331,24 +274,16 @@ contract RC3_Mall is RC3_Auction {
         return items;
     }
 
-    function getListLength() external view returns (uint256) {
-        return _list.length;
-    }
-
-    function getLists() external view returns (address[] memory) {
-        return _list;
-    }
-
     function _setFeePercentage(uint96 _newFee) internal {
         uint96 fee = feePercentage;
         require(_newFee != fee, "Error: already set");
         feePercentage = _newFee;
     }
 
-    function _setFeeReceipient(address payable _newFeeReceipient) internal {
-        address rec = feeReceipient;
-        require(_newFeeReceipient != rec, "Error: already receipient");
-        feeReceipient = _newFeeReceipient;
+    function _setFeeRecipient(address payable _newFeeRecipient) internal {
+        address rec = feeRecipient;
+        require(_newFeeRecipient != rec, "Error: already receipient");
+        feeRecipient = _newFeeRecipient;
     }
 
     function _registerMarket(
@@ -411,5 +346,12 @@ contract RC3_Mall is RC3_Auction {
             market.price,
             market.asset
         );
+    }
+
+    function _buyCheck(uint256 _marketId) private view {
+        Market memory market = markets[_marketId];
+
+        require(market.state == State.LISTED, "MARKET_NOT_LISTED");
+        require(market.seller != msg.sender, "OWNER_CANNOT_BUY");
     }
 }

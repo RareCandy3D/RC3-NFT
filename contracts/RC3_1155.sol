@@ -11,11 +11,13 @@ contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
     string public name;
     string public symbol;
     uint96 public royalty;
+    uint256 private _currentTokenID;
 
     mapping(uint256 => uint256) private _totalSupply;
-    mapping(address => bool) private _markets;
+    mapping(uint256 => uint256) public maxSupply;
+    mapping(address => bool) public isWhitelistedMarket;
     mapping(uint256 => address) public creators;
-    mapping(uint256 => string) customUri;
+    mapping(uint256 => string) private customUri;
 
     event NewToken(
         address indexed admin,
@@ -38,18 +40,12 @@ contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
     }
 
     modifier creatorOnly(uint256 id) {
-        require(
-            creators[id] == _msgSender(),
-            "ERC1155Tradable#creatorOnly: ONLY_CREATOR_ALLOWED"
-        );
+        _creatorOnly(id);
         _;
     }
 
     modifier adminOnly() {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
-            "UNAUTHORIZED_CALLER"
-        );
+        _adminOnly();
         _;
     }
 
@@ -76,10 +72,10 @@ contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
         emit URI(_newURI, _tokenId);
     }
 
-    function updateMarket(address market, bool isMarket) external adminOnly {
+    function setMarket(address market, bool isMarket) external adminOnly {
         require(market != address(0), "ZERO_ADDRESS");
 
-        _markets[market] = isMarket;
+        isWhitelistedMarket[market] = isMarket;
         emit MarketUpdated(msg.sender, market, isMarket);
     }
 
@@ -95,30 +91,28 @@ contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
         }
     }
 
-    function _setCreator(address to, uint256 id) internal creatorOnly(id) {
-        creators[id] = to;
-    }
-
     function create(
         address initialOwner,
-        uint256 id,
         uint256 initialSupply,
-        string memory _uri,
-        bytes memory data
+        uint256 maxSupply_,
+        string memory _uri
     ) public adminOnly returns (uint256) {
-        require(!exists(id), "token _id already exists");
+        require(initialSupply <= maxSupply_, "SUPPLY_ERR");
+        uint256 id = _getNextTokenID();
+        _incrementTokenTypeId();
         creators[id] = _msgSender();
+        maxSupply[id] = maxSupply_;
+
+        if (initialSupply > 0) {
+            _totalSupply[id] = initialSupply;
+            _mint(initialOwner, id, initialSupply, "0x0");
+        }
 
         if (bytes(_uri).length > 0) {
             customUri[id] = _uri;
             emit URI(_uri, id);
         }
 
-        if (initialSupply > 0) {
-            require(initialOwner != address(0), "INVALID_INITIAL_OWNER");
-            _totalSupply[id] = initialSupply;
-            _mint(initialOwner, id, initialSupply, data);
-        }
         emit NewToken(msg.sender, id, initialSupply);
         return id;
     }
@@ -126,31 +120,36 @@ contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
     function mint(
         address to,
         uint256 id,
-        uint256 amount,
-        bytes memory data
-    ) public virtual creatorOnly(id) {
-        _mint(to, id, amount, data);
+        uint256 amount
+    ) external creatorOnly(id) {
+        uint256 tokenSupply = _totalSupply[id];
+        uint256 maxSupply_ = maxSupply[id];
+        require(tokenSupply + amount <= maxSupply_, "MAX_SUPPLY_REACHED");
+        _mint(to, id, amount, "0x0");
         _totalSupply[id] += amount;
     }
 
     function mintBatch(
         address to,
         uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory data
-    ) public {
+        uint256[] memory amounts
+    ) external {
         uint256 len = ids.length;
         for (uint256 i = 0; i < len; i++) {
             uint256 id = ids[i];
             address addr = creators[id];
+            uint256 tokenSupply = _totalSupply[id];
+            uint256 maxSupply_ = maxSupply[id];
+            uint256 amount = amounts[i];
             require(
                 addr == _msgSender(),
                 "ERC1155Tradable#batchMint: ONLY_CREATOR_ALLOWED"
             );
-            uint256 quantity = amounts[i];
+            require(tokenSupply + amount <= maxSupply_, "MAX_SUPPLY_REACHED");
+            uint256 quantity = amount;
             _totalSupply[id] += quantity;
         }
-        _mintBatch(to, ids, amounts, data);
+        _mintBatch(to, ids, amounts, "0x0");
     }
 
     function burn(
@@ -165,6 +164,7 @@ contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
 
         _burn(from, id, amount);
         _totalSupply[id] -= amount;
+        maxSupply[id] -= amount;
     }
 
     function burnBatch(
@@ -184,6 +184,7 @@ contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
             uint256 id = ids[i];
             uint256 amt = amounts[i];
             _totalSupply[id] -= amt;
+            maxSupply[id] -= amt;
         }
     }
 
@@ -200,11 +201,7 @@ contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
         view
         returns (address, uint256)
     {
-        return (creators[id], calculateRoyalty(price));
-    }
-
-    function calculateRoyalty(uint256 price) public view returns (uint256) {
-        return (price / 10000) * royalty;
+        return (creators[id], _calculateRoyalty(price));
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -225,7 +222,7 @@ contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
         override
         returns (bool isOperator)
     {
-        if (_markets[operator]) return true;
+        if (isWhitelistedMarket[operator]) return true;
 
         return ERC1155.isApprovedForAll(owner, operator);
     }
@@ -239,17 +236,32 @@ contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
         bytes memory data
     ) internal virtual override {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+    }
 
-        if (from == address(0)) {
-            for (uint256 i = 0; i < ids.length; ++i) {
-                _totalSupply[ids[i]] += amounts[i];
-            }
-        }
+    function _calculateRoyalty(uint256 price) private view returns (uint256) {
+        return (price * royalty) / 10000;
+    }
 
-        if (to == address(0)) {
-            for (uint256 i = 0; i < ids.length; ++i) {
-                _totalSupply[ids[i]] -= amounts[i];
-            }
-        }
+    function _setCreator(address to, uint256 id) private creatorOnly(id) {
+        creators[id] = to;
+    }
+
+    function _getNextTokenID() private view returns (uint256) {
+        return _currentTokenID + 1;
+    }
+
+    function _incrementTokenTypeId() private {
+        _currentTokenID++;
+    }
+
+    function _creatorOnly(uint256 id) private view {
+        require(creators[id] == _msgSender(), "ONLY_CREATOR_ALLOWED");
+    }
+
+    function _adminOnly() private view {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
+            "UNAUTHORIZED_CALLER"
+        );
     }
 }

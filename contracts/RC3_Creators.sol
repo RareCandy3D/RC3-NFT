@@ -2,8 +2,8 @@
 pragma solidity 0.8.6;
 
 import "@openzeppelin/contracts/utils/Context.sol";
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
 contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
     bytes32[] public categories;
@@ -11,26 +11,28 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
 
     uint256 private _currentTokenID;
     uint256 public creationFee = 0.01 ether;
-    address payable public feeCollector;
+    uint256 public immutable splitRoyaltyLimit = 10;
+    address payable public feeReceipient;
 
     struct Info {
         address payable creator;
         bytes32 nature; //physical, digital & phygital
         bytes32 category; //ART, MUSIC, FASHION, etc
-        uint256 totalSupply;
+        uint256 tokenSupply;
         uint256 maxSupply;
         uint256 royalty; //1% = 100
         string customUri;
-        Royalty[] shares;
     }
 
     struct Royalty {
-        address payable recipient;
-        uint256 share; //1% = 1000
+        uint256 index;
+        mapping(uint256 => address payable) recipients;
+        mapping(uint256 => uint256) shares; //1% = 1000
     }
 
     mapping(uint256 => Info) private _idToInfo;
-    mapping(address => bool) private _markets;
+    mapping(uint256 => Royalty) private _idToRoyalty;
+    mapping(address => bool) public isWhitelistedMarket;
     mapping(uint256 => mapping(address => bool)) public canMint;
 
     event NewCategory(address indexed creator, string category);
@@ -38,8 +40,8 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
     event RoyaltyInfoUpdated(
         address indexed oldCreator,
         address indexed newCreator,
-        uint256[] ids,
-        uint256[] royalties,
+        uint256 id,
+        uint256 royalty,
         address payable[] recipients,
         uint256[] shares
     );
@@ -55,7 +57,6 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
         bool canMint
     );
 
-    //split between royalty wallets
     constructor(address defaultAdmin, string memory _uri) ERC1155(_uri) {
         _setupRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
 
@@ -68,28 +69,23 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
         natures[2] = stringToBytes32("PHYGITAL");
     }
 
+    //________________//
+    // MODIFIERS
+    //----------------//
+
     modifier onlyAdmin() {
         require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "ERR_ADMIN_ONLY");
         _;
     }
 
     modifier creatorOnly(uint256 id) {
-        address addr = creators(id);
+        address addr = creator(id);
         require(addr == _msgSender(), "ERR_ONLY_CREATOR");
         _;
     }
 
-    modifier onlyCreated(bytes32 category) {
-        bool created = false;
-        uint256 len = categories.length;
-
-        for (uint256 i; i < len; i++) {
-            bytes32 cat = categories[i];
-            if (cat == category) {
-                created = true;
-            }
-        }
-        require(created == true, "CREATED_CATEGORY_ONLY");
+    modifier onlyCreated(bytes32 category, bytes32 nature) {
+        _onlyCreated(category, nature);
         _;
     }
 
@@ -108,14 +104,15 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
                 created = true;
             }
         }
-        require(created == false, "NON-CREATED_CATEGORY_ONLY");
+        require(created == false, "NON_CREATED_CATEGORY_ONLY");
         _;
     }
 
-    modifier onlyValidShares(
+    modifier onlyValidLength(
         address payable[] memory recipients,
         uint256[] memory shares
     ) {
+        require(recipients.length <= splitRoyaltyLimit, "SPLIT_LIMIT_EXCEEDED");
         require(recipients.length == shares.length, "INVALID_INPUT_LENGTH");
         uint256 len = shares.length;
         uint256 total;
@@ -127,155 +124,9 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
         _;
     }
 
-    function createCategory(bytes32 category)
-        external
-        onlyNonCreated(category)
-        returns (string memory category_)
-    {
-        categories.push(category);
-        category_ = bytes32ToString(category);
-        emit NewCategory(msg.sender, bytes32ToString(category));
-    }
-
-    function setURI(string memory _newURI) public onlyAdmin {
-        _setURI(_newURI);
-    }
-
-    function setCustomURI(uint256 id, string memory newURI)
-        external
-        creatorOnly(id)
-    {
-        _idToInfo[id].customUri = newURI;
-        emit URI(newURI, id);
-    }
-
-    function setMinter(
-        uint256 id,
-        address minter,
-        bool _canMint
-    ) external creatorOnly(id) {
-        bool status = canMint[id][minter];
-        require(status != _canMint, "ALREADY_SET");
-        canMint[id][minter] = _canMint;
-        emit MinterSet(msg.sender, id, minter, _canMint);
-    }
-
-    function setRoyaltyInfo(
-        address payable creator,
-        address payable[] memory recipients,
-        uint256[] memory shares,
-        uint256[] memory ids,
-        uint256[] memory royalties //1% = 100. max is 15% ~ 1500
-    ) external onlyValidShares(recipients, shares) {
-        require(creator != address(0), "INVALID_ADDRESS.");
-        uint256 len = ids.length;
-
-        for (uint256 i = 0; i < len; i++) {
-            uint256 roy = royalties[i];
-            uint256 id = ids[i];
-            require(roy <= 1500, "MAX_ROYALTY_EXCEEDED");
-            _setCreator(creator, id, roy, recipients, shares);
-        }
-        emit RoyaltyInfoUpdated(
-            msg.sender,
-            creator,
-            ids,
-            royalties,
-            recipients,
-            shares
-        );
-    }
-
-    function updateMarket(address market, bool isMarket) external onlyAdmin {
-        require(market != address(0), "ZERO_ADDRESS");
-
-        _markets[market] = isMarket;
-        emit MarketUpdated(market, isMarket);
-    }
-
-    function setFeeCollector(address payable _newFeeReceipient)
-        external
-        onlyAdmin
-    {
-        address rec = feeReceipient;
-        require(_newFeeReceipient != rec, "ALREADY_EXISTS");
-        feeReceipient = _newFeeReceipient;
-    }
-
-    function createToken(
-        address _initialHodler,
-        uint256 _initialSupply,
-        uint256 _maxSupply,
-        uint256 royalty, //1% = 100. max is 50% ~ 5000
-        address payable[] memory recipients,
-        uint256[] memory shares,
-        bytes32 category,
-        bytes32 nature,
-        string memory _uri
-    )
-        external
-        payable
-        onlyCreated(category)
-        onlyViableRoyalty(royalty)
-        returns (uint256 tokenId)
-    {
-        require(msg.value >= creationFee, "FEE_NOT_SENT");
-        _createToken(
-            _initialHodler,
-            _initialSupply,
-            _maxSupply,
-            royalty,
-            recipients,
-            shares,
-            category,
-            nature,
-            _uri
-        );
-        return _getNextTokenID() - 1;
-    }
-
-    function mint(
-        address to,
-        uint256 id,
-        uint256 amount
-    ) external creatorOnly(id) returns (bool success) {
-        Info storage info = _idToInfo[id];
-
-        require(
-            info.totalSupply + amount <= info.maxSupply,
-            "MAX_SUPPLY_REACHED"
-        );
-
-        info.totalSupply += amount;
-        _mint(to, id, amount, "0x0");
-        return true;
-    }
-
-    function mintBatch(
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts
-    ) external returns (bool success) {
-        require(ids.length == amounts.length, "ERR_ARRAY_MISSMATCH");
-
-        uint256 len = ids.length;
-        for (uint256 i; i < len; i++) {
-            Info storage info = _idToInfo[ids[i]];
-
-            require(
-                info.totalSupply + amounts[i] <= info.maxSupply,
-                "MAX_SUPPLY_REACHED"
-            );
-
-            address addr = creators(ids[i]);
-            require(addr == _msgSender(), "ERR_ONLY_CREATOR");
-
-            info.totalSupply += amounts[i];
-        }
-
-        _mintBatch(to, ids, amounts, "0x0");
-        return true;
-    }
+    //________________//
+    // WRITE FUNCTIONS
+    //----------------//
 
     function burn(
         address from,
@@ -289,7 +140,7 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
 
         _burn(from, id, amount);
         Info storage info = _idToInfo[id];
-        info.totalSupply -= amount;
+        info.tokenSupply -= amount;
         info.maxSupply -= amount;
     }
 
@@ -307,25 +158,238 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
 
         for (uint256 i; i < ids.length; i++) {
             Info storage info = _idToInfo[ids[i]];
-            info.totalSupply -= amounts[i];
+            info.tokenSupply -= amounts[i];
             info.maxSupply -= amounts[i];
         }
     }
 
-    function tokenSupply(uint256 _id)
+    function createCategory(bytes32 category)
+        external
+        onlyNonCreated(category)
+        returns (string memory category_)
+    {
+        categories.push(category);
+        category_ = bytes32ToString(category);
+        emit NewCategory(msg.sender, bytes32ToString(category));
+    }
+
+    function createToken(
+        address _initialHodler,
+        uint256 _initialSupply,
+        uint256 _maxSupply,
+        uint256 royalty, //1% = 100. max is 50% ~ 5000
+        bytes32 category,
+        bytes32 nature,
+        string memory _uri
+    )
+        external
+        payable
+        onlyCreated(category, nature)
+        onlyViableRoyalty(royalty)
+        returns (uint256 tokenId)
+    {
+        require(msg.value >= creationFee, "FEE_NOT_SENT");
+        _createToken(
+            _initialHodler,
+            _initialSupply,
+            _maxSupply,
+            royalty,
+            category,
+            nature,
+            _uri
+        );
+        return _getNextTokenID() - 1;
+    }
+
+    function mint(
+        address to,
+        uint256 id,
+        uint256 amount
+    ) external returns (bool success) {
+        require(canMint[id][msg.sender], "ERR_ONLY_MINTER");
+        Info storage info = _idToInfo[id];
+
+        require(
+            info.tokenSupply + amount <= info.maxSupply,
+            "MAX_SUPPLY_REACHED"
+        );
+
+        info.tokenSupply += amount;
+        _mint(to, id, amount, "0x0");
+        return true;
+    }
+
+    function mintBatch(
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts
+    ) external returns (bool success) {
+        require(ids.length == amounts.length, "ERR_ARRAY_MISSMATCH");
+
+        uint256 len = ids.length;
+        for (uint256 i; i < len; i++) {
+            Info storage info = _idToInfo[ids[i]];
+
+            require(
+                info.tokenSupply + amounts[i] <= info.maxSupply,
+                "MAX_SUPPLY_REACHED"
+            );
+
+            uint256 id = ids[i];
+            require(canMint[id][msg.sender], "ERR_ONLY_MINTER");
+
+            info.tokenSupply += amounts[i];
+        }
+
+        _mintBatch(to, ids, amounts, "0x0");
+        return true;
+    }
+
+    function setCustomURI(uint256 id, string memory newURI)
+        external
+        creatorOnly(id)
+    {
+        _idToInfo[id].customUri = newURI;
+        emit URI(newURI, id);
+    }
+
+    function setFeeCollector(address payable _newFeeReceipient)
+        external
+        onlyAdmin
+    {
+        address payable rec = feeReceipient;
+        require(_newFeeReceipient != rec, "ALREADY_EXISTS");
+        feeReceipient = _newFeeReceipient;
+    }
+
+    function setMinter(
+        uint256 id,
+        address minter,
+        bool _canMint
+    ) external creatorOnly(id) {
+        bool status = canMint[id][minter];
+        require(status != _canMint, "ALREADY_SET");
+        canMint[id][minter] = _canMint;
+        emit MinterSet(msg.sender, id, minter, _canMint);
+    }
+
+    function setRoyaltyInfo(
+        address payable creator_,
+        address payable[] memory recipients,
+        uint256[] memory shares,
+        uint256 id,
+        uint256 royalty //1% = 100. max is 50% ~ 5000
+    )
+        external
+        onlyValidLength(recipients, shares)
+        creatorOnly(id)
+        onlyViableRoyalty(royalty)
+    {
+        require(creator_ != address(0), "INVALID_ADDRESS");
+
+        address payable _creator = creator_;
+        address payable[] memory _recipients = recipients;
+        uint256[] memory _shares = shares;
+        uint256 _id = id;
+        uint256 roy = royalty;
+
+        Info storage info = _idToInfo[_id];
+        info.creator = _creator;
+        info.royalty = roy;
+
+        Royalty storage r = _idToRoyalty[_id];
+
+        uint256 len = _shares.length;
+        r.index = len;
+        for (uint256 i; i < len; i++) {
+            uint256 shr = _shares[i];
+            address payable rec = _recipients[i];
+            r.shares[i] = shr;
+            r.recipients[i] = rec;
+        }
+
+        emit RoyaltyInfoUpdated(
+            msg.sender,
+            _creator,
+            _id,
+            roy,
+            _recipients,
+            _shares
+        );
+    }
+
+    function setURI(string memory _newURI) public onlyAdmin {
+        _setURI(_newURI);
+    }
+
+    function setMarket(address market, bool isMarket) external onlyAdmin {
+        require(market != address(0), "ZERO_ADDRESS");
+
+        isWhitelistedMarket[market] = isMarket;
+        emit MarketUpdated(market, isMarket);
+    }
+
+    //________________//
+    // READ FUNCTIONS
+    //----------------//
+
+    function creator(uint256 _id) public view returns (address creator_) {
+        return _idToInfo[_id].creator;
+    }
+
+    function exists(uint256 _id) external view returns (bool) {
+        return _exists(_id);
+    }
+
+    function getInfo(uint256 _id) external view returns (Info memory info) {
+        require(_exists(_id), "NON_EXISTENT_ID");
+        return _idToInfo[_id];
+    }
+
+    function isApprovedForAll(address _owner, address _operator)
+        public
+        view
+        override
+        returns (bool isOperator)
+    {
+        if (isWhitelistedMarket[_operator]) return true;
+
+        return ERC1155.isApprovedForAll(_owner, _operator);
+    }
+
+    function royaltyInfo(uint256 _tokenId, uint256 _salePrice)
         external
         view
-        returns (uint256 tokenSupply_)
+        returns (address, uint256)
     {
-        return _idToInfo[_id].totalSupply;
+        Info memory i = _idToInfo[_tokenId];
+        return (i.creator, _calculateRoyalty(_salePrice, i.royalty));
     }
 
-    function maxSupply(uint256 _id) public view returns (uint256 maxSupply_) {
-        return _idToInfo[_id].maxSupply;
-    }
+    function splitRoyaltyInfo(uint256 _tokenId, uint256 _salePrice)
+        external
+        view
+        virtual
+        returns (
+            address[] memory recipients,
+            uint256[] memory shares,
+            uint256 salePrice
+        )
+    {
+        Royalty storage rInfo = _idToRoyalty[_tokenId];
 
-    function creators(uint256 _id) public view returns (address creator) {
-        return _idToInfo[_id].creator;
+        uint256 len = rInfo.index;
+        recipients = new address[](len);
+        shares = new uint256[](len);
+
+        for (uint256 i; i < len; i++) {
+            if (rInfo.recipients[i] != address(0)) {
+                recipients[i] = rInfo.recipients[i];
+                shares[i] = rInfo.shares[i];
+            }
+        }
+
+        salePrice = _calculateRoyalty(_salePrice, _idToInfo[_tokenId].royalty);
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -339,60 +403,16 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
             interfaceId == 0x2a55205a || super.supportsInterface(interfaceId);
     }
 
-    function isApprovedForAll(address _owner, address _operator)
-        public
-        view
-        override
-        returns (bool isOperator)
-    {
-        if (_markets[_operator]) return true;
-
-        return ERC1155.isApprovedForAll(_owner, _operator);
-    }
-
-    function royaltyInfo(uint256 _tokenId, uint256 _salePrice)
+    function tokenSupply(uint256 _id)
         external
         view
-        returns (Royalty[] memory, uint256)
+        returns (uint256 tokenSupply_)
     {
-        Info memory info = _idToInfo[_tokenId];
-
-        uint256 len = info.shares.length;
-        uint256 count;
-        uint256 currentIndex;
-
-        for (uint256 i; i < len; i++) {
-            if (info.shares[i + 1].recipient != address(0)) {
-                count++;
-            }
-        }
-
-        Royalty[] memory shares = new Royalty[](count);
-
-        for (uint256 i; i < len; i++) {
-            Royalty[] memory share = _idToInfo[i + 1].shares;
-            if (share[i + 1].recipient != address(0)) {
-                shares[currentIndex] = share[i + 1];
-                currentIndex++;
-            }
-        }
-        return (shares, calculateRoyalty(_salePrice, info.royalty));
-    }
-
-    function calculateRoyalty(uint256 _salePrice, uint256 royalty)
-        private
-        pure
-        returns (uint256)
-    {
-        return (_salePrice / 10000) * royalty;
-    }
-
-    function exists(uint256 _id) external view returns (bool) {
-        return _exists(_id);
+        return _idToInfo[_id].tokenSupply;
     }
 
     function uri(uint256 id) public view override returns (string memory) {
-        require(_exists(id), "NONEXISTENT_TOKEN");
+        require(_exists(id), "NON_EXISTENT_TOKEN");
         // We have to convert string to bytes to check for existence
         Info storage info = _idToInfo[id];
         bytes memory customUriBytes = bytes(info.customUri);
@@ -403,93 +423,9 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
         }
     }
 
-    function _createToken(
-        address _initialHodler,
-        uint256 _initialSupply,
-        uint256 _maxSupply,
-        uint256 _royalty, //1% = 100. max is 50% ~ 5000
-        address payable[] memory _recipients,
-        uint256[] memory _shares,
-        bytes32 _category,
-        bytes32 _nature,
-        string memory _uri
-    ) private onlyValidShares(_recipients, _shares) {
-        address initialHodler = _initialHodler;
-        uint256 initialSupply = _initialSupply;
-        uint256 maxSupply_ = _maxSupply;
-        uint256 royalty = _royalty;
-        uint256[] memory shares = _shares;
-        address payable[] memory recipients = _recipients;
-        string memory uri_ = _uri;
-        bytes32 category = _category;
-        bytes32 nature = _nature;
-        require(initialSupply <= maxSupply_, "ERR_IN_SUPPLY");
-
-        uint256 id = _getNextTokenID();
-        _incrementTokenTypeId();
-
-        feeCollector.transfer(msg.value);
-
-        Info storage info = _idToInfo[id];
-        info.creator = payable(_msgSender());
-        info.category = category;
-        info.nature = nature;
-        info.royalty = royalty;
-        info.maxSupply = maxSupply_;
-
-        uint256 _id = id;
-        uint256 len = shares.length;
-        for (uint256 i; i < len; i++) {
-            uint256 shr = shares[i];
-            address payable rec = recipients[i];
-            info.shares[i].share = shr;
-            info.shares[i].recipient = rec;
-        }
-
-        if (initialSupply > 0) {
-            _mint(initialHodler, _id, initialSupply, "0x0");
-            info.totalSupply = initialSupply;
-        }
-
-        if (bytes(uri_).length > 0) {
-            info.customUri = uri_;
-            emit URI(uri_, _id);
-        }
-
-        emit NewToken(msg.sender, initialSupply, maxSupply_);
-    }
-
-    function _setCreator(
-        address payable creator,
-        uint256 id,
-        uint256 royalty,
-        address payable[] memory recipients,
-        uint256[] memory shares
-    ) internal creatorOnly(id) {
-        Info storage info = _idToInfo[id];
-        info.creator = creator;
-        info.royalty = royalty;
-
-        uint256 len = shares.length;
-        for (uint256 i; i < len; i++) {
-            uint256 shr = shares[i];
-            address payable rec = recipients[i];
-            info.shares[i].share = shr;
-            info.shares[i].recipient = rec;
-        }
-    }
-
-    function _getNextTokenID() private view returns (uint256) {
-        return _currentTokenID + 1;
-    }
-
-    function _incrementTokenTypeId() private {
-        _currentTokenID++;
-    }
-
-    function _exists(uint256 _id) private view returns (bool) {
-        return _idToInfo[_id].creator != address(0);
-    }
+    //________________//
+    // PRIVATE FUNCTIONS
+    //----------------//
 
     function _beforeTokenTransfer(
         address operator,
@@ -502,7 +438,123 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
 
+    function _calculateRoyalty(uint256 _salePrice, uint256 royalty)
+        private
+        pure
+        returns (uint256)
+    {
+        return (_salePrice * royalty) / 10000;
+    }
+
+    function _createToken(
+        address _initialHodler,
+        uint256 _initialSupply,
+        uint256 _maxSupply,
+        uint256 _royalty, //1% = 100. max is 50% ~ 5000
+        bytes32 _category,
+        bytes32 _nature,
+        string memory _uri
+    ) private {
+        address initialHodler = _initialHodler;
+        uint256 initialSupply = _initialSupply;
+        uint256 maxSupply_ = _maxSupply;
+        uint256 royalty = _royalty;
+        string memory uri_ = _uri;
+        bytes32 category = _category;
+        bytes32 nature = _nature;
+
+        require(initialSupply <= maxSupply_, "SUPPLY_ERR");
+
+        uint256 id = _getNextTokenID();
+        _incrementTokenTypeId();
+
+        canMint[id][msg.sender] = true;
+
+        Info storage info = _idToInfo[id];
+        info.creator = payable(_msgSender());
+        info.category = category;
+        info.nature = nature;
+        info.royalty = royalty;
+        info.maxSupply = maxSupply_;
+
+        uint256 _id = id;
+
+        (bool success, ) = feeReceipient.call{value: msg.value}("");
+        require(success, "FEE_TRANSFER_ERR");
+
+        if (initialSupply > 0) {
+            _mint(initialHodler, _id, initialSupply, "0x0");
+            info.tokenSupply = initialSupply;
+        }
+
+        if (bytes(uri_).length > 0) {
+            info.customUri = uri_;
+            emit URI(uri_, _id);
+        }
+
+        emit NewToken(msg.sender, initialSupply, maxSupply_);
+    }
+
+    function _exists(uint256 _id) private view returns (bool) {
+        return _idToInfo[_id].tokenSupply > 0;
+    }
+
+    function _getNextTokenID() private view returns (uint256) {
+        return _currentTokenID + 1;
+    }
+
+    function _incrementTokenTypeId() private {
+        _currentTokenID++;
+    }
+
+    function _onlyCreated(bytes32 category, bytes32 nature) private view {
+        bool natural = false;
+
+        for (uint256 i; i < 3; i++) {
+            bytes32 nat = natures[i];
+            if (nat == nature) {
+                natural = true;
+            }
+        }
+
+        if (!natural) {
+            revert("ONLY_VALID_NATURE");
+        } else {
+            bool categorized = false;
+            uint256 lenCat = categories.length;
+
+            for (uint256 i; i < lenCat; i++) {
+                bytes32 cat = categories[i];
+                if (cat == category) {
+                    categorized = true;
+                }
+            }
+            if (!categorized) revert("ONLY_CREATED_CATEGORY");
+        }
+    }
+
     // STRING / BYTE CONVERSION
+    /**
+     * @dev Helper Function to convert bytes32 to string format
+     * @param _bytes32 is the bytes32 format which needs to be converted
+     * @return result is the string representation of that bytes32 string
+     */
+    function bytes32ToString(bytes32 _bytes32)
+        public
+        pure
+        returns (string memory result)
+    {
+        uint8 i = 0;
+        while (i < 32 && _bytes32[i] != 0) {
+            i++;
+        }
+        bytes memory bytesArray = new bytes(i);
+        for (i = 0; i < 32 && _bytes32[i] != 0; i++) {
+            bytesArray[i] = _bytes32[i];
+        }
+        result = string(bytesArray);
+    }
+
     /**
      * @dev Helper Function to convert string to bytes32 format
      * @param source is the string which needs to be converted
@@ -521,32 +573,5 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
         assembly {
             result := mload(add(source, 32))
         }
-    }
-
-    /**
-     * @dev Helper Function to convert bytes32 to string format
-     * @param _x is the bytes32 format which needs to be converted
-     * @return result is the string representation of that bytes32 string
-     */
-    function bytes32ToString(bytes32 _x)
-        public
-        pure
-        returns (string memory result)
-    {
-        bytes memory bytesString = new bytes(32);
-        uint256 charCount = 0;
-        for (uint256 j = 0; j < 32; j++) {
-            bytes1 char = bytes1(bytes32(uint256(_x) * 2**(8 * j)));
-            if (char != 0) {
-                bytesString[charCount] = char;
-                charCount++;
-            }
-        }
-        bytes memory bytesStringTrimmed = new bytes(charCount);
-        for (uint256 j = 0; j < charCount; j++) {
-            bytesStringTrimmed[j] = bytesString[j];
-        }
-
-        result = string(bytesStringTrimmed);
     }
 }
