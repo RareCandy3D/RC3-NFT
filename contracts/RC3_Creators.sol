@@ -33,6 +33,7 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
     mapping(uint256 => Info) private _idToInfo;
     mapping(uint256 => Royalty) private _idToRoyalty;
     mapping(address => bool) public isWhitelistedMarket;
+    mapping(address => bool) public canCreatePhysical;
     mapping(uint256 => mapping(address => bool)) public canMint;
 
     event NewCategory(address indexed creator, string category);
@@ -56,6 +57,7 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
         address indexed minter,
         bool canMint
     );
+    event PhysicalCreatorSet(address indexed addr, bool canCreatePhysical);
 
     constructor(address defaultAdmin, string memory _uri) ERC1155(_uri) {
         _setupRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
@@ -124,6 +126,15 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
         _;
     }
 
+    modifier physicalCreator(bytes32 nature) {
+        bytes32 nature0 = natures[0];
+        if (nature == nature0) {
+            bool outcome = canCreatePhysical[msg.sender];
+            require(outcome, "Only Physical creator allowed");
+        }
+        _;
+    }
+
     //________________//
     // WRITE FUNCTIONS
     //----------------//
@@ -186,6 +197,7 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
         payable
         onlyCreated(category, nature)
         onlyViableRoyalty(royalty)
+        physicalCreator(nature)
         returns (uint256 tokenId)
     {
         require(msg.value >= creationFee, "FEE_NOT_SENT");
@@ -271,6 +283,20 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
         require(status != _canMint, "ALREADY_SET");
         canMint[id][minter] = _canMint;
         emit MinterSet(msg.sender, id, minter, _canMint);
+    }
+
+    function setPhysicalCreator(
+        address[] memory creators,
+        bool _canCreatePhysical
+    ) external onlyAdmin {
+        uint256 len = creators.length;
+        for (uint256 i; i < len; i++) {
+            address addr = creators[i];
+            bool status = canCreatePhysical[addr];
+            require(status != _canCreatePhysical, "ALREADY_SET");
+            canCreatePhysical[addr] = _canCreatePhysical;
+            emit PhysicalCreatorSet(addr, _canCreatePhysical);
+        }
     }
 
     function setRoyaltyInfo(
