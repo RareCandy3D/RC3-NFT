@@ -243,3 +243,32 @@ event FeeRecipientSet(address indexed sender, address feeReceipient);
 | ------------ | ------- | ------------------------------------ |
 | sender       | address | the address of the admin responsible |
 | feeRecipient | address | the new fee recipient                |
+
+## RC3_Creators
+
+1. ### createToken
+
+```
+event NewToken(
+        address indexed creator,
+        uint256 initialSupply,
+        uint256 maxSupply
+    );
+```
+
+| Syntax        | type    | description                                        |
+| ------------- | ------- | -------------------------------------------------- |
+| creator       | address | the address of the user who creates a new token id |
+| initialSupply | uint256 | initial supply of the newly created token id       |
+| maxSupply     | uint256 | the max supply of the newly created token id       |
+
+2. ### createCategory
+
+```
+event NewCategory(address indexed creator, string category);
+```
+
+| Syntax   | type    | description                                        |
+| -------- | ------- | -------------------------------------------------- |
+| creator  | address | the address of the user who creates a new category |
+| category | string  | the name of the newly created category             |
