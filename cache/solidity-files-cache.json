@@ -1328,7 +1328,7 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/contracts/RC3_Mall.sol": {
-      "lastModificationDate": 1651838311816,
+      "lastModificationDate": 1653599478030,
       "contentHash": "7f34d511ba9273f4fab840796dc15573",
       "sourceName": "contracts/RC3_Mall.sol",
       "solcConfig": {
@@ -1751,8 +1751,8 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/contracts/RC3_Creators.sol": {
-      "lastModificationDate": 1652570016408,
-      "contentHash": "33c383473a9425c2dd38cb406223e0de",
+      "lastModificationDate": 1653597326418,
+      "contentHash": "9084e9c4f3b317be437adf36752ca937",
       "sourceName": "contracts/RC3_Creators.sol",
       "solcConfig": {
         "version": "0.8.6",
