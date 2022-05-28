@@ -3,3 +3,5 @@ node_modules
 test/RCDY_Staking.js
 test/RCDY_Router.js
 test/RC3_Staking.js
+log/
+production.env
