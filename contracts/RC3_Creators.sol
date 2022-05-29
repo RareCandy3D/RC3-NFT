@@ -49,7 +49,8 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
     event NewToken(
         address indexed creator,
         uint256 initialSupply,
-        uint256 maxSupply
+        uint256 maxSupply,
+        uint256 id
     );
     event MinterSet(
         address indexed caller,
@@ -518,7 +519,7 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
             emit URI(uri_, _id);
         }
 
-        emit NewToken(msg.sender, initialSupply, maxSupply_);
+        emit NewToken(msg.sender, initialSupply, maxSupply_, _id);
     }
 
     function _exists(uint256 _id) private view returns (bool) {

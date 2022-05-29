@@ -36,22 +36,21 @@ module.exports = {
   },
 
   networks: {
-    kovan: {
-      url: process.env.INFURA_URL_KOVAN,
-      accounts: [process.env.PRIVATE_KEY],
-    },
-
-    hardhat: {
-      forking: {
-        url: process.env.MAINNET_URL,
-        blockNumber: 14348871, // from specific block number, there will be balance corresponding to it
-        runs: 1,
-      },
-    },
+    // kovan: {
+    //   url: process.env.INFURA_URL,
+    //   accounts: [process.env.PRIVATE_KEY],
+    // },
+    // hardhat: {
+    //   forking: {
+    //     url: process.env.MAINNET_URL,
+    //     blockNumber: 14348871, // from specific block number, there will be balance corresponding to it
+    //     runs: 1,
+    //   },
+    // },
   },
 
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    //apiKey: process.env.ETHERSCAN_API_KEY,
   },
 
   contractSizer: {
