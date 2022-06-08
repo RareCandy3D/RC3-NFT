@@ -7,11 +7,9 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract RC3_721 is
-    Context,
     AccessControlEnumerable,
     ERC721Burnable,
     ERC721URIStorage,
@@ -20,13 +18,19 @@ contract RC3_721 is
     using Counters for Counters.Counter;
 
     Counters.Counter private _id;
-    uint96 public royalty;
+    uint96 public immutable royalty;
+    address payable private feeTaker;
     string private _uri;
-    address payable feeTaker;
 
     mapping(address => bool) public isWhitelistedMarket;
 
-    event MarketUpdated(address admin, address indexed market, bool ismarket);
+    event MarketUpdated(
+        address indexed admin,
+        address indexed market,
+        bool ismarket
+    );
+
+    event RoyaltyInfoUpdated(address indexed caller, address indexed receiver);
 
     constructor(
         string memory _name,
@@ -35,6 +39,7 @@ contract RC3_721 is
         address payable _feeTaker,
         uint96 _royalty //1% = 100
     ) ERC721(_name, _symbol) {
+        require(_feeTaker != address(0), "Invalid address");
         _uri = uri;
         feeTaker = _feeTaker;
         royalty = _royalty;
@@ -55,7 +60,7 @@ contract RC3_721 is
     }
 
     function setCustomURI(uint256 _tokenId, string memory _newURI)
-        public
+        external
         adminOnly
     {
         _setTokenURI(_tokenId, _newURI);
@@ -68,20 +73,16 @@ contract RC3_721 is
         emit MarketUpdated(msg.sender, market, isMarket);
     }
 
-    function mint(address to) public adminOnly returns (uint256 newItemId) {
+    function mint(address to) external adminOnly returns (uint256 newItemId) {
         _id.increment();
         newItemId = _id.current();
         _safeMint(to, newItemId);
     }
 
-    function setFeeTaker(address payable _feeTaker) external adminOnly {
-        require(_feeTaker != address(0), "INVALID_ADDRESS");
-        feeTaker = _feeTaker;
-    }
-
-    function setRoyaltyInfo(address payable _feeTaker) external adminOnly {
-        require(_feeTaker != address(0), "INVALID_ADDRESS");
-        feeTaker = _feeTaker;
+    function setRoyaltyInfo(address payable _receiver) external adminOnly {
+        require(_receiver != address(0), "INVALID_ADDRESS");
+        feeTaker = _receiver;
+        emit RoyaltyInfoUpdated(msg.sender, _receiver);
     }
 
     function _burn(uint256 tokenId)
@@ -109,9 +110,9 @@ contract RC3_721 is
         override(AccessControlEnumerable, ERC721, ERC721Enumerable)
         returns (bool itSupports)
     {
-        //bytes4(keccak256("royaltyInfo(uint256,uint256)"))
+        //bytes4(keccak256("royaltyInfo(uint256)"))
         return
-            interfaceId == 0x2a55205a || super.supportsInterface(interfaceId);
+            interfaceId == 0xcef6d368 || super.supportsInterface(interfaceId);
     }
 
     function isApprovedForAll(address owner, address operator)
@@ -128,7 +129,6 @@ contract RC3_721 is
     function tokenURI(uint256 tokenId)
         public
         view
-        virtual
         override(ERC721URIStorage, ERC721)
         returns (string memory URI)
     {
@@ -139,7 +139,7 @@ contract RC3_721 is
         address from,
         address to,
         uint256 id
-    ) internal virtual override(ERC721, ERC721Enumerable) {
+    ) internal override(ERC721, ERC721Enumerable) {
         super._beforeTokenTransfer(from, to, id);
     }
 

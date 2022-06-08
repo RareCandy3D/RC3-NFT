@@ -13,12 +13,12 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
     using Counters for Counters.Counter;
 
     //state variables
-    IERC20 internal rcdy;
     Counters.Counter public auctionId;
     Counters.Counter public auctionsClosed;
 
+    IERC20 internal immutable rcdy;
     uint96 public feePercentage; // 1% = 1000
-    uint96 private immutable DIVISOR;
+    uint96 private constant DIVISOR = 100 * 1000;
     address payable public feeRecipient;
 
     enum TokenType {
@@ -27,7 +27,6 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
     }
 
     enum State {
-        UNLISTED,
         LISTED,
         DELISTED,
         SOLD
@@ -109,7 +108,6 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
     //Deployer
     constructor(address _rcdy) {
         rcdy = IERC20(_rcdy);
-        DIVISOR = 100 * 1000;
     }
 
     //Modifier to check all conditions are met before bid
@@ -182,11 +180,11 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
     {
         Auction storage auction = auctions[_auctionId];
 
-        rcdy.transferFrom(msg.sender, address(this), _bidAmount);
+        bidded = rcdy.safeTransferFrom(msg.sender, address(this), _bidAmount);
 
         if (auction.bidCount != 0) {
             //return token to the prevous highest bidder
-            rcdy.transfer(auction.highestBidder, auction.highestBidAmount);
+            rcdy.safeTransfer(auction.highestBidder, auction.highestBidAmount);
         }
 
         //update data
@@ -326,7 +324,7 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
         view
         returns (uint256 startsIn, uint256 endsIn)
     {
-        return _bidTimeRemaining(_auctionId);
+        (startsIn, endsIn) = _bidTimeRemaining(_auctionId);
     }
 
     function nextBidAmount(uint256 _auctionId)
@@ -334,15 +332,15 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
         view
         returns (uint256 amount)
     {
-        return _nextBidAmount(_auctionId);
+        amount = _nextBidAmount(_auctionId);
     }
 
     function getAuction(uint256 _auctionId)
         external
         view
-        returns (Auction memory)
+        returns (Auction memory auction_)
     {
-        return auctions[_auctionId];
+        auction_ = auctions[_auctionId];
     }
 
     ///-----------------///

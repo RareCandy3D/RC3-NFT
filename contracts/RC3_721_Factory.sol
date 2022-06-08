@@ -17,7 +17,7 @@ contract RC3_721_Factory {
         createdAddr = _make721(_name, _symbol, _uri, _royalty);
     }
 
-    function get721Lists()
+    function get721List()
         external
         view
         returns (address[] memory, uint256 length)

@@ -1,4 +1,15 @@
 creators = {
     address: "",
-    numberOfTimes: 0
+    numberOfNFTs: 0,
+}
+
+hot NFTs = {
+    address: "",
+    trades: 0,
+    auctions: 0,
+}
+
+top collections = {
+    supply: 0,
+    circulatingPrice: 0,
 }

@@ -1,17 +1,16 @@
 //"SPDX-License-Identifier: MIT"
 pragma solidity 0.8.6;
 
-import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
-contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
+contract RC3_Creators is ERC1155, AccessControlEnumerable {
     bytes32[] public categories;
     bytes32[3] public natures;
 
     uint256 private _currentTokenID;
-    uint256 public creationFee = 0.01 ether;
-    uint256 public immutable splitRoyaltyLimit = 10;
+    uint256 public constant creationFee = 0.01 ether;
+    uint256 public constant splitRoyaltyLimit = 10;
     address payable public feeReceipient;
 
     struct Info {
@@ -107,7 +106,7 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
                 created = true;
             }
         }
-        require(created == false, "NON_CREATED_CATEGORY_ONLY");
+        require(!created, "NON_CREATED_CATEGORY_ONLY");
         _;
     }
 
@@ -201,8 +200,8 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
         physicalCreator(nature)
         returns (uint256 tokenId)
     {
-        require(msg.value >= creationFee, "FEE_NOT_SENT");
-        _createToken(
+        require(msg.value == creationFee, "FEE_NOT_SENT");
+        tokenId = _createToken(
             _initialHodler,
             _initialSupply,
             _maxSupply,
@@ -211,7 +210,6 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
             nature,
             _uri
         );
-        return _getNextTokenID() - 1;
     }
 
     function mint(
@@ -237,9 +235,9 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
         uint256[] memory ids,
         uint256[] memory amounts
     ) external returns (bool success) {
-        require(ids.length == amounts.length, "ERR_ARRAY_MISSMATCH");
-
         uint256 len = ids.length;
+        require(len == amounts.length, "ERR_ARRAY_MISSMATCH");
+
         for (uint256 i; i < len; i++) {
             Info storage info = _idToInfo[ids[i]];
 
@@ -270,6 +268,7 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
         external
         onlyAdmin
     {
+        require(_newFeeReceipient != address(0), "INVALID_ADDRESS");
         address payable rec = feeReceipient;
         require(_newFeeReceipient != rec, "ALREADY_EXISTS");
         feeReceipient = _newFeeReceipient;
@@ -345,7 +344,7 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
         );
     }
 
-    function setURI(string memory _newURI) public onlyAdmin {
+    function setURI(string memory _newURI) external onlyAdmin {
         _setURI(_newURI);
     }
 
@@ -369,7 +368,6 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
     }
 
     function getInfo(uint256 _id) external view returns (Info memory info) {
-        require(_exists(_id), "NON_EXISTENT_ID");
         return _idToInfo[_id];
     }
 
@@ -396,7 +394,6 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
     function splitRoyaltyInfo(uint256 _tokenId, uint256 _salePrice)
         external
         view
-        virtual
         returns (
             address[] memory recipients,
             uint256[] memory shares,
@@ -481,7 +478,7 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
         bytes32 _category,
         bytes32 _nature,
         string memory _uri
-    ) private {
+    ) private returns (uint256) {
         address initialHodler = _initialHodler;
         uint256 initialSupply = _initialSupply;
         uint256 maxSupply_ = _maxSupply;
@@ -492,8 +489,7 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
 
         require(initialSupply <= maxSupply_, "SUPPLY_ERR");
 
-        uint256 id = _getNextTokenID();
-        _incrementTokenTypeId();
+        uint256 id = _nextIdPrint();
 
         canMint[id][msg.sender] = true;
 
@@ -506,32 +502,30 @@ contract RC3_Creators is Context, ERC1155, AccessControlEnumerable {
 
         uint256 _id = id;
 
-        (bool success, ) = feeReceipient.call{value: msg.value}("");
-        require(success, "FEE_TRANSFER_ERR");
-
-        if (initialSupply > 0) {
-            _mint(initialHodler, _id, initialSupply, "0x0");
-            info.tokenSupply = initialSupply;
-        }
-
         if (bytes(uri_).length > 0) {
             info.customUri = uri_;
             emit URI(uri_, _id);
         }
 
+        if (initialSupply > 0) {
+            info.tokenSupply = initialSupply;
+            _mint(initialHodler, _id, initialSupply, "0x0");
+        }
+
+        (bool success, ) = feeReceipient.call{value: msg.value}("");
+        require(success, "FEE_TRANSFER_ERR");
+
         emit NewToken(msg.sender, initialSupply, maxSupply_, _id);
+        return _id;
     }
 
     function _exists(uint256 _id) private view returns (bool) {
         return _idToInfo[_id].tokenSupply > 0;
     }
 
-    function _getNextTokenID() private view returns (uint256) {
-        return _currentTokenID + 1;
-    }
-
-    function _incrementTokenTypeId() private {
+    function _nextIdPrint() private returns (uint256) {
         _currentTokenID++;
+        return _currentTokenID;
     }
 
     function _onlyCreated(bytes32 category, bytes32 nature) private view {

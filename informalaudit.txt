@@ -1,0 +1,188 @@
+- general
+	project does not compile out of the box
+
+- git
+	update .gitignore to contain `cache/`, `artifacts/`, `package-lock.json`, etc...
+
+- hardhat
+	update the optimizer to have more `runs` value, like 1000
+
+- RCDY.sol
+	`approve` race condition, utilize `increaseAllowance` & `decreaseAllowance`
+
+- RC3_721.sol
+	L23: The public `RC3_721.royalty` mutability missing -> uint96 state variable can be declared `immutable`
+	L23,L25: State variables not tightly packed -> group `royalty` & `feeTaker` together
+	L25: State variable `feeTaker` visibility missing -> add the `private` keyword
+	L29: Inconsistent `admin` event parameter -> add `indexed` keyword
+	L39: Lack of zero-check on `feeTaker` state variable
+	L82-L85: Function `setRoyaltyInfo` not implemented correctly (critical)
+	L131, L142: Ambiguous use of `virtual`
+**  L114: Wrong keccak for `royaltyInfo` function -> should be `0xcef6d368` instead.
+****	L114: Only one function exposed by the interface hash
+****	L91, L114, L135, L143: Check the inheritance chain and explicitly call overriden contract instead of just super
+	L10, L14: redundant use of `Context`, already part fo the inheritance chain
+	L57, L71 : The aforementioned functions could be declared as external
+
+- RC3_721_Factory.sol:
+	L11: External RC3_721_Factory.create721NFT function (211:251:38) is an unprotected setter function
+	L20: typo in the name -> change to `get721List`
+**	L43: push-only storage array
+	
+- RC3_1155.sol:
+	L8, L10: redundant use of `Context`, already part fo the inheritance chain
+	L11: The public `RC3_1155.name` mutability missing -> string state variable can be declared `immutable`
+	L12: The public `RC3_1155.symbol` mutability missing -> string state variable can be declared `immutable`
+	L13: The public `RC3_1155.royalty` mutability missing -> uint96 state variable can be declared `immutable`
+	L20: State variable `customUri` non-conventional name -> add `s` suffix
+	L28: Inconsistent `admin` event parameter -> add `indexed` keyword
+	L57: Redundant storage read -> use local variable by modifying L55-L56
+	L59, L216, L238: Check the inheritance chain and explicitly call overriden contract instead of just super
+	L117: The public `create` function in the `RC3_1155` contract returns a local variable explicitly: `return id`
+	L144-L147: either ambiguous `require` or missing in the loop at L183
+	L94: The public `create` function does not follow the Checks-Effects-Interactions pattern -> move L111-L114 before `_mint`
+	L120: The external `mint` function does not follow the Checks-Effects-Interactions pattern -> move L129 before `_mint`
+**	L125, L126, L140, L141, L142: redundant local var -> remove
+**	L167, L187: why reduce the maxSupply here? -> remove code (critical)
+****	L87, L139, L143, L149, L184, L185: redundant local vars, as arguments are also in memory -> remove
+	L191, L195, L210, L237: Ambiguous use of `virtual`
+	L245: remove modifier and use internal function `_creatorOnly` instead
+	L249-L255: the two functions can be merged into one
+****	L216: Only one function exposed by the interface hash
+	L63, L67, L82, L94, L155, L170: The aforementioned functions could be declared as external
+
+- RC3_1155_Factory.sol:
+	L6: Contract code size exceeds 24576 bytes (a limit introduced in Spurious Dragon). This contract may not be deployable on mainnet.
+**	L11: External RC3_1155_Factory.create1155NFT function (213:253:36) is an unprotected setter function
+**	L37: push-only storage array
+	Compilation warnings/errors on RC3_1155_Factory.sol:
+
+- RC3_Creators.sol:
+	L8: Contract code size exceeds 24576 bytes (a limit introduced in Spurious Dragon). This contract may not be deployable on mainnet.
+	L8: redundant use of `Context`, already part fo the inheritance chain
+	L13: The public `RC3_Creators.creationFee` mutability missing -> uint256 state variable can be declared `constant`
+	L14: The public `RC3_Creators.splitRoyaltyLimit` mutability is wrong -> uint256 state variable should be declared `constant`
+	L10: The public `RC3_Creators.natures` mutability missing -> bytes32[3] state variable can be declared `immutable`
+	L85, L123, L131, L273, L283, L296, L332, L333: redundant local var -> remove
+	L110: A conditional contains a check with a boolean literal -> change to `require(!created)`
+	L204: encouraged change to strict equality
+	L156, L174: why reduce the maxSupply here? -> remove code (critical)
+	L269: new fee recipient can still be the zero address
+	L240: redundant check as internal batch function checks the same statement 
+	L242, L251, L317-L321, L485-L491, L507: redundant local vars, as arguments are also in memory -> remove
+****	L323-L336: Redundant storage reads -> change to more optimal solution
+	L509: The private `_createToken` function in the `RC3_Creators` contract has an external call sending eth ignoring the Check-Effects-Interactions pattern
+****	L509-L510: encouraged use of `.transfer` instead of `.call` for ETH transfers
+	L509-L510: potential re-entrancy -> move the ETH transfer to the bottom
+	L447: Redundant storage read -> use local variable by modifying L445-L446
+****	L430: Only one function exposed by the interface hash
+	L412-419: redundant storage reads in `view` function -> change L406 statement to `memory`
+	L339: Ambiguous use of `virtual`
+****	L373: redundant `return` statement -> update local var `info`
+****	L372: redundant `require` statement in an `external` `view` function -> remove
+	L529-L535: the two functions can be merged into one and `_createToken` could return the new token ID instead
+****	L563-L603: could be made simpler due to version `^0.8.0`
+	L348: The aforementioned function could be declared as external
+
+- RC3_Originals.sol:
+	L12: redundant use of `Context`, already part fo the inheritance chain
+	L29: The public `RC3_Originals.royalty` mutability missing -> uint256 state variable can be declared `constant`
+	L84, L118: Ambiguous use of `virtual`
+	L125: The external `mint` function in the `RC3_Originals` contract ignores the Check-Effects-Interactions pattern
+	L184: The public `calculateRoyalty` contain a division before a multiplication
+	L235: The internal `RC3_Originals._isApprovedOrOwner` function makes a call to the internal `ERC721._isApprovedOrOwner` function, ignoring the returned value
+	L233: The internal `RC3_Originals._isApprovedOrOwner` function in the `RC3_Originals` contract returns a local variable explicitly: `bool isApproved`
+****	L250-L290: could be made simpler due to version `^0.8.0`
+	L84, L256: The aforementioned functions could be declared as external
+
+- RC3_Staking.sol:
+	L11: encouraged pull over push pattern for contract owner
+	L16: The public `RC3_Staking.dailyReward` mutability missing -> uint256 state variable can be declared `immutable`
+	L87: The value of `id.claimed` is zeroed out after it is updated in the internal `_takeReward` function. Basically the claimed field will always be zero
+	L72, L91: encouraged use of `safeTransferFrom`, needs contract extension
+	L126-L154: bad code -> re-write
+	L118: change name to position
+	L127, L148: redundant storage read, pass the `id` to the internal function via memory
+	L60, L82, L101, L113, L121, L146: functions in the `RC3_Staking` contract returns a local variable explicitly
+	L87-L89: the code should not zero out the values of the user?
+	L143: Claimable about is based on the daily reward and is flat for all RC3 NFTs. As the daily reward is only set upon deployment, this may discourage users from staking in case their NFT value goes up.
+
+- RCDY_Staking.sol:
+	L10: encouraged pull over push pattern for contract owner
+	L14: The public `RCDY_Staking.ratePerDay` mutability missing -> uint256 state variable can be declared `immutable`
+	L24: The private `RCDY_Staking.BLOCKS_PER_DAY` mutability is wrong -> uint256 state variable should be declared `constant`
+	L50-L58: redundant `require` checks, L60 will revert if any of the two is wrong
+	L49, L81, L103, L130, L135: functions in the `RCDY_Staking` contract returns a local variable explicitly
+	L118, L140: redundant storage read, pass the `user` to the internal function via memory
+	L123: Ambiguous math
+	L152: The user is sent half of the reward amount while storing that he claimed the full amount in L151 & L153
+	L113-L125: No notion of compound stake, as the user's stake does not get updated via claims
+	L60, L65: The external `stakeRCDY` function in the `RCDY_Staking` contract ignores the Check-Effects-Interactions pattern
+	L94: Claimed amount is not reset if stakes are zeroed out
+	L104: redundant `claimableRewards` check
+	L150: The private `_distribute` function in the `RCDY_Staking` contract ignores the Check-Effects-Interactions pattern
+
+- RCDY_Router.sol:
+	L36: encouraged pull over push pattern for contract owner
+	L38: The internal `RCDY_Router.rcdy` mutability missing -> IERC20 state variable can be declared `immutable`
+	L39: The private `RCDY_Router._iUni` mutability missing -> IUniswapV2Router01 state variable can be declared `immutable`
+	L41: The public `RCDY_Router.swapFee` mutability missing -> uint256 state variable can be declared `immutable`
+	L54: Use of `indexed` can make off-chain monitoring easier
+	L55: `tokenB` can be omitted, as it will always be the `rcdy` address.
+	L141: functions in the `RCDY_Router` contract returns a local variable explicitly
+	L96: lack of slippage control, potential sandwich attack
+	L100: The external `swapETHForRCDY` function in the `RCDY_Router` contract ignores the Check-Effects-Interactions pattern
+	L111: The external `RCDY_Router.swapTokensForRCDY` function makes a call to the external `IERC20.approve` function, ignoring the returned value
+	L111: The external `swapTokensForRCDY` function in the `RCDY_Router` contract uses `ERC20.approve` instead of `SafeERC20.safeApprove`
+	L127: The external `swapTokensForRCDY` function in the `RCDY_Router` contract ignores the Check-Effects-Interactions pattern
+
+- RC3_Auction.sol:
+	L16-L22: State variables not tightly packed -> group `rcdy` & `feePercentage` together
+	L16: The internal `RC3_Auction.rcdy` mutability missing -> IERC20 state variable can be declared `immutable`
+	L20: The public `RC3_Auction.feePercentage` uint96 & `RC3_Auction.feeRecipient` address payable state variables will be forever uninitialized if the `RC3_Auction` contract is deployed alone 
+	L21: The private `RCDY_Staking.DIVISOR` mutability is wrong -> uint96 state variable should be declared `constant`
+	L30: `UNLISTED` state is never used -> remove
+	L414, L428: redundant local vars, as arguments are also in memory -> remove
+**	L183, L231, L303, L362: Redundant storage read -> use local variable to use data in memory and then write to storage
+	L181, L229, L301, L327, L335, L410: functions in the `RC3_Auction` contract returns a local variable explicitly
+	L37-L50: `Auction` struct not tightly packed -> group `seller` with `state` & `highestBidder` with `tokenType` together
+	L177: The external `bid` function in the `RC3_Auction` contract makes ERC-20 transfers without checking the amounts, which can revert if any are zero
+	L185: The external `RC3_Auction.bid` function makes a call to the external `IERC20.transferFrom` function, ignoring the returned value
+	L185: The external `bid` function in the `RC3_Auction` contract uses `ERC20.transferFrom` instead of `SafeERC20.safeTransferFrom`
+	L189: The external `RC3_Auction.bid` function makes a call to the external `IERC20.transfer` function, ignoring the returned value
+	L189: The external `bid` function in the `RC3_Auction` contract uses `ERC20.transfer` instead of `SafeERC20.safeTransfer`
+	L231: Redundant storage read -> use local variable to use data in memory and then write only the auction state to storage
+	L235-L236: can be merged into one require check
+	L226: The external `closeBid` function in the `RC3_Auction` contract makes ERC-20 transfers without checking the amounts, which can revert if any are zero
+	L266: The external `RC3_Auction.closeBid` function makes a call to the external `IERC20.transfer` function, ignoring the returned value
+	L266: The external `closeBid` function in the `RC3_Auction` contract uses `ERC20.transfer` instead of `SafeERC20.safeTransfer`
+	L267: The external `RC3_Auction.closeBid` function makes a call to the external `IERC20.transfer` function, ignoring the returned value
+	L267: The external `closeBid` function in the `RC3_Auction` contract uses `ERC20.transfer` instead of `SafeERC20.safeTransfer`
+	L299: Malicious seller can extend auction end time and spam the user experience
+	L315: inefficient storage read -> use `block.timestamp + _endsIn`
+	L263, L266: State variables `feePercentage` & `feeRecipient` can be uninitialized during execution
+	L125: The external `listAuction` function in the `RC3_Auction` contract ignores the Check-Effects-Interactions pattern
+
+- RC3_Mall.sol:
+	L7: Contract code size exceeds 24576 bytes (a limit introduced in Spurious Dragon). This contract may not be deployable on mainnet.
+	L7: encouraged pull over push pattern for contract owner
+	L21-L31: `Market` struct not tightly packed -> group `seller` with `tokenType`, `nifty` with `asset` & `buyer` with `state` together
+	L64: Use of `indexed` can make off-chain monitoring easier
+	L75: redundant, msg.sender is set as owner upon deployment
+	L97, L283: new fee percentage can still be the zero
+	L154: delisting a market by frontrunning a buy -> add a time frame of immutability after listing
+	L283: new fee recipient can still be the zero address
+	L104: The external `listMarket` function in the `RC3_Mall` contract ignores the Check-Effects-Interactions pattern
+	L201, L202: The external `buyWithETH` function in the `RC3_Mall` contract ignores the Check-Effects-Interactions pattern
+	L201: The external `buyWithETH` function in the `RC3_Mall` contract ignores the Secure-Ether-Transfer pattern: `feeRecipient.transfer(fee)`
+	L202: The external `buyWithETH` function in the `RC3_Mall` contract ignores the Secure-Ether-Transfer pattern: `market.seller.transfer(market.price - fee)`
+	L216: The external `RC3_Mall.buyWithRCDY` function makes a call to the external `IERC20.transferFrom` function, ignoring the returned value
+	L216: The external `buyWithRCDY` function in the `RC3_Mall` contract uses `ERC20.transferFrom` instead of `SafeERC20.safeTransferFrom`
+	L217: The external `RC3_Mall.buyWithRCDY` function makes a call to the external `IERC20.transferFrom` function, ignoring the returned value
+	L217: The external `buyWithRCDY` function in the `RC3_Mall` contract uses `ERC20.transferFrom` instead of `SafeERC20.safeTransferFrom`
+	L207: The external `buyWithRCDY` function in the `RC3_Mall` contract makes ERC-20 transfers without checking the amounts, which can revert if any are zero
+	L259: inefficient loop -> merge that one with the one in L267
+	L251: The external `getListedMarkets` function in the `RC3_Mall` contract returns a local variable explicitly: `return items`
+	L274: The external `myTradedNFTs` function in the `RC3_Mall` contract returns a local variable explicitly: `return items`
+	L97: The aforementioned function could be declared as external
+
