@@ -5,6 +5,8 @@ import "./RC3_Auction.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract RC3_Mall is RC3_Auction, Ownable {
+    using SafeERC20 for IERC20;
+
     using Counters for Counters.Counter;
 
     Counters.Counter public marketId;
@@ -12,6 +14,7 @@ contract RC3_Mall is RC3_Auction, Ownable {
     Counters.Counter public marketsDelisted;
 
     uint96 public ethFee; // 1% = 1000
+    uint256 public constant waitPeriod = 2 days;
 
     enum Asset {
         ETH,
@@ -20,14 +23,15 @@ contract RC3_Mall is RC3_Auction, Ownable {
 
     struct Market {
         address payable seller;
+        TokenType tokenType;
         address payable buyer;
+        State state;
         address nifty;
+        Asset asset;
         uint256 tokenId;
         uint256 tokenAmount;
         uint256 price; //in RCDY or ETH
-        TokenType tokenType;
-        State state;
-        Asset asset;
+        uint256 listTimestamp;
     }
 
     mapping(uint256 => Market) private markets;
@@ -59,11 +63,19 @@ contract RC3_Mall is RC3_Auction, Ownable {
         uint256 tokenId
     );
 
-    event FeeSet(address indexed sender, uint256 feePercentage, Asset asset);
+    event FeeSet(
+        address indexed sender,
+        uint256 feePercentage,
+        Asset indexed asset
+    );
 
-    event FeeRecipientSet(address indexed sender, address feeReceipient);
+    event FeeRecipientSet(
+        address indexed sender,
+        address indexed feeReceipient
+    );
 
     constructor(
+        address _owner,
         address _rcdy,
         address payable _feeReceipient,
         uint96 _feeRCDY,
@@ -72,7 +84,7 @@ contract RC3_Mall is RC3_Auction, Ownable {
         _setFeeRecipient(_feeReceipient);
         _setFeePercentage(_feeRCDY);
         ethFee = _ethFee;
-        transferOwnership(msg.sender);
+        transferOwnership(_owner);
     }
 
     modifier buyCheck(uint256 _marketId) {
@@ -85,16 +97,18 @@ contract RC3_Mall is RC3_Auction, Ownable {
     ///-----------------///
 
     function setFeeRecipient(address payable _newRecipient) external onlyOwner {
+        require(_newRecipient != address(0));
         _setFeeRecipient(_newRecipient);
         emit FeeRecipientSet(msg.sender, _newRecipient);
     }
 
     function setFeeRCDY(uint96 _newFee) external onlyOwner {
+        require(_newFee != 0);
         _setFeePercentage(_newFee);
         emit FeeSet(msg.sender, _newFee, Asset.RCDY);
     }
 
-    function setFeeETH(uint96 _newFee) public onlyOwner {
+    function setFeeETH(uint96 _newFee) external onlyOwner {
         uint96 fee = ethFee;
         require(_newFee != fee, "Error: already set");
         ethFee = _newFee;
@@ -160,6 +174,10 @@ contract RC3_Mall is RC3_Auction, Ownable {
 
         require(State.LISTED == market.state, "MARKET_NOT_LISTED");
         require(msg.sender == market.seller, "UNAUTHORIZED_CALLER");
+        require(
+            block.timestamp - market.listTimestamp >= waitPeriod,
+            "COOL_DOWN_PERIOD"
+        );
 
         market.tokenType == TokenType.ERC_721
             ? IERC721(market.nifty).safeTransferFrom(
@@ -198,8 +216,13 @@ contract RC3_Mall is RC3_Auction, Ownable {
         uint256 fee = (feeRate * market.price) / 100000;
         require(msg.value == market.price, "INVALID_PAYMENT_AMOUNT");
 
-        feeRecipient.transfer(fee);
-        market.seller.transfer(market.price - fee);
+        (bool success, ) = feeRecipient.call{value: fee}("");
+        (bool success_, ) = market.seller.call{value: market.price - fee}("");
+        require(
+            success && success_,
+            "Address: unable to send value, recipient may have reverted"
+        );
+
         _buy(_marketId);
         return true;
     }
@@ -213,8 +236,8 @@ contract RC3_Mall is RC3_Auction, Ownable {
         uint96 feeRate = feePercentage;
         uint256 fee = (feeRate * market.price) / 100000;
 
-        rcdy.transferFrom(msg.sender, feeRecipient, fee);
-        rcdy.transferFrom(msg.sender, market.seller, market.price - fee);
+        rcdy.safeTransferFrom(msg.sender, feeRecipient, fee);
+        rcdy.safeTransferFrom(msg.sender, market.seller, market.price - fee);
 
         _buy(_marketId);
         return true;
@@ -305,6 +328,7 @@ contract RC3_Mall is RC3_Auction, Ownable {
         market.state = State.LISTED;
         market.tokenType = _type;
         market.asset = _asset;
+        market.listTimestamp = block.timestamp;
 
         emit NewMarket(
             msg.sender,

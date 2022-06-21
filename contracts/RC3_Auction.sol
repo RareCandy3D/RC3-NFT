@@ -8,9 +8,11 @@ import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
     using Counters for Counters.Counter;
+    using SafeERC20 for IERC20;
 
     //state variables
     Counters.Counter public auctionId;
@@ -75,14 +77,6 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
         uint256 tokenId,
         uint256 amount,
         uint256 winPrice
-    );
-
-    event EndTimeUpdated(
-        address indexed creator,
-        address indexed nft,
-        uint256 indexed auctionId,
-        uint256 tokenId,
-        uint256 newEndTime
     );
 
     event NewAuction(
@@ -180,7 +174,7 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
     {
         Auction storage auction = auctions[_auctionId];
 
-        bidded = rcdy.safeTransferFrom(msg.sender, address(this), _bidAmount);
+        rcdy.safeTransferFrom(msg.sender, address(this), _bidAmount);
 
         if (auction.bidCount != 0) {
             //return token to the prevous highest bidder
@@ -230,7 +224,7 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
         require(auction.state == State.LISTED, "AUCTION_NOT_LISTED");
 
         (uint256 startTime, uint256 timeLeft) = _bidTimeRemaining(_auctionId);
-        require(startTime == 0, "AUCTION_NOT_STARTED");
+        require(startTime == 0 && timeLeft == 0, "AUCTION_NOT_STARTED");
         require(timeLeft == 0, "AUCTION_NOT_ENDED");
 
         uint256 highestBidAmount = auction.highestBidAmount;
@@ -261,8 +255,8 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
             uint256 fee = (feePercentage * highestBidAmount) / DIVISOR;
             address highestBidder = auction.highestBidder;
 
-            rcdy.transfer(feeRecipient, fee);
-            rcdy.transfer(auction.seller, highestBidAmount - fee);
+            rcdy.safeTransfer(feeRecipient, fee);
+            rcdy.safeTransfer(auction.seller, highestBidAmount - fee);
 
             auction.tokenType == TokenType.ERC_721
                 ? IERC721(auction.nifty).safeTransferFrom(
@@ -292,27 +286,6 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
 
         auctionsClosed.increment();
         return auction.state;
-    }
-
-    function updateEndTime(uint256 _auctionId, uint256 _endsIn)
-        external
-        returns (bool updated)
-    {
-        Auction storage auction = auctions[_auctionId];
-
-        require(auction.seller == msg.sender, "ONLY_SELLER");
-        require(auction.startPeriod <= block.timestamp, "AUCTION_NOT_STARTED");
-
-        auction.endPeriod = block.timestamp + _endsIn;
-
-        emit EndTimeUpdated(
-            msg.sender,
-            auction.nifty,
-            _auctionId,
-            auction.tokenId,
-            auction.endPeriod
-        );
-        return true;
     }
 
     ///-----------------///

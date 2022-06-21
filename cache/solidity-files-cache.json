@@ -78,7 +78,7 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/contracts/RC3_1155.sol": {
-      "lastModificationDate": 1654337091848,
+      "lastModificationDate": 1654731941255,
       "contentHash": "115e5839a5bd82c22c18df3189163b09",
       "sourceName": "contracts/RC3_1155.sol",
       "solcConfig": {
@@ -120,8 +120,8 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC1155/ERC1155.sol": {
-      "lastModificationDate": 1653944054627,
-      "contentHash": "1d68a32647e54f6acd6ff471d940ef4c",
+      "lastModificationDate": 1654732161446,
+      "contentHash": "792473360274d02eed0fe4c691d67d16",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/ERC1155.sol",
       "solcConfig": {
         "version": "0.8.6",
@@ -165,7 +165,7 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol": {
-      "lastModificationDate": 1653944054628,
+      "lastModificationDate": 1654732161477,
       "contentHash": "b9f23167c71a0ebb43ef5915b463a264",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol",
       "solcConfig": {
@@ -205,8 +205,8 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/access/AccessControlEnumerable.sol": {
-      "lastModificationDate": 1653944054588,
-      "contentHash": "ed8cb66146e00c05d3435beedacd0a9f",
+      "lastModificationDate": 1654732161133,
+      "contentHash": "b6d9b165dc57e9ad8153bdca05c783a4",
       "sourceName": "@openzeppelin/contracts/access/AccessControlEnumerable.sol",
       "solcConfig": {
         "version": "0.8.6",
@@ -246,46 +246,8 @@
         "AccessControlEnumerable"
       ]
     },
-    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/utils/Context.sol": {
-      "lastModificationDate": 1653944054654,
-      "contentHash": "5f2c5c4b6af2dd4551027144797bc8be",
-      "sourceName": "@openzeppelin/contracts/utils/Context.sol",
-      "solcConfig": {
-        "version": "0.8.6",
-        "settings": {
-          "metadata": {
-            "bytecodeHash": "none"
-          },
-          "optimizer": {
-            "enabled": true,
-            "runs": 0
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "Context"
-      ]
-    },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC1155/IERC1155.sol": {
-      "lastModificationDate": 1653944054627,
+      "lastModificationDate": 1654732162083,
       "contentHash": "59e1bc5713fdebc7f821dc52f4d3e0ef",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/IERC1155.sol",
       "solcConfig": {
@@ -325,8 +287,8 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol": {
-      "lastModificationDate": 1653944054628,
-      "contentHash": "90eddd06deda7317b4441f04ec26db4d",
+      "lastModificationDate": 1654732162096,
+      "contentHash": "9f8822b72fe2702979e40160cb6d9636",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol",
       "solcConfig": {
         "version": "0.8.6",
@@ -365,7 +327,7 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol": {
-      "lastModificationDate": 1653944054630,
+      "lastModificationDate": 1654732162087,
       "contentHash": "9148c2e10c4efb12c71a7f080da5559b",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol",
       "solcConfig": {
@@ -405,9 +367,47 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/utils/Address.sol": {
-      "lastModificationDate": 1653944054653,
-      "contentHash": "4cff8b2ea0d958750786b4e3ca308445",
+      "lastModificationDate": 1654732161153,
+      "contentHash": "ad714a6368ee7d43cded6bbe8af0b155",
       "sourceName": "@openzeppelin/contracts/utils/Address.sol",
+      "solcConfig": {
+        "version": "0.8.6",
+        "settings": {
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "optimizer": {
+            "enabled": true,
+            "runs": 0
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.1"
+      ],
+      "artifacts": [
+        "Address"
+      ]
+    },
+    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/utils/Context.sol": {
+      "lastModificationDate": 1654732161237,
+      "contentHash": "5f2c5c4b6af2dd4551027144797bc8be",
+      "sourceName": "@openzeppelin/contracts/utils/Context.sol",
       "solcConfig": {
         "version": "0.8.6",
         "settings": {
@@ -439,11 +439,11 @@
         "^0.8.0"
       ],
       "artifacts": [
-        "Address"
+        "Context"
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol": {
-      "lastModificationDate": 1653944054660,
+      "lastModificationDate": 1654732161568,
       "contentHash": "0e7db055ce108f9da7bb6686a00287c0",
       "sourceName": "@openzeppelin/contracts/utils/introspection/ERC165.sol",
       "solcConfig": {
@@ -483,7 +483,7 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
-      "lastModificationDate": 1653944054661,
+      "lastModificationDate": 1654732162122,
       "contentHash": "03e6768535ac4da0e9756f1d8a4a018a",
       "sourceName": "@openzeppelin/contracts/utils/introspection/IERC165.sol",
       "solcConfig": {
@@ -521,7 +521,7 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/access/IAccessControlEnumerable.sol": {
-      "lastModificationDate": 1646301899632,
+      "lastModificationDate": 1654732162011,
       "contentHash": "4e71cc90682e109e999ce2bd329f6572",
       "sourceName": "@openzeppelin/contracts/access/IAccessControlEnumerable.sol",
       "solcConfig": {
@@ -561,8 +561,8 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/access/AccessControl.sol": {
-      "lastModificationDate": 1653944054588,
-      "contentHash": "79af4d35ce7918696f13f0cb6653ec99",
+      "lastModificationDate": 1654732161117,
+      "contentHash": "08101487003fda67e21e6d2cfe35bb2e",
       "sourceName": "@openzeppelin/contracts/access/AccessControl.sol",
       "solcConfig": {
         "version": "0.8.6",
@@ -604,8 +604,8 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/utils/structs/EnumerableSet.sol": {
-      "lastModificationDate": 1653944054666,
-      "contentHash": "b8070bbbb327a49a4d37f5c590b38238",
+      "lastModificationDate": 1654732161412,
+      "contentHash": "ee7890ed6993382898aeeed014cffab8",
       "sourceName": "@openzeppelin/contracts/utils/structs/EnumerableSet.sol",
       "solcConfig": {
         "version": "0.8.6",
@@ -642,7 +642,7 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/access/IAccessControl.sol": {
-      "lastModificationDate": 1646301899629,
+      "lastModificationDate": 1654732162008,
       "contentHash": "57c84298234411cea19c7c284d86be8b",
       "sourceName": "@openzeppelin/contracts/access/IAccessControl.sol",
       "solcConfig": {
@@ -680,7 +680,7 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/utils/Strings.sol": {
-      "lastModificationDate": 1653944054656,
+      "lastModificationDate": 1654732162537,
       "contentHash": "9c54c6c065d9e590fdcdd72c451425b9",
       "sourceName": "@openzeppelin/contracts/utils/Strings.sol",
       "solcConfig": {
@@ -717,9 +717,417 @@
         "Strings"
       ]
     },
+    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/contracts/RC3_Originals.sol": {
+      "lastModificationDate": 1654731941260,
+      "contentHash": "eec743923e2f5000a6fca2a0a8c8f3c7",
+      "sourceName": "contracts/RC3_Originals.sol",
+      "solcConfig": {
+        "version": "0.8.6",
+        "settings": {
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "optimizer": {
+            "enabled": true,
+            "runs": 0
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/access/AccessControlEnumerable.sol",
+        "@openzeppelin/contracts/utils/Counters.sol",
+        "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
+        "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol",
+        "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol"
+      ],
+      "versionPragmas": [
+        "0.8.6"
+      ],
+      "artifacts": [
+        "RC3_Originals"
+      ]
+    },
+    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/utils/Counters.sol": {
+      "lastModificationDate": 1654732161243,
+      "contentHash": "74654e3ae5d7f39555055dfe244dab7a",
+      "sourceName": "@openzeppelin/contracts/utils/Counters.sol",
+      "solcConfig": {
+        "version": "0.8.6",
+        "settings": {
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "optimizer": {
+            "enabled": true,
+            "runs": 0
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "Counters"
+      ]
+    },
+    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol": {
+      "lastModificationDate": 1654732161858,
+      "contentHash": "580a443491d9d70eb064b0130fc3cd01",
+      "sourceName": "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
+      "solcConfig": {
+        "version": "0.8.6",
+        "settings": {
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "optimizer": {
+            "enabled": true,
+            "runs": 0
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../ERC721.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "ERC721URIStorage"
+      ]
+    },
+    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol": {
+      "lastModificationDate": 1654732161813,
+      "contentHash": "88095889e59d16821879a8083f906503",
+      "sourceName": "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol",
+      "solcConfig": {
+        "version": "0.8.6",
+        "settings": {
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "optimizer": {
+            "enabled": true,
+            "runs": 0
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../ERC721.sol",
+        "./IERC721Enumerable.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "ERC721Enumerable"
+      ]
+    },
+    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol": {
+      "lastModificationDate": 1654732161801,
+      "contentHash": "7bbd5ca6e396f0ad628cfbf0031d9e32",
+      "sourceName": "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol",
+      "solcConfig": {
+        "version": "0.8.6",
+        "settings": {
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "optimizer": {
+            "enabled": true,
+            "runs": 0
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../ERC721.sol",
+        "../../../utils/Context.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "ERC721Burnable"
+      ]
+    },
+    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol": {
+      "lastModificationDate": 1654732161786,
+      "contentHash": "21b9f3bdb3e60f56ea81361c37420136",
+      "sourceName": "@openzeppelin/contracts/token/ERC721/ERC721.sol",
+      "solcConfig": {
+        "version": "0.8.6",
+        "settings": {
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "optimizer": {
+            "enabled": true,
+            "runs": 0
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./IERC721.sol",
+        "./IERC721Receiver.sol",
+        "./extensions/IERC721Metadata.sol",
+        "../../utils/Address.sol",
+        "../../utils/Context.sol",
+        "../../utils/Strings.sol",
+        "../../utils/introspection/ERC165.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "ERC721"
+      ]
+    },
+    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol": {
+      "lastModificationDate": 1654732162190,
+      "contentHash": "cd8e72e5859bddd5fd26b2fb5c51c846",
+      "sourceName": "@openzeppelin/contracts/token/ERC721/IERC721.sol",
+      "solcConfig": {
+        "version": "0.8.6",
+        "settings": {
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "optimizer": {
+            "enabled": true,
+            "runs": 0
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../../utils/introspection/IERC165.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC721"
+      ]
+    },
+    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol": {
+      "lastModificationDate": 1654732162233,
+      "contentHash": "c22d4395e33763de693fd440c6fd10e1",
+      "sourceName": "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol",
+      "solcConfig": {
+        "version": "0.8.6",
+        "settings": {
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "optimizer": {
+            "enabled": true,
+            "runs": 0
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC721Receiver"
+      ]
+    },
+    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol": {
+      "lastModificationDate": 1654732162216,
+      "contentHash": "efbc0d15b80a74e34dbe8da0f3e879bb",
+      "sourceName": "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol",
+      "solcConfig": {
+        "version": "0.8.6",
+        "settings": {
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "optimizer": {
+            "enabled": true,
+            "runs": 0
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../IERC721.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC721Metadata"
+      ]
+    },
+    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol": {
+      "lastModificationDate": 1654732162203,
+      "contentHash": "f4dd06783f321aa26179bc2b6e361c29",
+      "sourceName": "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol",
+      "solcConfig": {
+        "version": "0.8.6",
+        "settings": {
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "optimizer": {
+            "enabled": true,
+            "runs": 0
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../IERC721.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC721Enumerable"
+      ]
+    },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol": {
-      "lastModificationDate": 1653944054632,
-      "contentHash": "f48de0eaae9544072b8766e2eac528a7",
+      "lastModificationDate": 1654732161636,
+      "contentHash": "a9d2146925da52142435d3bb8df53c3c",
       "sourceName": "@openzeppelin/contracts/token/ERC20/ERC20.sol",
       "solcConfig": {
         "version": "0.8.6",
@@ -760,8 +1168,8 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
-      "lastModificationDate": 1653944054633,
-      "contentHash": "302d9755e46bc69d7058b0cbe7185e37",
+      "lastModificationDate": 1654732162153,
+      "contentHash": "ad7c2d0af148c8f9f097d65deeb4da6b",
       "sourceName": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
       "solcConfig": {
         "version": "0.8.6",
@@ -798,7 +1206,7 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol": {
-      "lastModificationDate": 1653944054638,
+      "lastModificationDate": 1654732162162,
       "contentHash": "909ab67fc5c25033fe6cd364f8c056f9",
       "sourceName": "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol",
       "solcConfig": {
@@ -881,7 +1289,7 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": {
-      "lastModificationDate": 1653944054642,
+      "lastModificationDate": 1654732162494,
       "contentHash": "76814c83c32552ed2b521c816b4d801a",
       "sourceName": "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
       "solcConfig": {
@@ -922,7 +1330,7 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/access/Ownable.sol": {
-      "lastModificationDate": 1653944054588,
+      "lastModificationDate": 1654732162398,
       "contentHash": "8398972af73b4e9e5ff3b31cad86234f",
       "sourceName": "@openzeppelin/contracts/access/Ownable.sol",
       "solcConfig": {
@@ -962,7 +1370,7 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol": {
-      "lastModificationDate": 1653944054626,
+      "lastModificationDate": 1654732162460,
       "contentHash": "92f9448b23a90ea3bb932ee55cc3ccce",
       "sourceName": "@openzeppelin/contracts/security/ReentrancyGuard.sol",
       "solcConfig": {
@@ -1043,49 +1451,9 @@
         "RC3_Staking"
       ]
     },
-    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol": {
-      "lastModificationDate": 1653944054644,
-      "contentHash": "27d219ec6f69478d065fdbfa7931da68",
-      "sourceName": "@openzeppelin/contracts/token/ERC721/IERC721.sol",
-      "solcConfig": {
-        "version": "0.8.6",
-        "settings": {
-          "metadata": {
-            "bytecodeHash": "none"
-          },
-          "optimizer": {
-            "enabled": true,
-            "runs": 0
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "../../utils/introspection/IERC165.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "IERC721"
-      ]
-    },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/contracts/RC3_Auction.sol": {
-      "lastModificationDate": 1654470625894,
-      "contentHash": "edfa1741d50aee966caa66c601aa36b2",
+      "lastModificationDate": 1655767629608,
+      "contentHash": "badefdb32f4897c25a6fa77e10278194",
       "sourceName": "contracts/RC3_Auction.sol",
       "solcConfig": {
         "version": "0.8.6",
@@ -1120,7 +1488,8 @@
         "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol",
         "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol",
         "@openzeppelin/contracts/security/ReentrancyGuard.sol",
-        "@openzeppelin/contracts/utils/Counters.sol"
+        "@openzeppelin/contracts/utils/Counters.sol",
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol"
       ],
       "versionPragmas": [
         "0.8.6"
@@ -1130,7 +1499,7 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol": {
-      "lastModificationDate": 1653944054649,
+      "lastModificationDate": 1654732161834,
       "contentHash": "54062ff887823a306b33ea6494a220bc",
       "sourceName": "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol",
       "solcConfig": {
@@ -1170,8 +1539,8 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol": {
-      "lastModificationDate": 1653944054631,
-      "contentHash": "5637bdad6fa692dbbce1eeca845bedd8",
+      "lastModificationDate": 1654732161502,
+      "contentHash": "88079762e28b246888129028f757e047",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol",
       "solcConfig": {
         "version": "0.8.6",
@@ -1209,84 +1578,8 @@
         "ERC1155Holder"
       ]
     },
-    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/utils/Counters.sol": {
-      "lastModificationDate": 1653944054654,
-      "contentHash": "74654e3ae5d7f39555055dfe244dab7a",
-      "sourceName": "@openzeppelin/contracts/utils/Counters.sol",
-      "solcConfig": {
-        "version": "0.8.6",
-        "settings": {
-          "metadata": {
-            "bytecodeHash": "none"
-          },
-          "optimizer": {
-            "enabled": true,
-            "runs": 0
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "Counters"
-      ]
-    },
-    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol": {
-      "lastModificationDate": 1653944054644,
-      "contentHash": "592df588492d45fdcf46b3cb608c0fbf",
-      "sourceName": "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol",
-      "solcConfig": {
-        "version": "0.8.6",
-        "settings": {
-          "metadata": {
-            "bytecodeHash": "none"
-          },
-          "optimizer": {
-            "enabled": true,
-            "runs": 0
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "IERC721Receiver"
-      ]
-    },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC1155/utils/ERC1155Receiver.sol": {
-      "lastModificationDate": 1653944054632,
+      "lastModificationDate": 1654732161544,
       "contentHash": "55b180cf664783e9a2baac20e82683fb",
       "sourceName": "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Receiver.sol",
       "solcConfig": {
@@ -1327,8 +1620,8 @@
       ]
     },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/contracts/RC3_Mall.sol": {
-      "lastModificationDate": 1653944054528,
-      "contentHash": "7f34d511ba9273f4fab840796dc15573",
+      "lastModificationDate": 1655770485689,
+      "contentHash": "5319b0f11ba72953b86fc91b362ce93d",
       "sourceName": "contracts/RC3_Mall.sol",
       "solcConfig": {
         "version": "0.8.6",
@@ -1410,300 +1703,8 @@
         "RCDY_Router"
       ]
     },
-    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol": {
-      "lastModificationDate": 1653944054643,
-      "contentHash": "ead7082e39cf31875ff89b22f473500d",
-      "sourceName": "@openzeppelin/contracts/token/ERC721/ERC721.sol",
-      "solcConfig": {
-        "version": "0.8.6",
-        "settings": {
-          "metadata": {
-            "bytecodeHash": "none"
-          },
-          "optimizer": {
-            "enabled": true,
-            "runs": 0
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "./IERC721.sol",
-        "./IERC721Receiver.sol",
-        "./extensions/IERC721Metadata.sol",
-        "../../utils/Address.sol",
-        "../../utils/Context.sol",
-        "../../utils/Strings.sol",
-        "../../utils/introspection/ERC165.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "ERC721"
-      ]
-    },
-    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol": {
-      "lastModificationDate": 1653944054648,
-      "contentHash": "efbc0d15b80a74e34dbe8da0f3e879bb",
-      "sourceName": "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol",
-      "solcConfig": {
-        "version": "0.8.6",
-        "settings": {
-          "metadata": {
-            "bytecodeHash": "none"
-          },
-          "optimizer": {
-            "enabled": true,
-            "runs": 0
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "../IERC721.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "IERC721Metadata"
-      ]
-    },
-    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol": {
-      "lastModificationDate": 1653944054646,
-      "contentHash": "88095889e59d16821879a8083f906503",
-      "sourceName": "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol",
-      "solcConfig": {
-        "version": "0.8.6",
-        "settings": {
-          "metadata": {
-            "bytecodeHash": "none"
-          },
-          "optimizer": {
-            "enabled": true,
-            "runs": 0
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "../ERC721.sol",
-        "./IERC721Enumerable.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "ERC721Enumerable"
-      ]
-    },
-    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol": {
-      "lastModificationDate": 1653944054647,
-      "contentHash": "f69eb47f667b846a8698697d25eeff4e",
-      "sourceName": "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol",
-      "solcConfig": {
-        "version": "0.8.6",
-        "settings": {
-          "metadata": {
-            "bytecodeHash": "none"
-          },
-          "optimizer": {
-            "enabled": true,
-            "runs": 0
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "../IERC721.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "IERC721Enumerable"
-      ]
-    },
-    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/contracts/RC3_Originals.sol": {
-      "lastModificationDate": 1654339345333,
-      "contentHash": "eec743923e2f5000a6fca2a0a8c8f3c7",
-      "sourceName": "contracts/RC3_Originals.sol",
-      "solcConfig": {
-        "version": "0.8.6",
-        "settings": {
-          "metadata": {
-            "bytecodeHash": "none"
-          },
-          "optimizer": {
-            "enabled": true,
-            "runs": 0
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "@openzeppelin/contracts/access/AccessControlEnumerable.sol",
-        "@openzeppelin/contracts/utils/Counters.sol",
-        "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
-        "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol",
-        "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol"
-      ],
-      "versionPragmas": [
-        "0.8.6"
-      ],
-      "artifacts": [
-        "RC3_Originals"
-      ]
-    },
-    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol": {
-      "lastModificationDate": 1653944054647,
-      "contentHash": "580a443491d9d70eb064b0130fc3cd01",
-      "sourceName": "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol",
-      "solcConfig": {
-        "version": "0.8.6",
-        "settings": {
-          "metadata": {
-            "bytecodeHash": "none"
-          },
-          "optimizer": {
-            "enabled": true,
-            "runs": 0
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "../ERC721.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "ERC721URIStorage"
-      ]
-    },
-    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol": {
-      "lastModificationDate": 1653944054645,
-      "contentHash": "7bbd5ca6e396f0ad628cfbf0031d9e32",
-      "sourceName": "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol",
-      "solcConfig": {
-        "version": "0.8.6",
-        "settings": {
-          "metadata": {
-            "bytecodeHash": "none"
-          },
-          "optimizer": {
-            "enabled": true,
-            "runs": 0
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "../ERC721.sol",
-        "../../../utils/Context.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "ERC721Burnable"
-      ]
-    },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/contracts/RC3_721.sol": {
-      "lastModificationDate": 1654263542277,
+      "lastModificationDate": 1654731941256,
       "contentHash": "b61b7fb3118c92eb747790e4f530dfdf",
       "sourceName": "contracts/RC3_721.sol",
       "solcConfig": {
@@ -1747,8 +1748,48 @@
         "RC3_721"
       ]
     },
+    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/contracts/RC3_721_Factory.sol": {
+      "lastModificationDate": 1654731941257,
+      "contentHash": "b2f3372116eb48d17eaf1a1717ca7747",
+      "sourceName": "contracts/RC3_721_Factory.sol",
+      "solcConfig": {
+        "version": "0.8.6",
+        "settings": {
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "optimizer": {
+            "enabled": true,
+            "runs": 0
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./RC3_721.sol"
+      ],
+      "versionPragmas": [
+        "0.8.6"
+      ],
+      "artifacts": [
+        "RC3_721_Factory"
+      ]
+    },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/contracts/RC3_Creators.sol": {
-      "lastModificationDate": 1654469736135,
+      "lastModificationDate": 1654731941259,
       "contentHash": "b4d7e11eb1d9aa7dde7bd7eaee66a494",
       "sourceName": "contracts/RC3_Creators.sol",
       "solcConfig": {
@@ -1788,49 +1829,9 @@
         "RC3_Creators"
       ]
     },
-    "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/contracts/RC3_721_Factory.sol": {
-      "lastModificationDate": 1654263367113,
-      "contentHash": "b2f3372116eb48d17eaf1a1717ca7747",
-      "sourceName": "contracts/RC3_721_Factory.sol",
-      "solcConfig": {
-        "version": "0.8.6",
-        "settings": {
-          "metadata": {
-            "bytecodeHash": "none"
-          },
-          "optimizer": {
-            "enabled": true,
-            "runs": 0
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "./RC3_721.sol"
-      ],
-      "versionPragmas": [
-        "0.8.6"
-      ],
-      "artifacts": [
-        "RC3_721_Factory"
-      ]
-    },
     "/Users/hendobox/Desktop/THE GRIND/Blockchain Dev/projects/RC3-NFT/node_modules/@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol": {
-      "lastModificationDate": 1653944054634,
-      "contentHash": "9f43a2bc39b89ae302f1727697f9c420",
+      "lastModificationDate": 1654732161649,
+      "contentHash": "a1c7f80ae26f5b2d7d563475627fbf25",
       "sourceName": "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol",
       "solcConfig": {
         "version": "0.8.6",

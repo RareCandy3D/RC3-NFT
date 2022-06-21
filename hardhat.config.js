@@ -37,7 +37,7 @@ module.exports = {
 
   networks: {
     kovan: {
-      url: process.env.INFURA_URL,
+      url: process.env.KOVAN_URL,
       accounts: [process.env.PRIVATE_KEY],
     },
     hardhat: {
@@ -50,7 +50,7 @@ module.exports = {
   },
 
   etherscan: {
-    //apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: process.env.ETHERSCAN_API_KEY,
   },
 
   contractSizer: {

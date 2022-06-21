@@ -32,6 +32,7 @@ async function main() {
 
   const RC3_Mall = await hre.ethers.getContractFactory("RC3_Mall");
   const mall = await RC3_Mall.deploy(
+    admin,
     "0xc32E5B6990E15dfCf0E8CeeD3f06f778FF6C9c33",
     admin,
     2300,
@@ -66,8 +67,8 @@ main()
 
 // Kovan deployments
 // RCDY Deployed to: 0xc32E5B6990E15dfCf0E8CeeD3f06f778FF6C9c33
-// RC3_Originals Deployed to: 0xEd59ad78e4B69d36d526cE6c22277E393f309Fcb
-// RC3_Creators Deployed to: 0x85aD2E811e1b437dcaaef09A127005f5Ff5Fe48e
-// RC3_Mall Deployed to: 0xe9D3a5e6dAD969DB040df68c47CfA145EE6B1811
-// RC3_721_Factory Deployed to: 0xc075C58653fAfB8007b3A58C29024c3db2F47bf1
+// RC3_Originals Deployed to: 0xbd954d7ff7d6a9088985413Bc9337cCC8fCa458A
+// RC3_Creators Deployed to: 0xB9F85490182dBD9a158FF043CAe25Fea68b72E28
+// RC3_Mall Deployed to: 0x76476ccA8b857a7dA06780D2413B417BC9799a4c
+// RC3_721_Factory Deployed to: 0xec8feF5E7Ebde5F76566b257a8287253913B86C9
 // RC3_1155_Factory Deployed to: 0x3b773a56AdA5225413832403222EbE24022E50cC
