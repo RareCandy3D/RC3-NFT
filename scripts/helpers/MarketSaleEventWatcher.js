@@ -15,7 +15,7 @@ class MarketSaleEventWatcher {
           totalEth = asset === "1" ?  0 : 1;
         
 
-        let buys=address==buyer ? 1 : 0;
+        let buys=address==caller ? 1 : 0;
         let sales=address==seller ? 1 : 0;
 
         const checkUserActivity = await pool.query(

@@ -37,11 +37,11 @@ class Main {
       .on("data", async (block) => {
         // console.log(`New block: ${block.number}`);
         // watch for creator events
-        //  await new CreatorEventWatcher(creators).watch();
+         await new CreatorEventWatcher(creators).watch();
         // watch for auction events
-        // await new AuctionEventWatcher(mall).watch();
+        await new AuctionEventWatcher(mall).watch();
         // watch for market sale events
-        //  await new MarketSaleEventWatcher(mall).watch();
+         await new MarketSaleEventWatcher(mall).watch();
       })
       .on("error", (error) => {
         console.log(error);

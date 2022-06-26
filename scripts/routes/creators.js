@@ -8,9 +8,15 @@ const {
 
   router.get("/",  async (req, res) => {
     let output = { flag: false, message: "", data: {} };
-
     try{
-        let result=await pool.query(`SELECT OCLId as creatorId,OCLAddress as creatorAddress,COUNT(OCLId) as totalCount,COUNT(OCLInitialSupply) as totalInitialSupply,COUNT(OCLMaxSupply) as totalMaxSupply FROM ${TBL_CREATOR_LOGS}`,[]);
+        var result=await pool.query(`SELECT OCLId as id,OCLAddress as creatorAddress,OCLNON as numberOfNfts,OCLIDArray as creatorIdArray FROM ${TBL_CREATOR_LOGS} ORDER BY OCLNON DESC`,[]);
+        
+        if(result.length>=1){
+          result.map((x,index)=>{
+           result[index].creatorIdArray= x.creatorIdArray.split(",");
+          });
+        }
+
         output.flag = true;
         output.message = "Creators fetched successfully";
         output.data = result;

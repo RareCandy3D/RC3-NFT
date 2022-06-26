@@ -16,6 +16,7 @@ const log = require("../config/log4js");
 const Main=require("./services/main");
 const main=new Main();
 const creatorsRoute=require("./routes/creators");
+const hotnftsRoute=require("./routes/hot-nft");
 
 
 const allowedOrigins = [
@@ -35,6 +36,7 @@ app.use(cors({
 app.use(helmet());
 
 app.use("/api/creators",creatorsRoute);
+app.use("/api/hot-nfts",hotnftsRoute);
 
 (async function init(){
   await main.subscribe();
