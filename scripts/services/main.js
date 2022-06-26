@@ -4,6 +4,11 @@ const creatorsABI = require("../../artifacts/contracts/RC3_Creators.sol/RC3_Crea
 const originalsABI = require("../../artifacts/contracts/RC3_Originals.sol/RC3_Originals.json");
 const addresses = require("../../addresses/index.js");
 const { pool, TBL_CREATOR_LOGS } = require("../../db/db");
+const Web3Helper=require("../helpers/Web3Helper");
+const CreatorEventWatcher=require("../helpers/CreatorEventWatcher");
+
+
+
 
 class Main {
   async subscribe() {
@@ -33,10 +38,11 @@ class Main {
     //how to write a function using web3js
     //await mall.methods.setFeeETH(2450).send({ from: admin, gas: 45000 });
 
-    // web3.eth
-    //   .subscribe("newBlockHeaders")
-    //   .on("data", async (block) => {
-    //     // console.log(`New block: ${block.number}`);
+
+    web3.eth
+      .subscribe("newBlockHeaders")
+      .on("data", async (block) => {
+        console.log(`New block: ${block.number}`);
 
     //     //how to read SC values
     //     // const res = await mall.methods.ethFee().call();
@@ -48,15 +54,36 @@ class Main {
 
     //     // await mall.methods.setFeeETH(0).send({ from: admin, gas: 45000 });
 
-    //     //update database if event emits
+          // watch for creator events
+        await new CreatorEventWatcher().watch();
+
+
+
+        //   try {
+        //   await mall.events.AuctionResulted().on("data", async (event) => {
+        //     let { caller, seller,nft } = event.returnValues;
+        //   //   const result = await pool.query(
+        //   //     `INSERT INTO ${TBL_CREATOR_LOGS} (OCLAddress,OCLInitialSupply,OCLMaxSupply) VALUES ?  `,
+        //   //     [[[creator, initialSupply, maxSupply]]]
+        //   //   );
+        //   //   update database if event emits and web socket
+        //   });
+        // } catch (e) {
+        //   log.info(`Error Inserting creator logs: ${e}`);
+        //   console.log(`Error Inserting creator logs: ${e}`);
+        // }
+
+
+
     //     try {
-    //       await creators.events.NewToken().on("data", async (event) => {
-    //         let { creator, initialSupply, maxSupply } = event.returnValues;
-    //         const result = await pool.query(
-    //           `INSERT INTO ${TBL_CREATOR_LOGS} (OCLAddress,OCLInitialSupply,OCLMaxSupply) VALUES ?  `,
-    //           [[[creator, initialSupply, maxSupply]]]
-    //         );
-    //         //update database if event emits and web socket
+    //       await mall.events.MarketSale().on("data", async (event) => {
+    //         console.log(event);
+    //       //   let { creator, initialSupply, maxSupply } = event.returnValues;
+    //       //   const result = await pool.query(
+    //       //     `INSERT INTO ${TBL_CREATOR_LOGS} (OCLAddress,OCLInitialSupply,OCLMaxSupply) VALUES ?  `,
+    //       //     [[[creator, initialSupply, maxSupply]]]
+    //       //   );
+    //       //   update database if event emits and web socket
     //       });
     //     } catch (e) {
     //       log.info(`Error Inserting creator logs: ${e}`);
@@ -64,10 +91,10 @@ class Main {
     //     }
 
     //     // await mall.events.MarketSale()
-    //   })
-    //   .on("error", (error) => {
-    //     console.log(error);
-    //   });
+      })
+      .on("error", (error) => {
+        console.log(error);
+      });
   }
 }
 
