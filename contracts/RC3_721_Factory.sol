@@ -5,16 +5,25 @@ import "./RC3_721.sol";
 
 contract RC3_721_Factory {
     address[] private _list;
+    address payable public immutable feeWallet;
+    uint256 public immutable fee;
 
     event Created(address indexed creator, address indexed token);
+
+    constructor(uint256 _fee, address payable wallet) {
+        fee = _fee;
+        feeWallet = wallet;
+    }
 
     function create721NFT(
         string memory _name,
         string memory _symbol,
         string memory _uri,
         uint96 _royalty
-    ) external returns (address createdAddr) {
+    ) external payable returns (address createdAddr) {
+        require(msg.value == fee, "Must send fee");
         createdAddr = _make721(_name, _symbol, _uri, _royalty);
+        feeWallet.transfer(msg.value);
     }
 
     function get721List()
