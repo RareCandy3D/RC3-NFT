@@ -224,8 +224,7 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
         require(auction.state == State.LISTED, "AUCTION_NOT_LISTED");
 
         (uint256 startTime, uint256 timeLeft) = _bidTimeRemaining(_auctionId);
-        require(startTime == 0, "AUCTION_NOT_STARTED");
-        require(timeLeft == 0, "AUCTION_NOT_ENDED");
+        require(startTime == 0 && timeLeft == 0, "INVALID_TIME");
 
         uint256 highestBidAmount = auction.highestBidAmount;
 
