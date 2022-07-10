@@ -2,14 +2,12 @@
 pragma solidity 0.8.6;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 
 contract RC3_Originals is
-    Context,
     AccessControlEnumerable,
     ERC721Burnable,
     ERC721URIStorage,
@@ -26,7 +24,7 @@ contract RC3_Originals is
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     string private _uri;
-    uint256 public royalty = 1500; //15%
+    uint256 public constant royalty = 1500; //15%
 
     struct Info {
         address payable creator;
@@ -81,7 +79,7 @@ contract RC3_Originals is
         _;
     }
 
-    function baseTokenURI() public view virtual returns (string memory) {
+    function baseTokenURI() public view returns (string memory) {
         return _baseURI();
     }
 
@@ -115,7 +113,6 @@ contract RC3_Originals is
     function tokenURI(uint256 tokenId)
         public
         view
-        virtual
         override(ERC721URIStorage, ERC721)
         returns (string memory URI)
     {
@@ -133,9 +130,9 @@ contract RC3_Originals is
         _tokenIds.increment();
         newItemId = _tokenIds.current();
 
-        _safeMint(creator, newItemId);
         _setTokenURI(newItemId, _tokenURI);
         _setInfo(newItemId, creator, nature, category);
+        _safeMint(creator, newItemId);
 
         emit Mint(_msgSender(), newItemId, creator, category, nature);
     }
@@ -178,10 +175,10 @@ contract RC3_Originals is
 
     function calculateRoyalty(uint256 _salePrice)
         public
-        view
+        pure
         returns (uint256)
     {
-        return (_salePrice / 10000) * royalty;
+        return (_salePrice * royalty) / 10000;
     }
 
     function _delInfo(uint256 id) internal {
@@ -230,9 +227,9 @@ contract RC3_Originals is
         internal
         view
         override(ERC721)
-        returns (bool isApproved)
+        returns (bool approved)
     {
-        super._isApprovedOrOwner(spender, tokenId);
+        approved = super._isApprovedOrOwner(spender, tokenId);
 
         require(
             _exists(tokenId),
@@ -254,7 +251,7 @@ contract RC3_Originals is
      * @return result is the string representation of that bytes32 string
      */
     function bytes32ToString(bytes32 _bytes32)
-        public
+        external
         pure
         returns (string memory result)
     {

@@ -1,24 +1,30 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.6;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
-contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
-    using Counters for Counters.Counter;
+contract RC3_Auction is
+    ERC721HolderUpgradeable,
+    ERC1155HolderUpgradeable,
+    ReentrancyGuardUpgradeable
+{
+    using CountersUpgradeable for CountersUpgradeable.Counter;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     //state variables
-    IERC20 internal rcdy;
-    Counters.Counter public auctionId;
-    Counters.Counter public auctionsClosed;
+    CountersUpgradeable.Counter public auctionId;
+    CountersUpgradeable.Counter public auctionsClosed;
 
+    IERC20Upgradeable internal rcdy;
     uint96 public feePercentage; // 1% = 1000
-    uint96 private immutable DIVISOR;
+    uint96 private constant DIVISOR = 100 * 1000;
     address payable public feeRecipient;
 
     enum TokenType {
@@ -27,7 +33,6 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
     }
 
     enum State {
-        UNLISTED,
         LISTED,
         DELISTED,
         SOLD
@@ -78,14 +83,6 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
         uint256 winPrice
     );
 
-    event EndTimeUpdated(
-        address indexed creator,
-        address indexed nft,
-        uint256 indexed auctionId,
-        uint256 tokenId,
-        uint256 newEndTime
-    );
-
     event NewAuction(
         address indexed seller,
         address indexed nft,
@@ -105,12 +102,6 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
         uint256 tokenId,
         uint256 price
     );
-
-    //Deployer
-    constructor(address _rcdy) {
-        rcdy = IERC20(_rcdy);
-        DIVISOR = 100 * 1000;
-    }
 
     //Modifier to check all conditions are met before bid
     modifier bidCheck(uint256 _auctionId, uint256 _bidAmount) {
@@ -136,7 +127,7 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
         require(_lastsFor != 0, "INVALID_DURATION");
 
         if (_type == TokenType.ERC_721) {
-            IERC721 nft = IERC721(nifty);
+            IERC721Upgradeable nft = IERC721Upgradeable(nifty);
             address nftOwner = nft.ownerOf(_tokenId);
             nft.safeTransferFrom(nftOwner, address(this), _tokenId);
 
@@ -152,7 +143,7 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
             );
         } else {
             require(amount > 0, "INVALID_AMOUNT");
-            IERC1155 nft = IERC1155(nifty);
+            IERC1155Upgradeable nft = IERC1155Upgradeable(nifty);
             nft.safeTransferFrom(
                 msg.sender,
                 address(this),
@@ -182,11 +173,11 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
     {
         Auction storage auction = auctions[_auctionId];
 
-        rcdy.transferFrom(msg.sender, address(this), _bidAmount);
+        rcdy.safeTransferFrom(msg.sender, address(this), _bidAmount);
 
         if (auction.bidCount != 0) {
             //return token to the prevous highest bidder
-            rcdy.transfer(auction.highestBidder, auction.highestBidAmount);
+            rcdy.safeTransfer(auction.highestBidder, auction.highestBidAmount);
         }
 
         //update data
@@ -232,19 +223,18 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
         require(auction.state == State.LISTED, "AUCTION_NOT_LISTED");
 
         (uint256 startTime, uint256 timeLeft) = _bidTimeRemaining(_auctionId);
-        require(startTime == 0, "AUCTION_NOT_STARTED");
-        require(timeLeft == 0, "AUCTION_NOT_ENDED");
+        require(startTime == 0 && timeLeft == 0, "INVALID_TIME");
 
         uint256 highestBidAmount = auction.highestBidAmount;
 
         if (highestBidAmount == 0) {
             auction.tokenType == TokenType.ERC_721
-                ? IERC721(auction.nifty).safeTransferFrom(
+                ? IERC721Upgradeable(auction.nifty).safeTransferFrom(
                     address(this),
                     auction.seller,
                     auction.tokenId
                 )
-                : IERC1155(auction.nifty).safeTransferFrom(
+                : IERC1155Upgradeable(auction.nifty).safeTransferFrom(
                     address(this),
                     auction.seller,
                     auction.tokenId,
@@ -263,16 +253,16 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
             uint256 fee = (feePercentage * highestBidAmount) / DIVISOR;
             address highestBidder = auction.highestBidder;
 
-            rcdy.transfer(feeRecipient, fee);
-            rcdy.transfer(auction.seller, highestBidAmount - fee);
+            rcdy.safeTransfer(feeRecipient, fee);
+            rcdy.safeTransfer(auction.seller, highestBidAmount - fee);
 
             auction.tokenType == TokenType.ERC_721
-                ? IERC721(auction.nifty).safeTransferFrom(
+                ? IERC721Upgradeable(auction.nifty).safeTransferFrom(
                     address(this),
                     highestBidder,
                     auction.tokenId
                 )
-                : IERC1155(auction.nifty).safeTransferFrom(
+                : IERC1155Upgradeable(auction.nifty).safeTransferFrom(
                     address(this),
                     highestBidder,
                     auction.tokenId,
@@ -296,27 +286,6 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
         return auction.state;
     }
 
-    function updateEndTime(uint256 _auctionId, uint256 _endsIn)
-        external
-        returns (bool updated)
-    {
-        Auction storage auction = auctions[_auctionId];
-
-        require(auction.seller == msg.sender, "ONLY_SELLER");
-        require(auction.startPeriod <= block.timestamp, "AUCTION_NOT_STARTED");
-
-        auction.endPeriod = block.timestamp + _endsIn;
-
-        emit EndTimeUpdated(
-            msg.sender,
-            auction.nifty,
-            _auctionId,
-            auction.tokenId,
-            auction.endPeriod
-        );
-        return true;
-    }
-
     ///-----------------///
     /// READ FUNCTIONS ///
     ///-----------------///
@@ -326,7 +295,7 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
         view
         returns (uint256 startsIn, uint256 endsIn)
     {
-        return _bidTimeRemaining(_auctionId);
+        (startsIn, endsIn) = _bidTimeRemaining(_auctionId);
     }
 
     function nextBidAmount(uint256 _auctionId)
@@ -334,15 +303,15 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
         view
         returns (uint256 amount)
     {
-        return _nextBidAmount(_auctionId);
+        amount = _nextBidAmount(_auctionId);
     }
 
     function getAuction(uint256 _auctionId)
         external
         view
-        returns (Auction memory)
+        returns (Auction memory auction_)
     {
-        return auctions[_auctionId];
+        auction_ = auctions[_auctionId];
     }
 
     ///-----------------///

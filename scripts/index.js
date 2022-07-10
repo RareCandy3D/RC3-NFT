@@ -1,63 +1,52 @@
-require("dotenv").config();
-const Web3 = require("web3");
-const mallABI = require("./../artifacts/contracts/RC3_MALL.sol/RC3_MALL.json");
-const creatorsABI = require("./../artifacts/contracts/RC3_Creators.sol/RC3_Creators.json");
-const originalsABI = require("./../artifacts/contracts/RC3_Originals.sol/RC3_Originals.json");
-const addresses = require("./../addresses/index.js");
+const dev=process.env.NODE_ENV=="production" ? false : true;
+if(dev){
+  require('dotenv').config();
+}else{
+  require('dotenv').config({ path: "production.env"});
+}
 
-//connect to RPC
-const web3 = new Web3(
-  new Web3.providers.WebsocketProvider(process.env.INFURA_URL)
-);
+const express = require("express");
+const app = express();
+var morgan = require('morgan');
+app.use(morgan('combined'))
+const bodyParser = require("body-parser");
+const cors = require("cors"); 
+const helmet = require("helmet");
+const log = require("../config/log4js");
+const Main=require("./services/main");
+const main=new Main();
+const creatorsRoute=require("./routes/creators");
+const hotnftsRoute=require("./routes/hot-nft");
 
-//add wallet account
-const { address: admin } = web3.eth.accounts.wallet.add(
-  process.env.PRIVATE_KEY
-);
-//const accounts = web3.eth.getAccounts();
 
-//create web3 contract instance
-const mall = new web3.eth.Contract(mallABI.abi, addresses.kovan.mall);
+const allowedOrigins = [
+  "https://rarecandy.io","http://127.0.0.1"
+];
 
-const creators = new web3.eth.Contract(
-  creatorsABI.abi,
-  addresses.kovan.creators
-);
-// const originals = new web3.eth.Contract(
-//   originalsABI.abi,
-//   addresses.kovan.originals
-// );
+app.use(bodyParser.json({limit: '200mb'}));
+app.use(bodyParser.urlencoded({limit: '200mb', extended: false, parameterLimit: 1000000}));
+app.use(bodyParser.json({verify: (req, res, buf) => {req.rawBody = buf}}));
+app.use(cors({
+  "origin": allowedOrigins,
+  "methods": ["GET","HEAD","PUT","PATCH","POST","DELETE"],
+  "preflightContinue": false,
+  "optionsSuccessStatus": 204,
+  "allowedHeaders": ["Content-Type","Origin","X-Requested-with","Accept", "Authorization"]
+}));
+app.use(helmet());
 
-const init = async () => {
-  //how to write a function using web3js
-  //await mall.methods.setFeeETH(2450).send({ from: admin, gas: 45000 });
+app.use("/api/creators",creatorsRoute);
+app.use("/api/hot-nfts",hotnftsRoute);
 
-  web3.eth
-    .subscribe("newBlockHeaders")
-    .on("data", async (block) => {
-      //console.log(`New block: ${block.number}`);
+(async function init(){
+  await main.subscribe();
+})();
 
-      //how to read SC values
-      // const res = await mall.methods.ethFee().call();
-      // console.log("the result is:", res);
 
-      // await mall.events.FeeSet().on("data", (event) => {
-      //   console.log(event.returnValues.sender);
-      // });
 
-      // await mall.methods.setFeeETH(0).send({ from: admin, gas: 45000 });
+const port = process.env.PORT || 3000;
 
-      //update database if event emits
-      await creators.events.NewToken().on("data", (event) => {
-        console.log(event.returnValues.creator);
-
-        //update database if event emits and web socket
-      });
-
-      //await mall.events.MarketSale()...
-    })
-    .on("error", (error) => {
-      console.log(error);
-    });
-};
-init();
+  app.listen(port, () => {
+    log.info(`🚀 Listening to server on port ${port}`);
+    console.log(`Listening on port ${port}`);
+  });

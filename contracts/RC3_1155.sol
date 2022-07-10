@@ -5,19 +5,18 @@ pragma solidity 0.8.6;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
 
-contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
+contract RC3_1155 is AccessControlEnumerable, ERC1155Burnable {
     string public name;
     string public symbol;
-    uint96 public royalty;
+    uint96 public immutable royalty;
     uint256 private _currentTokenID;
 
     mapping(uint256 => uint256) private _totalSupply;
     mapping(uint256 => uint256) public maxSupply;
     mapping(address => bool) public isWhitelistedMarket;
     mapping(uint256 => address) public creators;
-    mapping(uint256 => string) private customUri;
+    mapping(uint256 => string) private customUris;
 
     event NewToken(
         address indexed admin,
@@ -25,7 +24,11 @@ contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
         uint256 initialSupply
     );
 
-    event MarketUpdated(address admin, address indexed market, bool ismarket);
+    event MarketUpdated(
+        address indexed admin,
+        address indexed market,
+        bool ismarket
+    );
 
     constructor(
         string memory _name,
@@ -52,23 +55,24 @@ contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
     function uri(uint256 _id) public view override returns (string memory) {
         require(exists(_id), "ERC1155Tradable#uri: NONEXISTENT_TOKEN");
         // We have to convert string to bytes to check for existence
-        bytes memory customUriBytes = bytes(customUri[_id]);
+        string memory uri_ = customUris[_id];
+        bytes memory customUriBytes = bytes(uri_);
         if (customUriBytes.length > 0) {
-            return customUri[_id];
+            return uri_;
         } else {
             return super.uri(_id);
         }
     }
 
-    function setURI(string memory _newURI) public adminOnly {
+    function setURI(string memory _newURI) external adminOnly {
         _setURI(_newURI);
     }
 
     function setCustomURI(uint256 _tokenId, string memory _newURI)
-        public
+        external
         creatorOnly(_tokenId)
     {
-        customUri[_tokenId] = _newURI;
+        customUris[_tokenId] = _newURI;
         emit URI(_newURI, _tokenId);
     }
 
@@ -79,7 +83,7 @@ contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
         emit MarketUpdated(msg.sender, market, isMarket);
     }
 
-    function setCreator(address to, uint256[] memory ids) public {
+    function setCreator(address to, uint256[] memory ids) external {
         require(
             to != address(0),
             "ERC1155Tradable#setCreator: INVALID_ADDRESS."
@@ -96,21 +100,20 @@ contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
         uint256 initialSupply,
         uint256 maxSupply_,
         string memory _uri
-    ) public adminOnly returns (uint256) {
+    ) external adminOnly returns (uint256 createdId) {
         require(initialSupply <= maxSupply_, "SUPPLY_ERR");
-        uint256 id = _getNextTokenID();
-        _incrementTokenTypeId();
+        uint256 id = _nextIdPrint();
         creators[id] = _msgSender();
         maxSupply[id] = maxSupply_;
+
+        if (bytes(_uri).length > 0) {
+            customUris[id] = _uri;
+            emit URI(_uri, id);
+        }
 
         if (initialSupply > 0) {
             _totalSupply[id] = initialSupply;
             _mint(initialOwner, id, initialSupply, "0x0");
-        }
-
-        if (bytes(_uri).length > 0) {
-            customUri[id] = _uri;
-            emit URI(_uri, id);
         }
 
         emit NewToken(msg.sender, id, initialSupply);
@@ -125,8 +128,8 @@ contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
         uint256 tokenSupply = _totalSupply[id];
         uint256 maxSupply_ = maxSupply[id];
         require(tokenSupply + amount <= maxSupply_, "MAX_SUPPLY_REACHED");
-        _mint(to, id, amount, "0x0");
         _totalSupply[id] += amount;
+        _mint(to, id, amount, "0x0");
     }
 
     function mintBatch(
@@ -188,11 +191,11 @@ contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
         }
     }
 
-    function totalSupply(uint256 id) public view virtual returns (uint256) {
+    function totalSupply(uint256 id) public view returns (uint256) {
         return _totalSupply[id];
     }
 
-    function exists(uint256 id) public view virtual returns (bool) {
+    function exists(uint256 id) public view returns (bool) {
         return totalSupply(id) > 0;
     }
 
@@ -207,7 +210,6 @@ contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        virtual
         override(AccessControlEnumerable, ERC1155)
         returns (bool)
     {
@@ -234,28 +236,28 @@ contract RC3_1155 is Context, AccessControlEnumerable, ERC1155Burnable {
         uint256[] memory ids,
         uint256[] memory amounts,
         bytes memory data
-    ) internal virtual override {
+    ) internal override {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
 
     function _calculateRoyalty(uint256 price) private view returns (uint256) {
-        return (price * royalty) / 10000;
+        uint256 roy = royalty;
+        return (price * roy) / 10000;
     }
 
-    function _setCreator(address to, uint256 id) private creatorOnly(id) {
+    function _setCreator(address to, uint256 id) private {
+        _creatorOnly(id);
         creators[id] = to;
     }
 
-    function _getNextTokenID() private view returns (uint256) {
-        return _currentTokenID + 1;
-    }
-
-    function _incrementTokenTypeId() private {
+    function _nextIdPrint() private returns (uint256) {
         _currentTokenID++;
+        return _currentTokenID;
     }
 
     function _creatorOnly(uint256 id) private view {
-        require(creators[id] == _msgSender(), "ONLY_CREATOR_ALLOWED");
+        address addr = creators[id];
+        require(addr == _msgSender(), "ONLY_CREATOR_ALLOWED");
     }
 
     function _adminOnly() private view {

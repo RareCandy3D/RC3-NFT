@@ -1,4 +1,0 @@
-creators = {
-    address: "",
-    numberOfTimes: 0
-}
