@@ -2,16 +2,16 @@
 pragma solidity 0.8.6;
 
 import "./RC3_Auction.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract RC3_Mall is RC3_Auction, Ownable {
-    using SafeERC20 for IERC20;
+contract RC3_Mall is RC3_Auction, OwnableUpgradeable {
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    using Counters for Counters.Counter;
+    using CountersUpgradeable for CountersUpgradeable.Counter;
 
-    Counters.Counter public marketId;
-    Counters.Counter public marketsSold;
-    Counters.Counter public marketsDelisted;
+    CountersUpgradeable.Counter public marketId;
+    CountersUpgradeable.Counter public marketsSold;
+    CountersUpgradeable.Counter public marketsDelisted;
 
     uint96 public ethFee; // 1% = 1000
     uint256 public constant waitPeriod = 2 days;
@@ -74,16 +74,18 @@ contract RC3_Mall is RC3_Auction, Ownable {
         address indexed feeReceipient
     );
 
-    constructor(
+    function initialize(
         address _owner,
         address _rcdy,
         address payable _feeReceipient,
         uint96 _feeRCDY,
         uint96 _ethFee
-    ) RC3_Auction(_rcdy) Ownable() {
+    ) public initializer {
+        OwnableUpgradeable.__Ownable_init();
         _setFeeRecipient(_feeReceipient);
         _setFeePercentage(_feeRCDY);
         ethFee = _ethFee;
+        rcdy = IERC20Upgradeable(_rcdy);
         transferOwnership(_owner);
     }
 
@@ -128,7 +130,7 @@ contract RC3_Mall is RC3_Auction, Ownable {
         marketId_ = marketId.current();
 
         if (_type == TokenType.ERC_721) {
-            IERC721 nft = IERC721(nifty);
+            IERC721Upgradeable nft = IERC721Upgradeable(nifty);
             address nftOwner = nft.ownerOf(_tokenId);
             nft.safeTransferFrom(nftOwner, address(this), _tokenId);
 
@@ -143,7 +145,7 @@ contract RC3_Mall is RC3_Auction, Ownable {
             );
         } else {
             require(amount > 0, "INVALID_AMOUNT");
-            IERC1155 nft = IERC1155(nifty);
+            IERC1155Upgradeable nft = IERC1155Upgradeable(nifty);
             nft.safeTransferFrom(
                 msg.sender,
                 address(this),
@@ -180,12 +182,12 @@ contract RC3_Mall is RC3_Auction, Ownable {
         );
 
         market.tokenType == TokenType.ERC_721
-            ? IERC721(market.nifty).safeTransferFrom(
+            ? IERC721Upgradeable(market.nifty).safeTransferFrom(
                 address(this),
                 market.seller,
                 market.tokenId
             )
-            : IERC1155(market.nifty).safeTransferFrom(
+            : IERC1155Upgradeable(market.nifty).safeTransferFrom(
                 address(this),
                 market.seller,
                 market.tokenId,
@@ -297,6 +299,10 @@ contract RC3_Mall is RC3_Auction, Ownable {
         return items;
     }
 
+    function version() public pure returns (uint256) {
+        return 2;
+    }
+
     function _setFeePercentage(uint96 _newFee) internal {
         uint96 fee = feePercentage;
         require(_newFee != fee, "Error: already set");
@@ -349,12 +355,12 @@ contract RC3_Mall is RC3_Auction, Ownable {
         marketsSold.increment();
 
         market.tokenType == TokenType.ERC_721
-            ? IERC721(market.nifty).safeTransferFrom(
+            ? IERC721Upgradeable(market.nifty).safeTransferFrom(
                 address(this),
                 msg.sender,
                 market.tokenId
             )
-            : IERC1155(market.nifty).safeTransferFrom(
+            : IERC1155Upgradeable(market.nifty).safeTransferFrom(
                 address(this),
                 msg.sender,
                 market.tokenId,

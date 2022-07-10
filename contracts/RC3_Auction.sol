@@ -1,24 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.6;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
-contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
-    using Counters for Counters.Counter;
-    using SafeERC20 for IERC20;
+contract RC3_Auction is
+    ERC721HolderUpgradeable,
+    ERC1155HolderUpgradeable,
+    ReentrancyGuardUpgradeable
+{
+    using CountersUpgradeable for CountersUpgradeable.Counter;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     //state variables
-    Counters.Counter public auctionId;
-    Counters.Counter public auctionsClosed;
+    CountersUpgradeable.Counter public auctionId;
+    CountersUpgradeable.Counter public auctionsClosed;
 
-    IERC20 internal immutable rcdy;
+    IERC20Upgradeable internal rcdy;
     uint96 public feePercentage; // 1% = 1000
     uint96 private constant DIVISOR = 100 * 1000;
     address payable public feeRecipient;
@@ -99,11 +103,6 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
         uint256 price
     );
 
-    //Deployer
-    constructor(address _rcdy) {
-        rcdy = IERC20(_rcdy);
-    }
-
     //Modifier to check all conditions are met before bid
     modifier bidCheck(uint256 _auctionId, uint256 _bidAmount) {
         _bidCheck(_auctionId, _bidAmount);
@@ -128,7 +127,7 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
         require(_lastsFor != 0, "INVALID_DURATION");
 
         if (_type == TokenType.ERC_721) {
-            IERC721 nft = IERC721(nifty);
+            IERC721Upgradeable nft = IERC721Upgradeable(nifty);
             address nftOwner = nft.ownerOf(_tokenId);
             nft.safeTransferFrom(nftOwner, address(this), _tokenId);
 
@@ -144,7 +143,7 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
             );
         } else {
             require(amount > 0, "INVALID_AMOUNT");
-            IERC1155 nft = IERC1155(nifty);
+            IERC1155Upgradeable nft = IERC1155Upgradeable(nifty);
             nft.safeTransferFrom(
                 msg.sender,
                 address(this),
@@ -230,12 +229,12 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
 
         if (highestBidAmount == 0) {
             auction.tokenType == TokenType.ERC_721
-                ? IERC721(auction.nifty).safeTransferFrom(
+                ? IERC721Upgradeable(auction.nifty).safeTransferFrom(
                     address(this),
                     auction.seller,
                     auction.tokenId
                 )
-                : IERC1155(auction.nifty).safeTransferFrom(
+                : IERC1155Upgradeable(auction.nifty).safeTransferFrom(
                     address(this),
                     auction.seller,
                     auction.tokenId,
@@ -258,12 +257,12 @@ contract RC3_Auction is ERC721Holder, ERC1155Holder, ReentrancyGuard {
             rcdy.safeTransfer(auction.seller, highestBidAmount - fee);
 
             auction.tokenType == TokenType.ERC_721
-                ? IERC721(auction.nifty).safeTransferFrom(
+                ? IERC721Upgradeable(auction.nifty).safeTransferFrom(
                     address(this),
                     highestBidder,
                     auction.tokenId
                 )
-                : IERC1155(auction.nifty).safeTransferFrom(
+                : IERC1155Upgradeable(auction.nifty).safeTransferFrom(
                     address(this),
                     highestBidder,
                     auction.tokenId,
