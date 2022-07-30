@@ -128,7 +128,8 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
 
     modifier physicalCreator(bytes32 nature) {
         bytes32 nature0 = natures[0];
-        if (nature == nature0) {
+        bytes32 nature2 = natures[2];
+        if (nature == nature0 || nature == nature2) {
             bool outcome = canCreatePhysical[msg.sender];
             require(outcome, "Only Physical creator allowed");
         }

@@ -30,17 +30,6 @@ async function main() {
   await creators.deployed();
   console.log("RC3_Creators Deployed to:", creators.address);
 
-  const RC3_Mall = await hre.ethers.getContractFactory("RC3_Mall");
-  const mall = await RC3_Mall.deploy(
-    admin,
-    "0xc32E5B6990E15dfCf0E8CeeD3f06f778FF6C9c33",
-    admin,
-    2300,
-    2500
-  );
-  await mall.deployed();
-  console.log("RC3_Mall Deployed to:", mall.address);
-
   const RC3_721_Factory = await hre.ethers.getContractFactory(
     "RC3_721_Factory"
   );

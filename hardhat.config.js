@@ -1,8 +1,9 @@
 // hardhat.config.js
 require("@nomiclabs/hardhat-ethers");
-//require('@openzeppelin/hardhat-upgrades');
+require("@openzeppelin/hardhat-upgrades");
 require("@nomiclabs/hardhat-etherscan");
 require("hardhat-contract-sizer");
+require("@openzeppelin/hardhat-defender");
 require("dotenv").config();
 
 /**
@@ -40,6 +41,10 @@ module.exports = {
       url: process.env.KOVAN_URL,
       accounts: [process.env.PRIVATE_KEY],
     },
+    rinkeby: {
+      url: process.env.RINKEBY_URL,
+      accounts: [process.env.PRIVATE_KEY],
+    },
     hardhat: {
       forking: {
         url: process.env.MAINNET_URL,
@@ -51,6 +56,11 @@ module.exports = {
 
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
+  },
+
+  defender: {
+    apiKey: process.env.DEFENDER_KEY,
+    apiSecret: process.env.DEFENDER_SECRET,
   },
 
   contractSizer: {
