@@ -20,7 +20,7 @@ const hotnftsRoute=require("./routes/hot-nft");
 
 
 const allowedOrigins = [
-  "https://rarecandy.io","http://127.0.0.1"
+  "https://rarecandy.xyz","http://localhost:3000"
 ];
 
 app.use(bodyParser.json({limit: '200mb'}));
@@ -37,6 +37,10 @@ app.use(helmet());
 
 app.use("/api/creators",creatorsRoute);
 app.use("/api/hot-nfts",hotnftsRoute);
+
+app.get("/api/",async (req,res)=>{
+  res.status(200).send(new Date);
+  });
 
 (async function init(){
   await main.subscribe();

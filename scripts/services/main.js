@@ -1,5 +1,5 @@
 const Web3 = require("web3");
-const mallABI = require("../../artifacts/contracts/RC3_MALL.sol/RC3_MALL.json");
+const mallABI = require("../../artifacts/contracts/RC3_Mall.sol/RC3_Mall.json");
 const creatorsABI = require("../../artifacts/contracts/RC3_Creators.sol/RC3_Creators.json");
 const originalsABI = require("../../artifacts/contracts/RC3_Originals.sol/RC3_Originals.json");
 const addresses = require("../../addresses/index.js");

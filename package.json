@@ -6,7 +6,9 @@
   "scripts": {
     "prettier": "prettier --write 'contracts/**/*.sol'",
     "lint": "prettier --list-different 'contracts/**/*.sol'",
-    "test": "npx hardhat test test/RCDY_Router.js"
+    "test": "npx hardhat test test/RCDY_Router.js",
+    "dev": "nodemon scripts/index.js",
+    "start": "node scripts/index.js"
   },
   "repository": {
     "type": "git",
