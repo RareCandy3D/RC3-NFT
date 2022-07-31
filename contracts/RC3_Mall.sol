@@ -15,7 +15,6 @@ contract RC3_Mall is RC3_Auction, OwnableUpgradeable {
 
     uint96 public ethFee; // 1% = 1000
     uint256 public constant waitPeriod = 2 days;
-    bool private deployed;
 
     enum Asset {
         ETH,
@@ -36,6 +35,7 @@ contract RC3_Mall is RC3_Auction, OwnableUpgradeable {
     }
 
     mapping(uint256 => Market) private markets;
+    bool private deployed;
 
     event NewMarket(
         address indexed caller,
