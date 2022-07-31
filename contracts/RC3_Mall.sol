@@ -15,6 +15,7 @@ contract RC3_Mall is RC3_Auction, OwnableUpgradeable {
 
     uint96 public ethFee; // 1% = 1000
     uint256 public constant waitPeriod = 2 days;
+    bool private deployed;
 
     enum Asset {
         ETH,
@@ -49,8 +50,9 @@ contract RC3_Mall is RC3_Auction, OwnableUpgradeable {
 
     event MarketSale(
         address indexed caller,
-        address indexed nifty,
-        uint256 indexed marketId,
+        address indexed seller,
+        address indexed nft,
+        uint256 marketId,
         uint256 tokenId,
         uint256 price,
         Asset asset
@@ -81,12 +83,14 @@ contract RC3_Mall is RC3_Auction, OwnableUpgradeable {
         uint96 _feeRCDY,
         uint96 _ethFee
     ) public initializer {
+        require(!deployed, "Error: contract has already been initialized");
         OwnableUpgradeable.__Ownable_init();
         _setFeeRecipient(_feeReceipient);
         _setFeePercentage(_feeRCDY);
         ethFee = _ethFee;
         rcdy = IERC20Upgradeable(_rcdy);
         transferOwnership(_owner);
+        deployed = true;
     }
 
     modifier buyCheck(uint256 _marketId) {
@@ -370,6 +374,7 @@ contract RC3_Mall is RC3_Auction, OwnableUpgradeable {
 
         emit MarketSale(
             msg.sender,
+            market.seller,
             market.nifty,
             _marketId,
             market.tokenId,
