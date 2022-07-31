@@ -1,5 +1,5 @@
 const { pool, TBL_CREATOR_LOGS } = require("../../db/db");
-
+const log = require("../../config/log4js");
 class CreatorEventWatcher {
   constructor(creators) {
     this.creators = creators;

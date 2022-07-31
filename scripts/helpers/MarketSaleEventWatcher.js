@@ -1,5 +1,5 @@
 const { pool, TBL_HOT_NFTS,TBL_HOT_ACTIVITIES } = require("../../db/db");
-
+const log = require("../../config/log4js");
 class MarketSaleEventWatcher {
   constructor(mall) {
     this.mall = mall;
