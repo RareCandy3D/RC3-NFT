@@ -1,5 +1,5 @@
 const Web3 = require("web3");
-const mallABI = require("../../artifacts/contracts/RC3_Mall.sol/RC3_Mall.json");
+const mallABI = require("../../addresses/mall_abi/RC3_Mall_Implementation.json");
 const creatorsABI = require("../../artifacts/contracts/RC3_Creators.sol/RC3_Creators.json");
 const originalsABI = require("../../artifacts/contracts/RC3_Originals.sol/RC3_Originals.json");
 const addresses = require("../../addresses/index.js");
@@ -41,7 +41,7 @@ class Main {
         // watch for auction events
         await new AuctionEventWatcher(mall).watch();
         // watch for market sale events
-         await new MarketSaleEventWatcher(mall).watch();
+         await new MarketSaleEventWatcher(mall).watch(mall);
       })
       .on("error", (error) => {
         console.log(error);
