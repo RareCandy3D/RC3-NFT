@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-const { pool, TBL_HOT_NFTS, TBL_HOT_ACTIVITIES } = require("../../db/db");
-
-=======
 const { pool, TBL_HOT_NFTS,TBL_HOT_ACTIVITIES } = require("../../db/db");
 const log = require("../../config/log4js");
->>>>>>> 80c7059e1dd0f418c510c5262860a43f1ce60546
 class MarketSaleEventWatcher {
   constructor(mall) {
     this.mall = mall;
