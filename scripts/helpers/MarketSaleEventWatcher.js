@@ -30,7 +30,7 @@ class MarketSaleEventWatcher {
         } else {
           await pool.query(
             `UPDATE ${TBL_HOT_ACTIVITIES} SET OUABuys=OUABuys+?, OUASales=OUASales+? WHERE OUAUserAddress=?`,
-            [[[buys, sales, address]]]
+            [buys, sales, address]
           );
         }
 
@@ -47,7 +47,7 @@ class MarketSaleEventWatcher {
           if (!checkNFT[0].OHNIDArray.includes(id)) {
             const result = await pool.query(
               `UPDATE ${TBL_HOT_NFTS} SET OHNTrades=OHNTrades+1,OHNTotalEth=OHNTotalEth+? OHNTotalRCDY=OHNTotalRCDY+? WHERE OHNNFTAddress=?`,
-              [[[totalEth, totalRCDY, nft]]]
+            [totalEth, totalRCDY, nft]
             );
           }
         }

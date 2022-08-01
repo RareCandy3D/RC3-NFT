@@ -26,7 +26,7 @@ class AuctionEventWatcher {
         } else {
           await pool.query(
             `UPDATE ${TBL_HOT_ACTIVITIES} SET OUABuys=OUABuys+?, OUASales=OUASales+? WHERE OUAUserAddress=?`,
-            [[[buys, sales, address]]]
+            [buys, sales, address]
           );
         }
 
@@ -43,7 +43,7 @@ class AuctionEventWatcher {
           if (!checkNFT[0].OHNIDArray.includes(id)) {
             const result = await pool.query(
               `UPDATE ${TBL_HOT_NFTS} SET OHNAuctions=OHNAuctions+1, OHNTotalRCDY=OHNTotalRCDY+1 WHERE OHNNFTAddress=?`,
-              [[[nft]]]
+              [nft]
             );
           }
         }
