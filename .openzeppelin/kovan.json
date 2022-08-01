@@ -1,20 +1,20 @@
 {
   "manifestVersion": "3.2",
   "admin": {
-    "address": "0x52431899FB35D38eF3D4aD6DF511f911a0A44990",
-    "txHash": "0x6e6e8f9e38027dfc0df1f29badd291f1f8c782317385ed1fdccaed6dc76bf1bf"
+    "address": "0xa8067abe1fc36601897175dae9Df7c355c84414C",
+    "txHash": "0x7c4b4d090943dd6d21a83937376caf1a053fc3fb4abafbf12221cced2879d2de"
   },
   "proxies": [
     {
-      "address": "0x977dD3B85f2BD24Df05d824838Db3E4dbb821Fd0",
-      "txHash": "0xcaa7d1cad923037382ef67a69ec292cc353edf1fe2cf21df5bd7e05308d4105a",
+      "address": "0x325f79eAC1E6036ECCCa21EfFCD6d3fBD93374E3",
+      "txHash": "0x3b704313be3179361960db8c1cca17a556c74017a3c7791bfd99b5c11f855e70",
       "kind": "transparent"
     }
   ],
   "impls": {
-    "c93a6edb024bbb22b5195ace2c72433bb25b78d78608f03410d62faac84da879": {
-      "address": "0xCd8b83C8dd8E4630c1F9fc1438a9Bb042FD51FeF",
-      "txHash": "0xa5bd5176377d734908eb492204ee7ca341e52b1f798ca6a8cbf5e29d4598616a",
+    "1e510617c086c0b8d7feb36f4ab5c5e78b6537f1b3145b2f897d71f96b45af00": {
+      "address": "0xe5a07Fee1a906AF3F5a1DD17FcadfD319BBa5325",
+      "txHash": "0xb11890f9a67990fae2b6622ac657c64e6ac4cd36740a27f5676146697c51972c",
       "layout": {
         "storage": [
           {
@@ -222,27 +222,17 @@
           },
           "t_enum(Asset)2613": {
             "label": "enum RC3_Mall.Asset",
-            "members": [
-              "ETH",
-              "RCDY"
-            ],
+            "members": ["ETH", "RCDY"],
             "numberOfBytes": "1"
           },
           "t_enum(State)1669": {
             "label": "enum RC3_Auction.State",
-            "members": [
-              "LISTED",
-              "DELISTED",
-              "SOLD"
-            ],
+            "members": ["LISTED", "DELISTED", "SOLD"],
             "numberOfBytes": "1"
           },
           "t_enum(TokenType)1665": {
             "label": "enum RC3_Auction.TokenType",
-            "members": [
-              "ERC_721",
-              "ERC_1155"
-            ],
+            "members": ["ERC_721", "ERC_1155"],
             "numberOfBytes": "1"
           },
           "t_mapping(t_uint256,t_struct(Auction)1696_storage)": {
@@ -424,9 +414,9 @@
         }
       }
     },
-    "1e510617c086c0b8d7feb36f4ab5c5e78b6537f1b3145b2f897d71f96b45af00": {
-      "address": "0x0ddDab794Fb8D0BDCb4EB4EB1652ab9BaFeb7953",
-      "txHash": "0x134d1c849051c13248b81dee885aca292828c641720bf50c4791af318704dc6e",
+    "b5fbd29980d0dfc75fae78c2fd511eb1fbc3b7e4ed4aaf4921e2b7ea6219e378": {
+      "address": "0xbF1D4C6502Fac711B2aceD0d1023b077f49890D3",
+      "txHash": "0xddae20ad4521d7a66c79c77c49322f0e206675ea03d7ce60634d3e933a33236e",
       "layout": {
         "storage": [
           {
@@ -605,6 +595,14 @@
             "type": "t_mapping(t_uint256,t_struct(Market)2637_storage)",
             "contract": "RC3_Mall",
             "src": "contracts/RC3_Mall.sol:37"
+          },
+          {
+            "label": "deployed",
+            "offset": 0,
+            "slot": "361",
+            "type": "t_bool",
+            "contract": "RC3_Mall",
+            "src": "contracts/RC3_Mall.sol:38"
           }
         ],
         "types": {
@@ -634,27 +632,17 @@
           },
           "t_enum(Asset)2613": {
             "label": "enum RC3_Mall.Asset",
-            "members": [
-              "ETH",
-              "RCDY"
-            ],
+            "members": ["ETH", "RCDY"],
             "numberOfBytes": "1"
           },
           "t_enum(State)1669": {
             "label": "enum RC3_Auction.State",
-            "members": [
-              "LISTED",
-              "DELISTED",
-              "SOLD"
-            ],
+            "members": ["LISTED", "DELISTED", "SOLD"],
             "numberOfBytes": "1"
           },
           "t_enum(TokenType)1665": {
             "label": "enum RC3_Auction.TokenType",
-            "members": [
-              "ERC_721",
-              "ERC_1155"
-            ],
+            "members": ["ERC_721", "ERC_1155"],
             "numberOfBytes": "1"
           },
           "t_mapping(t_uint256,t_struct(Auction)1696_storage)": {

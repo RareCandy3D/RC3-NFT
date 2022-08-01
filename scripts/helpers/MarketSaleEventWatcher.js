@@ -1,5 +1,10 @@
-const { pool, TBL_HOT_NFTS,TBL_HOT_ACTIVITIES } = require("../../db/db");
+<<<<<<< HEAD
+const { pool, TBL_HOT_NFTS, TBL_HOT_ACTIVITIES } = require("../../db/db");
 
+=======
+const { pool, TBL_HOT_NFTS,TBL_HOT_ACTIVITIES } = require("../../db/db");
+const log = require("../../config/log4js");
+>>>>>>> 80c7059e1dd0f418c510c5262860a43f1ce60546
 class MarketSaleEventWatcher {
   constructor(mall) {
     this.mall = mall;
@@ -7,32 +12,32 @@ class MarketSaleEventWatcher {
   async watch() {
     try {
       await this.mall.events.MarketSale().on("data", async (event) => {
-        let { id,address } = event;
+        let { id, address } = event;
         let { caller, seller, nft, asset } = event.returnValues;
-        var totalEth=0, totalRCDY=0;
-    
-          totalRCDY =asset === "1" ? 1 : 0;
-          totalEth = asset === "1" ?  0 : 1;
-        
+        var totalEth = 0,
+          totalRCDY = 0;
 
-        let buys=address==caller ? 1 : 0;
-        let sales=address==seller ? 1 : 0;
+        totalRCDY = asset === "1" ? 1 : 0;
+        totalEth = asset === "1" ? 0 : 1;
+
+        let buys = address == caller ? 1 : 0;
+        let sales = address == seller ? 1 : 0;
 
         const checkUserActivity = await pool.query(
-            `SELECT * FROM ${TBL_HOT_ACTIVITIES} WHERE OUAUserAddress=?`,
-            [address]
+          `SELECT * FROM ${TBL_HOT_ACTIVITIES} WHERE OUAUserAddress=?`,
+          [address]
+        );
+        if (checkUserActivity.length < 1) {
+          await pool.query(
+            `INSERT INTO ${TBL_HOT_ACTIVITIES} (OUAUserAddress,OUABuys,OUASales) VALUES ?  `,
+            [[[address, buys, sales]]]
           );
-          if (checkUserActivity.length < 1) {
-            await pool.query(
-                `INSERT INTO ${TBL_HOT_ACTIVITIES} (OUAUserAddress,OUABuys,OUASales) VALUES ?  `,
-                [[[address,buys,sales]]]
-              );
-          }else{
-            await pool.query(
-                `UPDATE ${TBL_HOT_ACTIVITIES} SET OUABuys=OUABuys+?, OUASales=OUASales+? WHERE OUAUserAddress=?`,
-                [[[buys,sales,address]]]
-              );
-          }
+        } else {
+          await pool.query(
+            `UPDATE ${TBL_HOT_ACTIVITIES} SET OUABuys=OUABuys+?, OUASales=OUASales+? WHERE OUAUserAddress=?`,
+            [[[buys, sales, address]]]
+          );
+        }
 
         const checkNFT = await pool.query(
           `SELECT * FROM ${TBL_HOT_NFTS} WHERE OHNNFTAddress=?`,

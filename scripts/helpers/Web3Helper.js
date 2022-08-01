@@ -1,5 +1,5 @@
 const web3=require("web3");
-
+const log = require("../../config/log4js");
 class Web3Helper{
 
          fromWei(value){

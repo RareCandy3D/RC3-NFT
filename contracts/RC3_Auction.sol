@@ -74,10 +74,10 @@ contract RC3_Auction is
 
     event AuctionResulted(
         address indexed caller,
-        address seller,
+        address indexed seller,
         address highestBidder,
         address indexed nft,
-        uint256 indexed auctionId,
+        uint256 auctionId,
         uint256 tokenId,
         uint256 amount,
         uint256 winPrice
