@@ -436,7 +436,11 @@
       "inputs": [],
       "name": "auctionId",
       "outputs": [
-        { "internalType": "uint256", "name": "_value", "type": "uint256" }
+        {
+          "internalType": "uint256",
+          "name": "_value",
+          "type": "uint256"
+        }
       ],
       "stateMutability": "view",
       "type": "function"
@@ -445,54 +449,108 @@
       "inputs": [],
       "name": "auctionsClosed",
       "outputs": [
-        { "internalType": "uint256", "name": "_value", "type": "uint256" }
+        {
+          "internalType": "uint256",
+          "name": "_value",
+          "type": "uint256"
+        }
       ],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
-        { "internalType": "uint256", "name": "_auctionId", "type": "uint256" },
-        { "internalType": "uint256", "name": "_bidAmount", "type": "uint256" }
+        {
+          "internalType": "uint256",
+          "name": "_auctionId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_bidAmount",
+          "type": "uint256"
+        }
       ],
       "name": "bid",
-      "outputs": [{ "internalType": "bool", "name": "bidded", "type": "bool" }],
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "bidded",
+          "type": "bool"
+        }
+      ],
       "stateMutability": "nonpayable",
       "type": "function"
     },
     {
       "inputs": [
-        { "internalType": "uint256", "name": "_auctionId", "type": "uint256" }
+        {
+          "internalType": "uint256",
+          "name": "_auctionId",
+          "type": "uint256"
+        }
       ],
       "name": "bidTimeRemaining",
       "outputs": [
-        { "internalType": "uint256", "name": "startsIn", "type": "uint256" },
-        { "internalType": "uint256", "name": "endsIn", "type": "uint256" }
+        {
+          "internalType": "uint256",
+          "name": "startsIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "endsIn",
+          "type": "uint256"
+        }
       ],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
-        { "internalType": "uint256", "name": "_marketId", "type": "uint256" }
+        {
+          "internalType": "uint256",
+          "name": "_marketId",
+          "type": "uint256"
+        }
       ],
       "name": "buyWithETH",
-      "outputs": [{ "internalType": "bool", "name": "bought", "type": "bool" }],
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "bought",
+          "type": "bool"
+        }
+      ],
       "stateMutability": "payable",
       "type": "function"
     },
     {
       "inputs": [
-        { "internalType": "uint256", "name": "_marketId", "type": "uint256" }
+        {
+          "internalType": "uint256",
+          "name": "_marketId",
+          "type": "uint256"
+        }
       ],
       "name": "buyWithRCDY",
-      "outputs": [{ "internalType": "bool", "name": "bought", "type": "bool" }],
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "bought",
+          "type": "bool"
+        }
+      ],
       "stateMutability": "nonpayable",
       "type": "function"
     },
     {
       "inputs": [
-        { "internalType": "uint256", "name": "_auctionId", "type": "uint256" }
+        {
+          "internalType": "uint256",
+          "name": "_auctionId",
+          "type": "uint256"
+        }
       ],
       "name": "closeBid",
       "outputs": [
@@ -507,7 +565,11 @@
     },
     {
       "inputs": [
-        { "internalType": "uint256", "name": "_marketId", "type": "uint256" }
+        {
+          "internalType": "uint256",
+          "name": "_marketId",
+          "type": "uint256"
+        }
       ],
       "name": "delistMarket",
       "outputs": [
@@ -523,14 +585,26 @@
     {
       "inputs": [],
       "name": "ethFee",
-      "outputs": [{ "internalType": "uint96", "name": "", "type": "uint96" }],
+      "outputs": [
+        {
+          "internalType": "uint96",
+          "name": "",
+          "type": "uint96"
+        }
+      ],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [],
       "name": "feePercentage",
-      "outputs": [{ "internalType": "uint96", "name": "", "type": "uint96" }],
+      "outputs": [
+        {
+          "internalType": "uint96",
+          "name": "",
+          "type": "uint96"
+        }
+      ],
       "stateMutability": "view",
       "type": "function"
     },
@@ -538,14 +612,22 @@
       "inputs": [],
       "name": "feeRecipient",
       "outputs": [
-        { "internalType": "address payable", "name": "", "type": "address" }
+        {
+          "internalType": "address payable",
+          "name": "",
+          "type": "address"
+        }
       ],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
-        { "internalType": "uint256", "name": "_auctionId", "type": "uint256" }
+        {
+          "internalType": "uint256",
+          "name": "_auctionId",
+          "type": "uint256"
+        }
       ],
       "name": "getAuction",
       "outputs": [
@@ -561,8 +643,16 @@
               "name": "highestBidder",
               "type": "address"
             },
-            { "internalType": "address", "name": "nifty", "type": "address" },
-            { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+            {
+              "internalType": "address",
+              "name": "nifty",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
             {
               "internalType": "uint256",
               "name": "tokenAmount",
@@ -638,19 +728,31 @@
               "name": "state",
               "type": "uint8"
             },
-            { "internalType": "address", "name": "nifty", "type": "address" },
+            {
+              "internalType": "address",
+              "name": "nifty",
+              "type": "address"
+            },
             {
               "internalType": "enum RC3_Mall.Asset",
               "name": "asset",
               "type": "uint8"
             },
-            { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
             {
               "internalType": "uint256",
               "name": "tokenAmount",
               "type": "uint256"
             },
-            { "internalType": "uint256", "name": "price", "type": "uint256" },
+            {
+              "internalType": "uint256",
+              "name": "price",
+              "type": "uint256"
+            },
             {
               "internalType": "uint256",
               "name": "listTimestamp",
@@ -667,7 +769,11 @@
     },
     {
       "inputs": [
-        { "internalType": "uint256", "name": "_marketId", "type": "uint256" }
+        {
+          "internalType": "uint256",
+          "name": "_marketId",
+          "type": "uint256"
+        }
       ],
       "name": "getMarket",
       "outputs": [
@@ -693,19 +799,31 @@
               "name": "state",
               "type": "uint8"
             },
-            { "internalType": "address", "name": "nifty", "type": "address" },
+            {
+              "internalType": "address",
+              "name": "nifty",
+              "type": "address"
+            },
             {
               "internalType": "enum RC3_Mall.Asset",
               "name": "asset",
               "type": "uint8"
             },
-            { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
             {
               "internalType": "uint256",
               "name": "tokenAmount",
               "type": "uint256"
             },
-            { "internalType": "uint256", "name": "price", "type": "uint256" },
+            {
+              "internalType": "uint256",
+              "name": "price",
+              "type": "uint256"
+            },
             {
               "internalType": "uint256",
               "name": "listTimestamp",
@@ -722,15 +840,31 @@
     },
     {
       "inputs": [
-        { "internalType": "address", "name": "_owner", "type": "address" },
-        { "internalType": "address", "name": "_rcdy", "type": "address" },
+        {
+          "internalType": "address",
+          "name": "_owner",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_rcdy",
+          "type": "address"
+        },
         {
           "internalType": "address payable",
           "name": "_feeReceipient",
           "type": "address"
         },
-        { "internalType": "uint96", "name": "_feeRCDY", "type": "uint96" },
-        { "internalType": "uint96", "name": "_ethFee", "type": "uint96" }
+        {
+          "internalType": "uint96",
+          "name": "_feeRCDY",
+          "type": "uint96"
+        },
+        {
+          "internalType": "uint96",
+          "name": "_ethFee",
+          "type": "uint96"
+        }
       ],
       "name": "initialize",
       "outputs": [],
@@ -739,11 +873,31 @@
     },
     {
       "inputs": [
-        { "internalType": "address", "name": "nifty", "type": "address" },
-        { "internalType": "uint256", "name": "_tokenId", "type": "uint256" },
-        { "internalType": "uint256", "name": "amount", "type": "uint256" },
-        { "internalType": "uint256", "name": "_startsIn", "type": "uint256" },
-        { "internalType": "uint256", "name": "_lastsFor", "type": "uint256" },
+        {
+          "internalType": "address",
+          "name": "nifty",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_tokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_startsIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_lastsFor",
+          "type": "uint256"
+        },
         {
           "internalType": "uint256",
           "name": "_initialBidAmount",
@@ -757,17 +911,37 @@
       ],
       "name": "listAuction",
       "outputs": [
-        { "internalType": "uint256", "name": "auctionId_", "type": "uint256" }
+        {
+          "internalType": "uint256",
+          "name": "auctionId_",
+          "type": "uint256"
+        }
       ],
       "stateMutability": "nonpayable",
       "type": "function"
     },
     {
       "inputs": [
-        { "internalType": "address", "name": "nifty", "type": "address" },
-        { "internalType": "uint256", "name": "_tokenId", "type": "uint256" },
-        { "internalType": "uint256", "name": "amount", "type": "uint256" },
-        { "internalType": "uint256", "name": "_price", "type": "uint256" },
+        {
+          "internalType": "address",
+          "name": "nifty",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_tokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_price",
+          "type": "uint256"
+        },
         {
           "internalType": "enum RC3_Auction.TokenType",
           "name": "_type",
@@ -781,7 +955,11 @@
       ],
       "name": "listMarket",
       "outputs": [
-        { "internalType": "uint256", "name": "marketId_", "type": "uint256" }
+        {
+          "internalType": "uint256",
+          "name": "marketId_",
+          "type": "uint256"
+        }
       ],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -790,7 +968,11 @@
       "inputs": [],
       "name": "marketId",
       "outputs": [
-        { "internalType": "uint256", "name": "_value", "type": "uint256" }
+        {
+          "internalType": "uint256",
+          "name": "_value",
+          "type": "uint256"
+        }
       ],
       "stateMutability": "view",
       "type": "function"
@@ -799,7 +981,11 @@
       "inputs": [],
       "name": "marketsDelisted",
       "outputs": [
-        { "internalType": "uint256", "name": "_value", "type": "uint256" }
+        {
+          "internalType": "uint256",
+          "name": "_value",
+          "type": "uint256"
+        }
       ],
       "stateMutability": "view",
       "type": "function"
@@ -808,7 +994,11 @@
       "inputs": [],
       "name": "marketsSold",
       "outputs": [
-        { "internalType": "uint256", "name": "_value", "type": "uint256" }
+        {
+          "internalType": "uint256",
+          "name": "_value",
+          "type": "uint256"
+        }
       ],
       "stateMutability": "view",
       "type": "function"
@@ -839,19 +1029,31 @@
               "name": "state",
               "type": "uint8"
             },
-            { "internalType": "address", "name": "nifty", "type": "address" },
+            {
+              "internalType": "address",
+              "name": "nifty",
+              "type": "address"
+            },
             {
               "internalType": "enum RC3_Mall.Asset",
               "name": "asset",
               "type": "uint8"
             },
-            { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
             {
               "internalType": "uint256",
               "name": "tokenAmount",
               "type": "uint256"
             },
-            { "internalType": "uint256", "name": "price", "type": "uint256" },
+            {
+              "internalType": "uint256",
+              "name": "price",
+              "type": "uint256"
+            },
             {
               "internalType": "uint256",
               "name": "listTimestamp",
@@ -868,57 +1070,145 @@
     },
     {
       "inputs": [
-        { "internalType": "uint256", "name": "_auctionId", "type": "uint256" }
+        {
+          "internalType": "uint256",
+          "name": "_auctionId",
+          "type": "uint256"
+        }
       ],
       "name": "nextBidAmount",
       "outputs": [
-        { "internalType": "uint256", "name": "amount", "type": "uint256" }
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
       ],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
-        { "internalType": "address", "name": "", "type": "address" },
-        { "internalType": "address", "name": "", "type": "address" },
-        { "internalType": "uint256[]", "name": "", "type": "uint256[]" },
-        { "internalType": "uint256[]", "name": "", "type": "uint256[]" },
-        { "internalType": "bytes", "name": "", "type": "bytes" }
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
       ],
       "name": "onERC1155BatchReceived",
-      "outputs": [{ "internalType": "bytes4", "name": "", "type": "bytes4" }],
+      "outputs": [
+        {
+          "internalType": "bytes4",
+          "name": "",
+          "type": "bytes4"
+        }
+      ],
       "stateMutability": "nonpayable",
       "type": "function"
     },
     {
       "inputs": [
-        { "internalType": "address", "name": "", "type": "address" },
-        { "internalType": "address", "name": "", "type": "address" },
-        { "internalType": "uint256", "name": "", "type": "uint256" },
-        { "internalType": "uint256", "name": "", "type": "uint256" },
-        { "internalType": "bytes", "name": "", "type": "bytes" }
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
       ],
       "name": "onERC1155Received",
-      "outputs": [{ "internalType": "bytes4", "name": "", "type": "bytes4" }],
+      "outputs": [
+        {
+          "internalType": "bytes4",
+          "name": "",
+          "type": "bytes4"
+        }
+      ],
       "stateMutability": "nonpayable",
       "type": "function"
     },
     {
       "inputs": [
-        { "internalType": "address", "name": "", "type": "address" },
-        { "internalType": "address", "name": "", "type": "address" },
-        { "internalType": "uint256", "name": "", "type": "uint256" },
-        { "internalType": "bytes", "name": "", "type": "bytes" }
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
       ],
       "name": "onERC721Received",
-      "outputs": [{ "internalType": "bytes4", "name": "", "type": "bytes4" }],
+      "outputs": [
+        {
+          "internalType": "bytes4",
+          "name": "",
+          "type": "bytes4"
+        }
+      ],
       "stateMutability": "nonpayable",
       "type": "function"
     },
     {
       "inputs": [],
       "name": "owner",
-      "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
       "stateMutability": "view",
       "type": "function"
     },
@@ -931,7 +1221,11 @@
     },
     {
       "inputs": [
-        { "internalType": "uint96", "name": "_newFee", "type": "uint96" }
+        {
+          "internalType": "uint96",
+          "name": "_newFee",
+          "type": "uint96"
+        }
       ],
       "name": "setFeeETH",
       "outputs": [],
@@ -940,7 +1234,11 @@
     },
     {
       "inputs": [
-        { "internalType": "uint96", "name": "_newFee", "type": "uint96" }
+        {
+          "internalType": "uint96",
+          "name": "_newFee",
+          "type": "uint96"
+        }
       ],
       "name": "setFeeRCDY",
       "outputs": [],
@@ -962,16 +1260,30 @@
     },
     {
       "inputs": [
-        { "internalType": "bytes4", "name": "interfaceId", "type": "bytes4" }
+        {
+          "internalType": "bytes4",
+          "name": "interfaceId",
+          "type": "bytes4"
+        }
       ],
       "name": "supportsInterface",
-      "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
-        { "internalType": "address", "name": "newOwner", "type": "address" }
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
       ],
       "name": "transferOwnership",
       "outputs": [],
@@ -981,14 +1293,26 @@
     {
       "inputs": [],
       "name": "version",
-      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
       "stateMutability": "pure",
       "type": "function"
     },
     {
       "inputs": [],
       "name": "waitPeriod",
-      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
       "stateMutability": "view",
       "type": "function"
     }
