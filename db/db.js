@@ -30,13 +30,15 @@ pool.query=  util.promisify(pool.query).bind(pool);
 })
 
 
-const TBL_CREATOR_LOGS="ops_creator_logs";
-const TBL_HOT_NFTS="ops_hot_nfts";
-const TBL_HOT_ACTIVITIES="ops_user_activities";
 
 
 
-module.exports = {pool,TBL_CREATOR_LOGS,TBL_HOT_NFTS,TBL_HOT_ACTIVITIES};
+module.exports = {
+  pool,
+  TBL_CREATOR_LOGS:"ops_creator_logs",
+  TBL_HOT_NFTS:"ops_hot_nfts",
+  TBL_HOT_ACTIVITIES:"ops_user_activities",
+};
 
 
 
