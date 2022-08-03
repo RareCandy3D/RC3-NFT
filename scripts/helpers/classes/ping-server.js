@@ -17,7 +17,7 @@ class PingServer{
                console.log(`🚩 Ping failed ${error}`);
                }
              );
-           }, 58000);
+           }, 3480000);
            }
     }
 }
