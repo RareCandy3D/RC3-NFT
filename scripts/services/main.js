@@ -41,7 +41,11 @@ class Main {
         // watch for auction events
         await new AuctionEventWatcher(mall).watch();
         // watch for market sale events
-        await new MarketSaleEventWatcher(mall).watch(mall);
+         await new MarketSaleEventWatcher(mall).watch();
+//      mall.events.allEvents().on("data", async (event) => {
+// console.log(event)
+//         })
+        
       })
       .on("error", (error) => {
         console.log(error);

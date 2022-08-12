@@ -22,6 +22,8 @@ const {
         output.data = result;
         return res.status(200).json(output);
     }catch(err){
+      log.info(`Error fetching creator's list: ${err}`);
+      console.log(`Error fetching creator's list: ${err}`);
         output.message = "Failed to fetch creator's list!";
         return res.status(400).json(output);
     }

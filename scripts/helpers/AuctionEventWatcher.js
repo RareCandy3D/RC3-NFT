@@ -1,9 +1,5 @@
-<<<<<<< HEAD
-const { pool, TBL_HOT_NFTS, TBL_HOT_ACTIVITIES } = require("../../db/db");
-=======
 const { pool, TBL_HOT_NFTS,TBL_HOT_ACTIVITIES } = require("../../db/db");
 const log = require("../../config/log4js");
->>>>>>> 80c7059e1dd0f418c510c5262860a43f1ce60546
 
 class AuctionEventWatcher {
   constructor(mall) {
@@ -30,7 +26,7 @@ class AuctionEventWatcher {
         } else {
           await pool.query(
             `UPDATE ${TBL_HOT_ACTIVITIES} SET OUABuys=OUABuys+?, OUASales=OUASales+? WHERE OUAUserAddress=?`,
-            [[[buys, sales, address]]]
+            [buys, sales, address]
           );
         }
 
@@ -47,7 +43,7 @@ class AuctionEventWatcher {
           if (!checkNFT[0].OHNIDArray.includes(id)) {
             const result = await pool.query(
               `UPDATE ${TBL_HOT_NFTS} SET OHNAuctions=OHNAuctions+1, OHNTotalRCDY=OHNTotalRCDY+1 WHERE OHNNFTAddress=?`,
-              [[[nft]]]
+              [nft]
             );
           }
         }

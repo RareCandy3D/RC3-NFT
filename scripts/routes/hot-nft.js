@@ -16,6 +16,8 @@ const {
         output.data = result;
         return res.status(200).json(output);
     }catch(err){
+      log.info(`Error fetching hot nfts: ${err}`);
+      console.log(`Error fetching hot nfts: ${err}`);
         output.message = "Failed to fetch hot nfts";
         return res.status(400).json(output);
     }

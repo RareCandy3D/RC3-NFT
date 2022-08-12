@@ -15,9 +15,8 @@ const helmet = require("helmet");
 const log = require("../config/log4js");
 const Main=require("./services/main");
 const main=new Main();
-const creatorsRoute=require("./routes/creators");
-const hotnftsRoute=require("./routes/hot-nft");
 
+const PingServer=require("./helpers/classes/ping-server");
 
 const allowedOrigins = [
   "https://rarecandy.xyz","http://localhost:3000"
@@ -35,8 +34,8 @@ app.use(cors({
 }));
 app.use(helmet());
 
-app.use("/api/creators",creatorsRoute);
-app.use("/api/hot-nfts",hotnftsRoute);
+app.use("/api/creators",require("./routes/creators"));
+app.use("/api/hot-nfts",require("./routes/hot-nft"));
 
 app.get("/api/",async (req,res)=>{
   res.status(200).send(new Date);
@@ -46,7 +45,8 @@ app.get("/api/",async (req,res)=>{
   await main.subscribe();
 })();
 
-
+//ping heroku server every 50 mins
+new PingServer().ping();
 
 const port = process.env.PORT || 3000;
 
