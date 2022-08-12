@@ -303,10 +303,6 @@ contract RC3_Mall is RC3_Auction, OwnableUpgradeable {
         return items;
     }
 
-    function version() public pure returns (uint256) {
-        return 2;
-    }
-
     function _setFeePercentage(uint96 _newFee) internal {
         uint96 fee = feePercentage;
         require(_newFee != fee, "Error: already set");

@@ -8,7 +8,7 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
     bytes32[] public categories;
     bytes32[3] public natures;
 
-    uint256 private _currentTokenID;
+    uint256 public serialNum;
     uint256 public constant creationFee = 0.01 ether;
     uint256 public constant splitRoyaltyLimit = 10;
     address payable public feeReceipient;
@@ -20,7 +20,6 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
         uint256 tokenSupply;
         uint256 maxSupply;
         uint256 royalty; //1% = 100
-        string customUri;
     }
 
     struct Royalty {
@@ -30,6 +29,7 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
     }
 
     mapping(uint256 => Info) private _idToInfo;
+    mapping(uint256 => uint256) public serialNumToId;
     mapping(uint256 => Royalty) private _idToRoyalty;
     mapping(address => bool) public isWhitelistedMarket;
     mapping(address => bool) public canCreatePhysical;
@@ -59,7 +59,7 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
     );
     event PhysicalCreatorSet(address indexed addr, bool canCreatePhysical);
 
-    constructor(address defaultAdmin, string memory _uri) ERC1155(_uri) {
+    constructor(address defaultAdmin) ERC1155("ipfs://f0") {
         _setupRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
 
         categories.push(stringToBytes32("ART"));
@@ -187,12 +187,12 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
 
     function createToken(
         address _initialHodler,
+        uint256 _id,
         uint256 _initialSupply,
         uint256 _maxSupply,
         uint256 royalty, //1% = 100. max is 50% ~ 5000
         bytes32 category,
-        bytes32 nature,
-        string memory _uri
+        bytes32 nature
     )
         external
         payable
@@ -204,12 +204,12 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
         require(msg.value == creationFee, "FEE_NOT_SENT");
         tokenId = _createToken(
             _initialHodler,
+            _id,
             _initialSupply,
             _maxSupply,
             royalty,
             category,
-            nature,
-            _uri
+            nature
         );
     }
 
@@ -255,14 +255,6 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
 
         _mintBatch(to, ids, amounts, "0x0");
         return true;
-    }
-
-    function setCustomURI(uint256 id, string memory newURI)
-        external
-        creatorOnly(id)
-    {
-        _idToInfo[id].customUri = newURI;
-        emit URI(newURI, id);
     }
 
     function setFeeCollector(address payable _newFeeReceipient)
@@ -345,10 +337,6 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
         );
     }
 
-    function setURI(string memory _newURI) external onlyAdmin {
-        _setURI(_newURI);
-    }
-
     function setMarket(address market, bool isMarket) external onlyAdmin {
         require(market != address(0), "ZERO_ADDRESS");
 
@@ -383,16 +371,16 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
         return ERC1155.isApprovedForAll(_owner, _operator);
     }
 
-    function royaltyInfo(uint256 _tokenId, uint256 _salePrice)
+    function royaltyInfo(uint256 _id, uint256 _salePrice)
         external
         view
         returns (address, uint256)
     {
-        Info memory i = _idToInfo[_tokenId];
+        Info memory i = _idToInfo[_id];
         return (i.creator, _calculateRoyalty(_salePrice, i.royalty));
     }
 
-    function splitRoyaltyInfo(uint256 _tokenId, uint256 _salePrice)
+    function splitRoyaltyInfo(uint256 _id, uint256 _salePrice)
         external
         view
         returns (
@@ -401,7 +389,7 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
             uint256 salePrice
         )
     {
-        Royalty storage rInfo = _idToRoyalty[_tokenId];
+        Royalty storage rInfo = _idToRoyalty[_id];
 
         uint256 len = rInfo.index;
         recipients = new address[](len);
@@ -414,7 +402,7 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
             }
         }
 
-        salePrice = _calculateRoyalty(_salePrice, _idToInfo[_tokenId].royalty);
+        salePrice = _calculateRoyalty(_salePrice, _idToInfo[_id].royalty);
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -436,16 +424,10 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
         return _idToInfo[_id].tokenSupply;
     }
 
-    function uri(uint256 id) public view override returns (string memory) {
-        require(_exists(id), "NON_EXISTENT_TOKEN");
-        // We have to convert string to bytes to check for existence
-        Info storage info = _idToInfo[id];
-        bytes memory customUriBytes = bytes(info.customUri);
-        if (customUriBytes.length > 0) {
-            return info.customUri;
-        } else {
-            return super.uri(id);
-        }
+    function uri(uint256 _id) public view override returns (string memory) {
+        require(_exists(_id), "NON_EXISTENT_TOKEN");
+        string memory hexstrId = uint2hexstr(_id);
+        return string(abi.encodePacked("ipfs://f0", hexstrId));
     }
 
     //________________//
@@ -473,60 +455,56 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
 
     function _createToken(
         address _initialHodler,
+        uint256 _id,
         uint256 _initialSupply,
         uint256 _maxSupply,
         uint256 _royalty, //1% = 100. max is 50% ~ 5000
         bytes32 _category,
-        bytes32 _nature,
-        string memory _uri
+        bytes32 _nature
     ) private returns (uint256) {
         address initialHodler = _initialHodler;
         uint256 initialSupply = _initialSupply;
         uint256 maxSupply_ = _maxSupply;
         uint256 royalty = _royalty;
-        string memory uri_ = _uri;
         bytes32 category = _category;
         bytes32 nature = _nature;
 
         require(initialSupply <= maxSupply_, "SUPPLY_ERR");
 
-        uint256 id = _nextIdPrint();
-
-        canMint[id][msg.sender] = true;
-
-        Info storage info = _idToInfo[id];
+        Info storage info = _idToInfo[_id];
         info.creator = payable(_msgSender());
         info.category = category;
         info.nature = nature;
         info.royalty = royalty;
         info.maxSupply = maxSupply_;
 
-        uint256 _id = id;
+        uint256 id = _id;
+        uint256 sn = _nextIdPrint();
 
-        if (bytes(uri_).length > 0) {
-            info.customUri = uri_;
-            emit URI(uri_, _id);
-        }
+        serialNumToId[sn] = id;
+        canMint[id][msg.sender] = true;
 
         if (initialSupply > 0) {
             info.tokenSupply = initialSupply;
-            _mint(initialHodler, _id, initialSupply, "0x0");
+            _mint(initialHodler, id, initialSupply, "0x0");
         }
 
         (bool success, ) = feeReceipient.call{value: msg.value}("");
         require(success, "FEE_TRANSFER_ERR");
 
-        emit NewToken(msg.sender, initialSupply, maxSupply_, _id);
-        return _id;
+        emit NewToken(msg.sender, initialSupply, maxSupply_, id);
+        return id;
     }
 
     function _exists(uint256 _id) private view returns (bool) {
-        return _idToInfo[_id].tokenSupply > 0;
+        return
+            _idToInfo[_id].nature !=
+            0x0000000000000000000000000000000000000000000000000000000000000000;
     }
 
     function _nextIdPrint() private returns (uint256) {
-        _currentTokenID++;
-        return _currentTokenID;
+        serialNum++;
+        return serialNum;
     }
 
     function _onlyCreated(bytes32 category, bytes32 nature) private view {
@@ -555,7 +533,7 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
         }
     }
 
-    // STRING / BYTE CONVERSION
+    // HELPER FUNCTIONS
     /**
      * @dev Helper Function to convert bytes32 to string format
      * @param _bytes32 is the bytes32 format which needs to be converted
@@ -595,5 +573,26 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
         assembly {
             result := mload(add(source, 32))
         }
+    }
+
+    function uint2hexstr(uint256 i) public pure returns (string memory) {
+        if (i == 0) return "0";
+        uint256 j = i;
+        uint256 length;
+        while (j != 0) {
+            length++;
+            j = j >> 4;
+        }
+        uint256 mask = 15;
+        bytes memory bstr = new bytes(length);
+        uint256 k = length;
+        while (i != 0) {
+            uint256 curr = (i & mask);
+            bstr[--k] = curr > 9
+                ? bytes1(uint8(55 + curr))
+                : bytes1(uint8(48 + curr)); // 55 = 65 - 10
+            i = i >> 4;
+        }
+        return string(bstr);
     }
 }
