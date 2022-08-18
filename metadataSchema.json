@@ -1,0 +1,56 @@
+IPFS flow for URI only comes to play when a new token type is created. (This is different from minting itself).
+Hence we won't be doing any metadata actions when minting goes on in the contracts. 
+Only when a creator creates a new token type with the smart contract method below:
+
+- NOTE. the entire pinning and CID generating process must have completed before the metamask transaction
+ is actually executed as the final CID form will be passed in as a parameter in the smart contract call.
+
+function createToken(
+    address initialHodler,
+    uint256 id,
+    uint256 initialSupply,
+    uint256 maxSupply,
+    uint256 royalty,
+    bytes32 category,
+    bytes32 nature
+  )
+
+
+- client fills in the name, description, nature, and category
+
+- client uploads the correspinding image/video/audio/GIF. 
+
+- backend posts the uploaded image/video/audio/GIF to IPFS and returns the unique CID, (example. QmWS1VAdMD353A6SDk9wNyvkT14kyCiZrNDYAad4w1tKqT)
+
+- backend creates the example json file below, using this string as the value for image: "ipfs://QmWS1VAdMD353A6SDk9wNyvkT14kyCiZrNDYAad4w1tKqT"
+
+{
+  "name": "Advertising Space",
+  "description": "This is the description described by the creator.",
+  "image": "ipfs://QmWS1VAdMD353A6SDk9wNyvkT14kyCiZrNDYAad4w1tKqT",
+  "catalogue number": "could be a number or string. It could also be empty",
+  "properties": {
+    "category": "could be ART, FASHION, MUSIC, etc",
+    "nature": "could be PHYSICAL, DIGITAL, or PHYGITAL",
+    "unlockable content": "URL link to unlockable",
+    "unlockable content details": "string explaining what the unlockable content grants you access to"
+  }
+}
+
+- backend creates a CID V1 by adding “cid-version=1 hash=blake2b-208” like this:
+
+$ ipfs add MetaDataIPFSToken.json cid-version=1 hash=blake2b-208
+added bafkzvzacdkm3bu3t266ivacqjowxqi3hvpqsyijxhsb23rv7nj7a MetaDataIPFSToken.json
+
+
+- Then backend converts it to hex “-b=base16” like this:
+
+$ ipfs cid format -b=base16 bafkzvzacdkm3bu3t266ivacqjowxqi3hvpqsyijxhsb23rv7nj7a
+f01559ae4021a99b0d373d7bc8a80504bad782367abe12c21373c83adc6bf6a7e
+
+
+- always remove "f0" and replace it with "0x0" to look like this:
+
+0x01559ae4021a99b0d373d7bc8a80504bad782367abe12c21373c83adc6bf6a7e. which is the actual token id of this NFT.
+
+https://docs.ipfs.tech/how-to/best-practices-for-ipfs-builders/#use-cidv1-for-future-proof-addressing-and-case-insenstive-contexts

@@ -37,7 +37,7 @@ class Main {
       .on("data", async (block) => {
         // console.log(`New block: ${block.number}`);
         // watch for creator events
-         await new CreatorEventWatcher(creators).watch();
+        await new CreatorEventWatcher(creators).watch();
         // watch for auction events
         await new AuctionEventWatcher(mall).watch();
         // watch for market sale events
