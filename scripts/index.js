@@ -12,6 +12,7 @@ app.use(morgan('combined'))
 const bodyParser = require("body-parser");
 const cors = require("cors"); 
 const helmet = require("helmet");
+
 const log = require("../config/log4js");
 const Main=require("./services/main");
 const main=new Main();
@@ -36,6 +37,7 @@ app.use(helmet());
 
 app.use("/api/creators",require("./routes/creators"));
 app.use("/api/hot-nfts",require("./routes/hot-nft"));
+app.use("/api/create-nft",require("./routes/create-nft"));
 
 app.get("/api/",async (req,res)=>{
   res.status(200).send(new Date);
