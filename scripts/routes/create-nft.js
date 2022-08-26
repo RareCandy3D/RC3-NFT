@@ -4,16 +4,8 @@ const multer = require("multer");
 const Joi = require("joi");
 const fs = require('fs');
 const CIDTool = require('cid-tool');
-const pinataSDK = require('@pinata/sdk');
-const pinata = pinataSDK(process.env.PINATA_KEY, process.env.PINATA_PRIVATE_KEY);
 const log = require("../../config/log4js");
-pinata.testAuthentication().then((result) => {
-        log.info(`Authenticated with Pinata`);
-        console.log(`Authenticated with Pinata`);
-     }).catch((err) => {
-        log.info(`Authentication with Pinata failed`);
-        console.log(`Authentication with Pinata failed`);
-});
+
 const postUploads = multer({ dest: "uploads/post_uploads"});
 const uploadSchema = Joi.object({
 name: Joi.string().required(),
@@ -21,10 +13,6 @@ description: Joi.string().required(),
 nature:Joi.string().valid("PHYSICAL","DIGITAL", "PHYGITAL").required(),
 category:Joi.string().required()
 });
-
-
-
-
 
   router.post("/", postUploads.single("media"), async (req, res) => {
     let output = { flag: false, message: "", data: {} };
@@ -41,24 +29,28 @@ category:Joi.string().required()
            //pin image
             const readableStreamForFile = fs.createReadStream(path);  
 
+            const {create} =await import("ipfs-http-client");
+
+            const client = create({
+                host: 'ipfs.infura.io',
+                port: 5001,
+                protocol: 'https',
+                headers: {
+                    authorization: 'Basic ' + Buffer.from(process.env.IPFS_ID + ':' + process.env.IPFS_SECRET).toString('base64')
+                },
+            });
+
     try {
-        let pinFile= await pinata.pinFileToIPFS(readableStreamForFile, {
-            pinataMetadata: {
-            name: filename,
-            },
-            pinataOptions: {
-            cidVersion: 0
-            }
-        });
+        let pinFile= await client.add(readableStreamForFile,{
+            cidVersion:0
+        } );
 
-           let {IpfsHash}=pinFile;
-
-           //build json pinata
-            let pinJson= await pinata.pinJSONToIPFS(
-                {
+           //build json 
+            let pinJson= await client.add(
+                JSON.stringify({
                     name,
                     description,
-                    image: `ipfs://${IpfsHash}`,
+                    image: `ipfs://${pinFile.path}`,
                     "catalogue number": "",
                     properties: {
                     category,
@@ -66,18 +58,13 @@ category:Joi.string().required()
                     "unlockable content": "URL link to unlockable",
                     "unlockable content details": "string explaining what the unlockable content grants you access to"
                     }
-                },
-                    {
-                    pinataMetadata: {
-                        name: filename
-                    },
-                    pinataOptions: {
-                        cidVersion: 1
-                    }
-                    }
+                }),
+                {
+                    cidVersion:1,
+                    hashAlg:"blake2b-208"
+                }   
             );
-           
-        var tokenId=CIDTool.format(pinJson.IpfsHash, { base: 'base16' }).split('');
+        var tokenId=CIDTool.format(pinJson.path, { base: 'base16' }).split('');
         tokenId.splice(0,2,"0","x","0");
         let newTokenId=tokenId.join('');
         output.flag=true;
