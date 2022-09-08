@@ -1,4 +1,4 @@
-const { pool, TBL_HOT_NFTS,TBL_HOT_ACTIVITIES } = require("../../db/db");
+const { pool, TBL_HOT_NFTS, TBL_HOT_ACTIVITIES } = require("../../db/db");
 const log = require("../../config/log4js");
 class MarketSaleEventWatcher {
   constructor(mall) {
@@ -47,7 +47,7 @@ class MarketSaleEventWatcher {
           if (!checkNFT[0].OHNIDArray.includes(id)) {
             const result = await pool.query(
               `UPDATE ${TBL_HOT_NFTS} SET OHNTrades=OHNTrades+1,OHNTotalEth=OHNTotalEth+? OHNTotalRCDY=OHNTotalRCDY+? WHERE OHNNFTAddress=?`,
-            [totalEth, totalRCDY, nft]
+              [totalEth, totalRCDY, nft]
             );
           }
         }
