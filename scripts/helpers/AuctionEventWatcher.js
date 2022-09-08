@@ -1,4 +1,4 @@
-const { pool, TBL_HOT_NFTS,TBL_HOT_ACTIVITIES } = require("../../db/db");
+const { pool, TBL_HOT_NFTS, TBL_HOT_ACTIVITIES } = require("../../db/db");
 const log = require("../../config/log4js");
 
 class AuctionEventWatcher {
@@ -39,6 +39,7 @@ class AuctionEventWatcher {
             `INSERT INTO ${TBL_HOT_NFTS} (OHNNFTAddress,OHNAuctions,OHNTotalRCDY,OHNIDArray) VALUES ?  `,
             [[[nft, 1, 1, id]]]
           );
+          return result;
         } else {
           if (!checkNFT[0].OHNIDArray.includes(id)) {
             const result = await pool.query(
@@ -46,6 +47,7 @@ class AuctionEventWatcher {
               [nft]
             );
           }
+          return result;
         }
       });
     } catch (e) {
