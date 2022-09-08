@@ -1,10 +1,19 @@
+IPFS flow for URI only comes to play when a new token type is created. (This is different from minting itself).
+Hence we won't be doing any metadata actions when minting goes on in the contracts. 
+Only when a creator creates a new token type with the smart contract method below:
+
+- NOTE. the entire pinning and CID generating process must have completed before the metamask transaction
+ is actually executed as the final CID form will be passed in as a parameter in the smart contract call.
+
 function createToken(
-    address _initialHodler,
+    address initialHodler,
+    uint256 id,
     uint256 initialSupply,
     uint256 maxSupply,
     uint256 royalty,
     bytes32 category,
-    bytes32 nature)
+    bytes32 nature
+  )
 
 
 - client fills in the name, description, nature, and category

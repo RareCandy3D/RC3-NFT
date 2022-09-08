@@ -27,6 +27,9 @@ class Main {
       creatorsABI.abi,
       addresses.kovan.creators
     );
+    // let yy=await creators.methods.uri("0x01559ae4021a99b0d373d7bc8a80504bad782367abe12c21373c83adc6bf6a7e");
+    // console.log(yy,"waiting");
+    
     // const originals = new web3.eth.Contract(
     //   originalsABI.abi,
     //   addresses.kovan.originals
