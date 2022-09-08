@@ -34,6 +34,8 @@ event Created(address creator, address token)
 
 ## RC3_Mall
 
+This smart contract handles NFT auctions and direct sales. The following events:
+
 1. ### listAuction
 
 ```
@@ -66,20 +68,21 @@ event NewAuction(
 
 ```
 event NewBid(
-        address indexed bidder,
-        address indexed nft,
-        uint256 indexed auctionId,
-        uint256 tokenId,
-        uint256 price
-    );
+    address indexed bidder,
+    address indexed nft,
+    uint256 indexed auctionId,
+    uint256 tokenId,
+    uint256 price
+);
+
 
 event AuctionUpdated(
-        address indexed bidder,
-        address indexed nft,
-        uint256 indexed auctionId,
-        uint256 tokenId,
-        uint256 newEndPeriod
-    );
+    address indexed bidder,
+    address indexed nft,
+    uint256 indexed auctionId,
+    uint256 tokenId,
+    uint256 newEndPeriod
+);
 ```
 
 | Syntax       | type    | description                             |
@@ -91,46 +94,26 @@ event AuctionUpdated(
 | price        | uint256 | the price that was bidded with          |
 | newEndPeriod | uint256 | the new timestamp when bidden will stop |
 
-3. ### updateEndTime
-
-```
-event EndTimeUpdated(
-        address indexed creator,
-        address indexed nft,
-        uint256 indexed auctionId,
-        uint256 tokenId,
-        uint256 newEndTime
-    );
-```
-
-| Syntax     | type    | description                             |
-| ---------- | ------- | --------------------------------------- |
-| creator    | address | the address that created the auction    |
-| nft        | address | the address of the NFT                  |
-| auctionId  | uint256 | the id of the auction                   |
-| tokenId    | uint256 | the id of the nft token                 |
-| newEndTime | uint256 | the new timestamp when bidden will stop |
-
-4. ### closeBid
+3. ### closeBid
 
 ```
 event AuctionResulted(
-        address indexed caller,
-        address seller,
-        address highestBidder,
-        address indexed nft,
-        uint256 indexed auctionId,
-        uint256 tokenId,
-        uint256 amount,
-        uint256 winPrice
-    );
+    address indexed caller,
+    address indexed seller,
+    address highestBidder,
+    address indexed nft,
+    uint256 auctionId,
+    uint256 tokenId,
+    uint256 amount,
+    uint256 winPrice
+);
 
 event AuctionCancelled(
-        address indexed caller,
-        address indexed nft,
-        uint256 indexed auctionId,
-        uint256 tokenID
-    );
+    address indexed caller,
+    address indexed nft,
+    uint256 indexed auctionId,
+    uint256 tokenID
+);
 
 ```
 
@@ -156,19 +139,19 @@ else, if there was bidding: **AuctionResulted**
 | amount        | uint256 | the number of tokens being auctioned             |
 | winPrice      | uint256 | the highest bidded amount                        |
 
-5. ### listMarket
+4. ### listMarket
 
 ```
 event NewMarket(
-        address indexed caller,
-        address indexed nifty,
-        uint256 indexed marketId,
-        uint256 tokenId,
-        uint256 amount,
-        uint256 price,
-        TokenType tokenType,
-        Asset asset
-    );
+    address indexed caller,
+    address indexed nifty,
+    uint256 indexed marketId,
+    uint256 tokenId,
+    uint256 amount,
+    uint256 price,
+    TokenType tokenType,
+    Asset asset
+);
 ```
 
 | Syntax    | type    | description                                    |
@@ -181,29 +164,32 @@ event NewMarket(
 | price     | uint256 | the price                                      |
 | tokenType | enum    | type of token being sold. ie ERC721 or ERC1155 |
 
-6. ### buyWithETH & buyWithRCDY
+5. ### buyWithETH & buyWithRCDY
 
 ```
 event MarketSale(
-        address indexed caller,
-        address indexed nifty,
-        uint256 indexed marketId,
-        uint256 tokenId,
-        uint256 price,
-        Asset asset
-    );
+    address indexed caller,
+    address indexed seller,
+    address indexed nft,
+    uint256 marketId,
+    uint256 tokenId,
+    uint256 price,
+    Asset asset
+);
+
 ```
 
 | Syntax   | type    | description                         |
 | -------- | ------- | ----------------------------------- |
 | caller   | address | the address of the user who buys    |
+| seller   | address | the address of the user who sold    |
 | nifty    | address | the address of the NFT being sold   |
 | marketId | uint256 | the id of the market                |
 | tokenId  | uint256 | the id of the nft token             |
 | price    | uint256 | the price that was bought with      |
 | asset    | enum    | the kind of asset used. ETH or RCDY |
 
-7. ### delistMarket
+6. ### delistMarket
 
 ```
 event MarketCancelled(
@@ -211,7 +197,8 @@ event MarketCancelled(
         address indexed nifty,
         uint256 marketId,
         uint256 tokenId
-    );
+);
+
 ```
 
 | Syntax   | type    | description                           |

@@ -27,6 +27,9 @@ class Main {
       creatorsABI.abi,
       addresses.kovan.creators
     );
+    // let yy=await creators.methods.uri("0x01559ae4021a99b0d373d7bc8a80504bad782367abe12c21373c83adc6bf6a7e");
+    // console.log(yy,"waiting");
+    
     // const originals = new web3.eth.Contract(
     //   originalsABI.abi,
     //   addresses.kovan.originals
@@ -41,11 +44,10 @@ class Main {
         // watch for auction events
         await new AuctionEventWatcher(mall).watch();
         // watch for market sale events
-         await new MarketSaleEventWatcher(mall).watch();
-//      mall.events.allEvents().on("data", async (event) => {
-// console.log(event)
-//         })
-        
+        await new MarketSaleEventWatcher(mall).watch();
+        //      mall.events.allEvents().on("data", async (event) => {
+        // console.log(event)
+        //         })
       })
       .on("error", (error) => {
         console.log(error);
