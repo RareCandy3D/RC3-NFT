@@ -130,9 +130,9 @@ contract RC3_Originals is
         _tokenIds.increment();
         newItemId = _tokenIds.current();
 
+        _safeMint(creator, newItemId);
         _setTokenURI(newItemId, _tokenURI);
         _setInfo(newItemId, creator, nature, category);
-        _safeMint(creator, newItemId);
 
         emit Mint(_msgSender(), newItemId, creator, category, nature);
     }

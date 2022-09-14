@@ -17,7 +17,6 @@ describe("RC3_721", function () {
       addr0.address,
       1500
     );
-    await rc3.deployed();
   });
 
   it("should deploy contract properly", async () => {
