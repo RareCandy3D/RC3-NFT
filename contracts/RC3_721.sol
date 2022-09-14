@@ -112,7 +112,9 @@ contract RC3_721 is
     {
         //bytes4(keccak256("royaltyInfo(uint256)"))
         return
-            interfaceId == 0xcef6d368 || super.supportsInterface(interfaceId);
+            interfaceId == 0xcef6d368 ||
+            interfaceId == 0x2a55205a ||
+            super.supportsInterface(interfaceId);
     }
 
     function isApprovedForAll(address owner, address operator)

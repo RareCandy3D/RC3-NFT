@@ -1,0 +1,42 @@
+For Backend we need these endpoints.. Currently the app is just showing UI
+
+- endpoint for Landing Page List of NFTs with their nft Image, price, auctionEnd time , link or tag to get all its data with pagination.
+-- we need to track all the active/ongoing auctions, and then we need to display the various data like price, latest bid, and seconds left
+-- we need to porpulate the HOT NIFTIEs with token ID NFTs of the RC3_Creators contract that have recently been sold or auctioned on the RC3_Mall marketplace contract 
+-- for COLLECTIONS, we should show all the created tokenIDs of the RC3_Creators 1155 contract
+-- for ORIGINALS, we should show all the created tokenIDs of the RC3_Originals 721 contract
+- for CREATORS, we should show all the creators on the RC3_Creators contract along with how many token types they have created
+
+- endpoint to create Token in the RC3_Creators NFT contract using data and images input and then return the cid of the NFT after pinning image so that it can be used in the smart contract.
+
+- endpoint to get popular categories to show on Suggested Categories modal.
+
+- endpoint to get all user owned NFT by address in List Page to choose among user NFTs.
+
+- endpoint to get all created NFTs by address in List Page to choose among user NFTs.
+
+- endpoint to get all details of NFT on Auction or Sale by contract address and token Id to show on NFT Auction or Bid or Sale page like owner name ,Auction status, auction end date, image, NFT details, floor price, all bids and History of NFT like Listed and liked.Will need all collection images to show on screen as shown on NFT Details Page.         
+
+- endpoint to like an NFT by a user.
+
+- endpoint to follow and unfollow a user
+
+- endpoint for Listed NFTs and not listed NFTs of the User.
+
+- endpoint for Listing NFT by owner of NFT.
+
+- endpoint to Add/ Update personal Details of user for modal
+
+- endpoint to get all NFTs of user for visitor dashboard.
+
+- endpoint to get all NFTs on Sale, Owned , Created , Collections of User.
+
+- endpoint to get All Activity of the user for Dashboard/Visitor/ Activity page.
+
+- endpoint to get authenticated so that personal and visitor dashboard are different
+
+- endpoint to add/update profile image, name, bio , custom url.
+
+- endpoint to add all personal info like Delivery address and likes with likes of collections .
+
+- endpoint to get all liked NFTs photo and details.
