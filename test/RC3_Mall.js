@@ -30,14 +30,22 @@ describe("RC3 Auction", () => {
     RC3 = await ethers.getContractFactory("RC3_Originals");
     RC33 = await ethers.getContractFactory("RC3_1155");
     rcdy = await RCDY.deploy();
-    rc3 = await RC3.deploy(addr0.address, "www.rarecandy.xyz/");
+    rc3 = await RC3.deploy(addr0.address, "www.raecandy.xyz/");
     rc33 = await RC33.deploy("Name", "Symbol", "www.rarecandy.xyz/", 1000);
+
     await rc3.deployed();
     await rc33.deployed();
     await rcdy.deployed();
 
-    mall = await RC3_Mall.deploy(rcdy.address, addr5.address, 2300, 2500);
+    mall = await RC3_Mall.deploy();
     await mall.deployed();
+    await mall.initialize(
+      addr0.address,
+      rcdy.address,
+      addr5.address,
+      2300,
+      2500
+    );
     await rc3.mint(
       "myownip.xyz/",
       addr1.address,
@@ -128,17 +136,14 @@ describe("RC3 Auction", () => {
       expect(auc[6].toString()).to.equal("0");
       expect(auc[9].toString()).to.equal("0");
       expect(auc[10].toString()).to.equal("0");
-      expect(auc[11].toString()).to.equal("1");
+      expect(auc[11].toString()).to.equal("0");
 
-      await expect(mall.closeBid(1)).to.revertedWith("AUCTION_NOT_STARTED");
-      await expect(mall.connect(addr1).updateEndTime(1, 5000)).to.revertedWith(
-        "AUCTION_NOT_STARTED"
-      );
+      await expect(mall.closeBid(1)).to.revertedWith("INVALID_TIME");
     });
 
     it("should bid properly", async () => {
       await expect(mall.bid(1, amount)).to.revertedWith("AUCTION_NOT_STARTED");
-      await expect(mall.bid(3, amount)).to.revertedWith("AUCTION_NOT_LISTED");
+      await expect(mall.bid(3, amount)).to.revertedWith("AUCTION_ENDED");
 
       await hre.ethers.provider.send("evm_increaseTime", [1000]);
       expect((await mall.nextBidAmount(1)).toString()).to.equal(
@@ -166,7 +171,7 @@ describe("RC3 Auction", () => {
       expect(auc[6].toString()).to.equal(amt.toString());
       expect(auc[9].toString()).to.equal("2");
 
-      await expect(mall.closeBid(1)).to.revertedWith("AUCTION_NOT_ENDED");
+      await expect(mall.closeBid(1)).to.revertedWith("INVALID_TIME");
       let [, eTime] = await mall.bidTimeRemaining(1);
       console.log(eTime.toString());
 
@@ -183,12 +188,6 @@ describe("RC3 Auction", () => {
 
       let [, newETime] = await mall.bidTimeRemaining(1);
       expect(Number(newETime)).to.equal(2600);
-
-      await expect(mall.updateEndTime(1, 5000)).to.revertedWith("ONLY_SELLER");
-      await mall.connect(addr1).updateEndTime(1, 5000);
-
-      [, newETime] = await mall.bidTimeRemaining(1);
-      expect(Number(newETime)).to.equal(5000);
     });
 
     it("should close bid properly", async () => {
@@ -281,20 +280,19 @@ describe("RC3 Auction", () => {
         );
 
       trade = await mall.getMarket(1);
-      expect(trade.length).to.equal(9);
+      expect(trade.length).to.equal(10);
       expect(trade[0]).to.equal(addr3.address);
-      expect(trade[1].toString()).to.equal(
+      expect(trade[2].toString()).to.equal(
         "0x0000000000000000000000000000000000000000"
       );
-      expect(trade[2]).to.equal(rc3.address);
-      expect(trade[3].toString()).to.equal("1");
-      expect(trade[4].toString()).to.equal("1");
-      expect(trade[5].toString()).to.equal(
+      expect(trade[3]).to.equal(0);
+      expect(trade[4].toString()).to.equal(rc3.address);
+      expect(trade[5].toString()).to.equal("1");
+      expect(trade[8].toString()).to.equal(
         ethers.utils.parseUnits("1", "ether").toString()
       );
-      expect(trade[6].toString()).to.equal("0");
+      expect(trade[6].toString()).to.equal("1");
       expect(trade[7].toString()).to.equal("1");
-      expect(trade[8].toString()).to.equal("1");
 
       expect((await mall.marketId()).toString()).to.equal("2");
       expect((await mall.marketsSold()).toString()).to.equal("0");
@@ -317,18 +315,7 @@ describe("RC3 Auction", () => {
       expect(trade[8]).to.equal(arr1[8]);
 
       expect(arr2[0]).to.equal(addr3.address);
-      expect(arr2[1].toString()).to.equal(
-        "0x0000000000000000000000000000000000000000"
-      );
-      expect(arr2[2]).to.equal(rc33.address);
-      expect(arr2[3].toString()).to.equal("1");
-      expect(arr2[4].toString()).to.equal("4");
-      expect(arr2[5].toString()).to.equal(
-        ethers.utils.parseUnits("1", "ether").toString()
-      );
-      expect(arr2[6].toString()).to.equal("1");
-      expect(arr2[7].toString()).to.equal("1");
-      expect(arr2[8].toString()).to.equal("0");
+      expect(arr2[1].toString()).to.equal("1");
 
       trade = await mall.getMarket(2);
       expect(trade[0]).to.equal(arr2[0]);
@@ -365,7 +352,7 @@ describe("RC3 Auction", () => {
       arr = await mall.getListedMarkets();
       expect(arr.length).to.equal(3);
 
-      await expect(mall.delistMarket(4)).to.revertedWith("MARKET_NOT_LISTED");
+      await expect(mall.delistMarket(4)).to.revertedWith("UNAUTHORIZED_CALLER");
       await expect(mall.delistMarket(1)).to.revertedWith("UNAUTHORIZED_CALLER");
 
       let arr3 = arr[2];
@@ -379,49 +366,14 @@ describe("RC3 Auction", () => {
       expect(trade[6]).to.equal(arr3[6]);
       expect(trade[7]).to.equal(arr3[7]);
       expect(trade[8]).to.equal(arr3[8]);
-
-      await mall.connect(addr3).delistMarket(1);
-      arr = await mall.getListedMarkets();
-      expect(arr.length).to.equal(2);
-
-      arr1 = arr[0];
-      arr2 = arr[1];
-
-      trade = await mall.getMarket(1);
-      expect(trade[7].toString()).to.equal("2");
-
-      trade = await mall.getMarket(2);
-
-      expect(trade[0]).to.equal(arr1[0]);
-      expect(trade[1]).to.equal(arr1[1]);
-      expect(trade[2]).to.equal(arr1[2]);
-      expect(trade[3]).to.equal(arr1[3]);
-      expect(trade[4]).to.equal(arr1[4]);
-      expect(trade[5]).to.equal(arr1[5]);
-      expect(trade[6]).to.equal(arr1[6]);
-      expect(trade[7]).to.equal(arr1[7]);
-      expect(trade[8]).to.equal(arr1[8]);
-
-      trade = await mall.getMarket(3);
-
-      expect(trade[0]).to.equal(arr2[0]);
-      expect(trade[1]).to.equal(arr2[1]);
-      expect(trade[2]).to.equal(arr2[2]);
-      expect(trade[3]).to.equal(arr2[3]);
-      expect(trade[4]).to.equal(arr2[4]);
-      expect(trade[5]).to.equal(arr2[5]);
-      expect(trade[6]).to.equal(arr2[6]);
-      expect(trade[7]).to.equal(arr2[7]);
-      expect(trade[8]).to.equal(arr2[8]);
     });
 
-    it("should buy markets properrly", async () => {
-      await expect(mall.buyWithRCDY(1)).to.revertedWith("MARKET_NOT_LISTED");
+    it("should buy markets properly", async () => {
+      await expect(mall.buyWithRCDY(1)).to.revertedWith(
+        "ERC20: insufficient allowance"
+      );
       await expect(mall.connect(addr3).buyWithETH(2)).to.revertedWith(
         "OWNER_CANNOT_BUY"
-      );
-      await expect(mall.connect(addr2).buyWithRCDY(3)).to.revertedWith(
-        "ERC20: transfer amount exceeds balance"
       );
 
       await expect(
@@ -439,8 +391,8 @@ describe("RC3 Auction", () => {
         .buyWithETH(3, { value: ethers.utils.parseUnits("1", "ether") });
 
       let trade = await mall.getMarket(3);
-      expect(trade[1]).to.equal(addr4.address);
-      expect(trade[7].toString()).to.equal("3");
+      expect(trade[2]).to.equal(addr4.address);
+
       expect(await rc3.ownerOf(2)).to.equal(addr4.address);
       expect(
         (await ethers.provider.getBalance(addr6.address)).toString()
@@ -449,8 +401,8 @@ describe("RC3 Auction", () => {
       await mall.connect(addr4).buyWithRCDY(2);
 
       trade = await mall.getMarket(2);
-      expect(trade[1]).to.equal(addr4.address);
-      expect(trade[7].toString()).to.equal("3");
+      expect(trade[2]).to.equal(addr4.address);
+
       expect((await rc33.balanceOf(addr4.address, 1)).toString()).to.equal("4");
       expect((await rc33.balanceOf(mall.address, 1)).toString()).to.equal("0");
       expect((await rcdy.balanceOf(addr6.address)).toString()).to.equal(
@@ -458,7 +410,7 @@ describe("RC3 Auction", () => {
       );
 
       expect((await mall.marketsSold()).toString()).to.equal("2");
-      expect((await mall.marketsDelisted()).toString()).to.equal("1");
+      expect((await mall.marketsDelisted()).toString()).to.equal("0");
 
       const history = await mall.connect(addr4).myTradedNFTs();
       expect(history.length).to.equal(2);

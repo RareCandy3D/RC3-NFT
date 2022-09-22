@@ -45,17 +45,22 @@ module.exports = {
       url: process.env.RINKEBY_URL,
       accounts: [process.env.PRIVATE_KEY],
     },
+    bscTest: {
+      url: process.env.BSC_TEST,
+      accounts: [process.env.PRIVATE_KEY],
+    },
     hardhat: {
-      forking: {
-        url: process.env.MAINNET_URL,
-        blockNumber: 14348871, // from specific block number, there will be balance corresponding to it
-        runs: 1,
-      },
+      // forking: {
+      //   // url: process.env.MAINNET_URL,
+      //   blockNumber: 14348871, // from specific block number, there will be balance corresponding to it
+      //   runs: 1,
+      // },
     },
   },
 
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    // apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: { bscTestnet: process.env.BSC_KEY },
   },
 
   defender: {
