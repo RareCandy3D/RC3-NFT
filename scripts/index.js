@@ -52,9 +52,10 @@ app.use(
   })
 );
 app.use(helmet());
-app.use("/api/creators",require("./routes/creators"));
-app.use("/api/hot-nfts",require("./routes/hot-nft"));
-app.use("/api/create-nft",require("./routes/create-nft"));
+app.use("/api/creators", require("./routes/creators"));
+app.use("/api/hot-nfts", require("./routes/hot-nft"));
+app.use("/api/create-nft", require("./routes/create-nft"));
+app.use("/api/routes", require("./routes/routes"));
 
 app.get("/api/", async (req, res) => {
   res.status(200).send(new Date());
