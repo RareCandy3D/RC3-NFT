@@ -2,15 +2,19 @@ const Web3 = require("web3");
 const mallABI = require("../../addresses/mall_abi/RC3_Mall_Implementation.json");
 const creatorsABI = require("../../artifacts/contracts/RC3_Creators.sol/RC3_Creators.json");
 const addresses = require("../../addresses/index.js");
-const CreatorEventWatcher = require("../helpers/CreatorEventWatcher");
-const AuctionEventWatcher = require("../helpers/AuctionEventWatcher");
-const MarketSaleEventWatcher = require("../helpers/MarketSaleEventWatcher");
+const CreatorsEventSync = require("../helpers/CreatorsEventSync");
+const AuctionEventSync = require("../helpers/AuctionEventSync");
+const MarketEventSync = require("../helpers/MarketEventSync");
 
 class Main {
+  constructor() {
+    this.lastBlock = 22825845; // bst testnet read from
+  }
+
   async subscribe() {
     //connect to RPC
     const web3 = new Web3(
-      new Web3.providers.WebsocketProvider(process.env.INFURA_URL)
+      new Web3.providers.WebsocketProvider(process.env.BSC_TEST)
     );
 
     //create web3 contract instance
@@ -20,22 +24,39 @@ class Main {
       addresses.kovan.creators
     );
 
-    web3.eth
-      .subscribe("newBlockHeaders")
-      .on("data", async (block) => {
-        // watch for creator events
-        await new CreatorEventWatcher(creators).watch();
-        // watch for auction events
-        await new AuctionEventWatcher(mall).watch();
-        // watch for market sale events
-        await new MarketSaleEventWatcher(mall).watch();
-        //      mall.events.allEvents().on("data", async (event) => {
-        // console.log(event)
-        //         })
-      })
-      .on("error", (error) => {
-        console.log(error);
-      });
+    const latest_block = await web3.eth.getBlockNumber();
+
+    try {
+      // watch for creator events
+      await new CreatorsEventSync(
+        web3,
+        creators,
+        latest_block,
+        this.lastBlock
+      ).sync();
+
+      // watch for auction events
+      await new AuctionEventSync(
+        web3,
+        mall,
+        latest_block,
+        this.lastBlock
+      ).sync();
+
+      // watch for market sale events
+      await new MarketEventSync(
+        web3,
+        mall,
+        latest_block,
+        this.lastBlock
+      ).sync();
+
+      //update latest checked block
+      this.lastBlock = latest_block;
+    } catch (e) {
+      log.info(`Error inserting new market logs: ${e}`);
+      console.log(`Error inserting new market logs: ${e}`);
+    }
   }
 }
 

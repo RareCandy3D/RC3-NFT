@@ -61,7 +61,7 @@ contract RC3_Auction is
         address indexed bidder,
         address indexed nft,
         uint256 indexed auctionId,
-        uint256 _tokenId,
+        uint256 tokenId,
         uint256 newEndPeriod
     );
 

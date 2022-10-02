@@ -257,52 +257,6 @@ contract RC3_Mall is RC3_Auction, OwnableUpgradeable {
         return markets[_marketId];
     }
 
-    function getListedMarkets()
-        external
-        view
-        returns (Market[] memory marketItems)
-    {
-        uint256 itemCount = marketId.current();
-        uint256 listedItemCount = itemCount -
-            marketsDelisted.current() -
-            marketsSold.current();
-        uint256 currentIndex;
-
-        Market[] memory items = new Market[](listedItemCount);
-
-        for (uint256 i; i < itemCount; i++) {
-            if (markets[i + 1].state == State.LISTED) {
-                Market memory currentItem = markets[i + 1];
-                items[currentIndex] = currentItem;
-                currentIndex++;
-            }
-        }
-        return items;
-    }
-
-    function myTradedNFTs() external view returns (Market[] memory myNfts) {
-        uint256 totalItemCount = marketId.current();
-        uint256 itemCount;
-        uint256 currentIndex;
-
-        for (uint256 i; i < totalItemCount; i++) {
-            if (markets[i + 1].buyer == payable(msg.sender)) {
-                itemCount++;
-            }
-        }
-
-        Market[] memory items = new Market[](itemCount);
-
-        for (uint256 i; i < totalItemCount; i++) {
-            Market memory item = markets[i + 1];
-            if (item.buyer == payable(msg.sender)) {
-                items[currentIndex] = item;
-                currentIndex++;
-            }
-        }
-        return items;
-    }
-
     function _setFeePercentage(uint96 _newFee) internal {
         uint96 fee = feePercentage;
         require(_newFee != fee, "Error: already set");

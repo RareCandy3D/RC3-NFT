@@ -7,8 +7,6 @@ if (dev) {
 
 const mongoose = require("mongoose");
 const express = require("express");
-
-const mongoString = process.env.DATABASE_URL;
 const app = express();
 var morgan = require("morgan");
 const bodyParser = require("body-parser");
@@ -67,7 +65,10 @@ app.get("/api/", async (req, res) => {
 });
 
 (async function init() {
-  // await main.subscribe();
+  await mongoConnect();
+  setInterval(async () => {
+    await main.subscribe();
+  }, 10000); //5 mins
 })();
 
 //ping heroku server every 50 mins
@@ -75,10 +76,7 @@ new PingServer().ping();
 
 const port = process.env.PORT || 3000;
 
-(async function startServer() {
-  await mongoConnect();
-  await app.listen(port, () => {
-    log.info(`🚀 Listening to server on port ${port}`);
-    console.log(`Listening on port ${port}`);
-  });
-})();
+app.listen(port, () => {
+  log.info(`🚀 Listening to server on port ${port}`);
+  console.log(`Listening on port ${port}`);
+});
