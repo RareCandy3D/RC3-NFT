@@ -66,6 +66,7 @@ class AuctionEventSync {
 
   async updateAuctionCreatedDB(data_events) {
     for (i = 0; i < data_events.length; i++) {
+      console.log(`found ${i + 1}`);
       let seller = data_events[i]["returnValues"]["seller"];
       let nft = data_events[i]["returnValues"]["nft"];
       let auctionId = data_events[i]["returnValues"]["auctionId"];

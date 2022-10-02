@@ -27,14 +27,6 @@ class Main {
     const latest_block = await web3.eth.getBlockNumber();
 
     try {
-      // watch for creator events
-      await new CreatorsEventSync(
-        web3,
-        creators,
-        latest_block,
-        this.lastBlock
-      ).sync();
-
       // watch for auction events
       await new AuctionEventSync(
         web3,
@@ -47,6 +39,14 @@ class Main {
       await new MarketEventSync(
         web3,
         mall,
+        latest_block,
+        this.lastBlock
+      ).sync();
+
+      // watch for creator events
+      await new CreatorsEventSync(
+        web3,
+        creators,
         latest_block,
         this.lastBlock
       ).sync();
