@@ -47,6 +47,12 @@ const auctionTradeSchema = new mongoose.Schema({
     required: true,
   },
 
+  amount: {
+    // amount being sold
+    type: Number,
+    required: true,
+  },
+
   endTime: {
     // time for end
     type: Number,
@@ -105,6 +111,13 @@ const directTradeSchema = new mongoose.Schema({
     // the asset used to conduct this sale. RCDY or ETH
     type: String,
   },
+
+  amount: {
+    // amount being sold
+    type: Number,
+    required: true,
+  },
+
   isClosed: {
     //if still open
     type: Boolean,

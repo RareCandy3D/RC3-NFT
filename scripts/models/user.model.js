@@ -74,11 +74,11 @@ const userSchema = new mongoose.Schema({
     // array of auction ids bidded
     type: [Number],
   },
-  directIdsCreated: {
+  marketIdsCreated: {
     // array of direct trade ids created
     type: [Number],
   },
-  directIdsBought: {
+  marketIdsBought: {
     // array of direct trade ids bought
     type: [Number],
   },
