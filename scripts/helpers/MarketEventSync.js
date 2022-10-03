@@ -59,8 +59,6 @@ class MarketEventSync {
           nftAddress: nft,
           seller: seller,
           floorPrice: price,
-          startTime: startPeriod,
-          endTime: endPeriod,
           tradeToken: asset === 0 ? "ETH" : "RCDY",
           amount: tokenType === 0 ? 1 : amount,
         });

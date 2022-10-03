@@ -10,7 +10,7 @@ userRouter.get("/:address", async (req, res) => {
     };
 
     const data = await UserModel.find(query);
-    return res.status(200).json(data);
+    return res.status(200).json(data.address);
   } catch (e) {
     return res.status(400).json({ message: error.message });
   }

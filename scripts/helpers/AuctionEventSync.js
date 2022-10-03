@@ -66,7 +66,6 @@ class AuctionEventSync {
 
   async updateAuctionCreatedDB(data_events) {
     for (i = 0; i < data_events.length; i++) {
-      console.log(`found ${i + 1}`);
       let seller = data_events[i]["returnValues"]["seller"];
       let nft = data_events[i]["returnValues"]["nft"];
       let auctionId = data_events[i]["returnValues"]["auctionId"];
@@ -139,7 +138,6 @@ class AuctionEventSync {
 
   async updateAuctionUpdatedDB(data_events) {
     for (i = 0; i < data_events.length; i++) {
-      let bidder = data_events[i]["returnValues"]["bidder"];
       let auctionId = data_events[i]["returnValues"]["auctionId"];
       let newEndPeriod = data_events[i]["returnValues"]["newEndPeriod"];
 
@@ -160,7 +158,6 @@ class AuctionEventSync {
 
   async updateAuctionResultedDB(data_events) {
     for (i = 0; i < data_events.length; i++) {
-      let bidder = data_events[i]["returnValues"]["bidder"];
       let auctionId = data_events[i]["returnValues"]["auctionId"];
 
       try {
