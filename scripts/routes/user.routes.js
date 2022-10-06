@@ -10,24 +10,76 @@ userRouter.get("/:address", async (req, res) => {
     };
 
     const data = await UserModel.find(query);
-    return res.status(200).json(data.address);
+    return res.status(200).json(data);
   } catch (e) {
     return res.status(400).json({ message: error.message });
   }
 });
 
-//update user profile
+//update user profile username
 userRouter.post("/", async (req, res) => {
+  const data = req.body;
+  if (!data.address || !data.username) {
+    return res.status(400).json({
+      error: "Missing required property from client",
+    });
+  }
   try {
-    const data = {
-      username: req.body.username,
-      bio: req.body.bio,
-      image: req.body.image,
-      address: req.body.address,
-    };
-    await UserModel.updateOne(data);
-    const dataToSave = await data.save();
-    return res.status(200).json(dataToSave);
+    await UserModel.updateOne(
+      {
+        address: data.address,
+      },
+      {
+        username: data.username,
+      }
+    );
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+});
+
+//update user profile bio
+userRouter.post("/", async (req, res) => {
+  const data = req.body;
+  if (!data.address || !data.bio) {
+    return res.status(400).json({
+      error: "Missing required property from client",
+    });
+  }
+  try {
+    await UserModel.updateOne(
+      {
+        address: data.address,
+      },
+      {
+        bio: data.bio,
+      }
+    );
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+});
+
+//update user profile picture
+userRouter.post("/", async (req, res) => {
+  const data = req.body;
+  if (!data.address || !data.image) {
+    return res.status(400).json({
+      error: "Missing required property from client",
+    });
+  }
+  try {
+    await UserModel.updateOne(
+      {
+        address: data.address,
+      },
+      {
+        image: data.image,
+      }
+    );
+    return res.status(200).json(data);
   } catch (error) {
     return res.status(400).json({ message: error.message });
   }

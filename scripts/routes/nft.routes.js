@@ -107,7 +107,7 @@ nftRouter.post(
 //get NFT
 nftRouter.get("/nft", async (req, res) => {
   const address = req.params.address;
-  const tokenId = Number(req.params.tokenId);
+  const tokenId = req.params.tokenId;
 
   if (!address || !tokenId) {
     return res.status(400).json({
@@ -126,27 +126,28 @@ nftRouter.get("/nft", async (req, res) => {
         unlockableContentDescription: "",
       },
     };
+    let uri;
 
     let tokenMulti = new web3.eth.Contract(_1155ABI.abi, address);
 
     if (tokenMulti) {
-      let uriMulti = await tokenMulti.methods.uri(tokenId).call();
+      let uri = await tokenMulti.methods.uri(tokenId).call();
       nft = {
-        name: uriMulti.name,
-        description: uriMulti.description,
-        image: uriMulti.image,
-        properties: uriMulti.properties,
+        name: uri.name,
+        description: uri.description,
+        image: uri.image,
+        properties: uri.properties,
       };
     } else {
       let tokenSingle = new web3.eth.Contract(_721ABI.abi, address);
-      let uriSingle = await tokenSingle.methods.tokenURI(tokenId).call();
+      uri = await tokenSingle.methods.tokenURI(tokenId).call();
 
-      if (uriSingle) {
+      if (uri) {
         nft = {
-          name: uriSingle.name,
-          description: uriSingle.description,
-          image: uriSingle.image,
-          properties: uriSingle.properties,
+          name: uri.name,
+          description: uri.description,
+          image: uri.image,
+          properties: uri.properties,
         };
       } else {
         return res.status(400).json({
@@ -186,7 +187,6 @@ nftRouter.get("/rc3Creators/collections", async (req, res) => {
   try {
     const query = {
       address: addresses.kovan.creators,
-      collectionId: req.params.collectionId,
     };
     const sort = { numberOfTimesTraded: -1, timeLastTraded: -1 }; // sort in descending (-1) order by numberOfTokensCreated
 
@@ -202,7 +202,6 @@ nftRouter.get("/rc3Originals/collections", async (req, res) => {
   try {
     const query = {
       address: addresses.kovan.originals,
-      collectionId: req.params.collectionId,
     };
     const sort = { numberOfTimesTraded: -1, timeLastTraded: -1 };
 
@@ -237,7 +236,7 @@ nftRouter.get("/rc3Creators/natures", async (req, res) => {
     const query = {
       address: addresses.kovan.creators,
       properties: {
-        category: req.params.nature,
+        nature: req.params.nature,
       },
     };
     const sort = { numberOfTimesTraded: -1, timeLastTraded: -1 };

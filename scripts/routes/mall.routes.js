@@ -19,8 +19,8 @@ mallRouter.get("/auctions/active", async (req, res) => {
   try {
     const data = await AuctionModel.find({
       $and: [
-        { startTime: { $gte: new Date.now() } },
-        { endTime: { $lte: new Date.now() } },
+        { startTime: { $lte: new Date.now() } },
+        { endTime: { $gte: new Date.now() } },
       ],
     })
       .limit(10)

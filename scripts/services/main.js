@@ -14,7 +14,7 @@ class Main {
   async subscribe() {
     //connect to RPC
     const web3 = new Web3(
-      new Web3.providers.WebsocketProvider(process.env.BSC_TEST)
+      new Web3.providers.HttpProvider(process.env.BSC_TEST)
     );
 
     //create web3 contract instance
@@ -25,6 +25,7 @@ class Main {
     );
 
     const latest_block = await web3.eth.getBlockNumber();
+    console.log(`The latest block is ${latest_block}`);
 
     try {
       // watch for auction events
