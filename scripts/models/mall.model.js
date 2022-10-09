@@ -9,7 +9,7 @@ const auctionTradeSchema = new mongoose.Schema({
 
   nftId: {
     // ID of the NFT
-    type: Number,
+    type: String,
     required: true,
   },
 
@@ -31,7 +31,7 @@ const auctionTradeSchema = new mongoose.Schema({
   },
 
   floorPrice: {
-    // price in which it was sold
+    // floor price
     type: Number,
     required: true,
   },
@@ -76,7 +76,7 @@ const directTradeSchema = new mongoose.Schema({
 
   nftId: {
     // ID of the NFT
-    type: Number,
+    type: String,
     required: true,
   },
 
@@ -127,6 +127,6 @@ const directTradeSchema = new mongoose.Schema({
 });
 
 module.exports = {
-  auction: mongoose.model("AuctionTrade", auctionTradeSchema),
-  direct: mongoose.model("DirectTrade", directTradeSchema),
+  auctionDatabase: mongoose.model("AuctionTrade", auctionTradeSchema),
+  directDatabase: mongoose.model("DirectTrade", directTradeSchema),
 };

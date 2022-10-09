@@ -1,12 +1,14 @@
+const Web3 = require("web3");
 const log = require("../../config/log4js");
-const UserModel = require("../models/user.model");
-const { AuctionModel, DirectModel } = require("../models/mall.model");
-const { CollectionModel, NftModel } = require("../models/nft.model");
+const userDatabase = require("../models/user.model");
+const directDatabase = require("../models/mall.model");
+const collectionDatabase = require("../models/nft.model");
+const web3 = new Web3(new Web3.providers.HttpProvider(process.env.BSC_TEST));
+const { RC3MallAddr, RC3CAddr, RC3MallABI } = require("../contracts");
 
 class MarketEventSync {
-  constructor(web3, mall, currentBlock, lastBlockChecked) {
-    this.web3 = web3;
-    this.mall = mall;
+  constructor(currentBlock, lastBlockChecked) {
+    this.mall = new web3.eth.Contract(RC3MallABI, RC3MallAddr);
     this.currentBlock = currentBlock;
     this.lastBlockChecked = lastBlockChecked;
   }
@@ -17,14 +19,20 @@ class MarketEventSync {
         fromBlock: this.lastBlockChecked,
         toBlock: this.currentBlock,
       });
-      await updateMarketCreatedDB(market_created_events);
+
+      if (market_created_events.length !== 0) {
+        this.updateMarketCreatedDB(market_created_events);
+      }
 
       //buy market trade
       const market_bid_events = await this.mall.getPastEvents("MarketSale", {
         fromBlock: this.lastBlockChecked,
         toBlock: this.currentBlock,
       });
-      await updateMarketSaleDB(market_bid_events);
+
+      if (market_bid_events.length !== 0) {
+        this.updateMarketSaleDB(market_bid_events);
+      }
 
       //delist market trade
       const market_cancelled_events = await this.mall.getPastEvents(
@@ -34,7 +42,9 @@ class MarketEventSync {
           toBlock: this.currentBlock,
         }
       );
-      await updateMarketCancelledDB(market_cancelled_events);
+      if (market_cancelled_events.length !== 0) {
+        this.updateMarketCancelledDB(market_cancelled_events);
+      }
     } catch (e) {
       log.info(`Error Inserting action logs: ${e}`);
       console.log(`Error Inserting market logs: ${e}`);
@@ -42,107 +52,181 @@ class MarketEventSync {
   }
 
   async updateMarketCreatedDB(data_events) {
-    for (i = 0; i < data_events.length; i++) {
-      let seller = data_events[i]["returnValues"]["caller"];
-      let nft = data_events[i]["returnValues"]["nifty"];
-      let marketId = data_events[i]["returnValues"]["marketId"];
-      let tokenId = data_events[i]["returnValues"]["tokenId"];
-      let amount = data_events[i]["returnValues"]["amount"];
-      let price = data_events[i]["returnValues"]["price"];
-      let tokenType = data_events[i]["returnValues"]["tokenType"];
-      let asset = data_events[i]["returnValues"]["asset"];
+    for (let i = 0; i < data_events.length; i++) {
+      const seller = data_events[i]["returnValues"]["caller"];
+      const nft = data_events[i]["returnValues"]["nifty"];
+      const marketId = data_events[i]["returnValues"]["marketId"];
+      const tokenId = data_events[i]["returnValues"]["tokenId"];
+      const amount = data_events[i]["returnValues"]["amount"];
+      const price = data_events[i]["returnValues"]["price"];
+      const tokenType = data_events[i]["returnValues"]["tokenType"];
+      const asset = data_events[i]["returnValues"]["asset"];
 
-      try {
-        const data = new DirectModel({
-          marketId: marketId,
-          nftId: tokenId,
-          nftAddress: nft,
-          seller: seller,
-          floorPrice: price,
-          startTime: startPeriod,
-          endTime: endPeriod,
-          tradeToken: asset === 0 ? "ETH" : "RCDY",
-          amount: tokenType === 0 ? 1 : amount,
-        });
-        await data.save();
+      const data = new directDatabase.directDatabase({
+        marketId: marketId,
+        nftId: tokenId.toString(),
+        nftAddress: nft,
+        seller: seller,
+        floorPrice: price,
+        tradeToken: asset === 0 ? "ETH" : "RCDY",
+        amount: tokenType === 0 ? 1 : amount,
+      });
+      await data.save();
 
-        await UserModel.updateOne(
-          { address: seller },
-          {
-            $push: { marketIdsCreated: marketId },
-          }
-        );
-      } catch (e) {
-        log.info(`Error inserting new market logs: ${e}`);
-        console.log(`Error inserting new market logs: ${e}`);
-      }
+      await userDatabase.findOneAndUpdate(
+        { address: seller },
+        {
+          $push: { marketIdsCreated: marketId },
+        }
+      );
+
+      console.log(
+        `Found NewMarket event: marketID = ${marketId}, txHash = ${data_events[i]["transactionHash"]}`
+      );
     }
   }
 
   async updateMarketSaleDB(data_events) {
-    for (i = 0; i < data_events.length; i++) {
-      let buyer = data_events[i]["returnValues"]["caller"];
-      let marketId = data_events[i]["returnValues"]["marketId"];
-      let price = data_events[i]["returnValues"]["price"];
+    for (let i = 0; i < data_events.length; i++) {
+      const buyer = data_events[i]["returnValues"]["caller"];
+      const marketId = data_events[i]["returnValues"]["marketId"];
+      const price = data_events[i]["returnValues"]["price"];
 
-      try {
-        const market = await DirectModel.find({ marketId: marketId });
+      await directDatabase.directDatabase.findOneAndUpdate(
+        { marketId: marketId },
+        {
+          buyer: buyer,
+          soldFor: price,
+          isClosed: true,
+        }
+      );
 
-        await DirectModel.updateOne(
-          { marketId: marketId },
-          { buyer: buyer, soldFor: price, isClosed: true }
-        );
-
-        await CollectionModel.updateOne(
-          { collectionId: market.collectionId },
+      const market = await directDatabase.directDatabase.findOne({
+        marketId: marketId,
+      });
+      const query = {
+        $and: [
           {
-            numberOfTimesTraded: market.numberOfTimesTraded + 1,
-            timeLastTraded: new Date.now(),
-          }
-        );
-
-        await UserModel.updateOne(
-          { address: buyer },
+            collectionId: market["nftId"],
+          },
           {
-            numberOfItemsBuys: market.numberOfItemsBuys + 1,
-            amountSpent: market.amountSpent + market.soldFor,
-            $push: { marketIdsBought: marketId },
-          }
-        );
+            address: RC3CAddr,
+          },
+        ],
+      };
 
-        await UserModel.updateOne(
-          { address: market.seller },
+      const collection = await collectionDatabase.findOne(query);
 
-          {
-            numberOfSells: market.numberOfSells + 1,
-            amountReceived: market.amountReceived + market.soldFor,
-          }
-        );
-      } catch (e) {
-        log.info(`Error Inserting creator logs: ${e}`);
-        console.log(`Error Inserting creator logs: ${e}`);
+      await collectionDatabase.findOneAndUpdate(query, {
+        numberOfTimesTraded: collection["numberOfTimesTraded"] + 1,
+        timeLastTraded: Date.now(),
+      });
+
+      if (market["tradeToken"] === "RCDY") {
+        this.updateRCDYPayment(market);
+      } else {
+        this.updateETHPayment(market);
       }
+
+      console.log(
+        `Found MarketSale event: marketID=${marketId}, txHash=${data_events[i]["transactionHash"]}`
+      );
     }
   }
 
   async updateMarketCancelledDB(data_events) {
-    for (i = 0; i < data_events.length; i++) {
-      let marketId = data_events[i]["returnValues"]["marketId"];
+    for (let i = 0; i < data_events.length; i++) {
+      const marketId = data_events[i]["returnValues"]["marketId"];
 
-      try {
-        const market = await DirectModel.find({ marketId: marketId });
+      await directDatabase.directDatabase.findOneAndUpdate(
+        { marketId: marketId },
+        { isClosed: true }
+      );
 
-        if (!market.isClosed) {
-          await DirectModel.updateOne(
-            { marketId: marketId },
-            { $set: { isClosed: true } }
-          );
-        }
-      } catch (e) {
-        log.info(`Error Inserting creator logs: ${e}`);
-        console.log(`Error Inserting creator logs: ${e}`);
-      }
+      console.log(
+        `Found MarketCancelled event: marketID = ${marketId}, txHash = ${data_events[i]["transactionHash"]}`
+      );
     }
+  }
+
+  async updateRCDYPayment(market) {
+    const buyer = market["buyer"];
+    const seller = market["seller"];
+    const price = market["floorPrice"];
+    const marketId = market["marketId"];
+
+    let user = await userDatabase.findOne({ address: buyer });
+
+    if (!user) {
+      const newUser = new userDatabase({
+        address: buyer,
+        numberOfItemsBuys: 1,
+        rcdySpent: web3.utils.fromWei(price.toString()),
+        marketIdsBought: [marketId],
+      });
+      await newUser.save();
+      console.log("New user saved:", buyer);
+    } else {
+      await userDatabase.findOneAndUpdate(
+        { address: buyer },
+        {
+          numberOfItemsBuys: user["numberOfItemsBuys"] + 1,
+          rcdySpent: user["rcdySpent"] + web3.utils.fromWei(price.toString()),
+          $push: { marketIdsBought: marketId },
+        }
+      );
+    }
+
+    user = await userDatabase.findOne({ address: seller });
+    await userDatabase.findOneAndUpdate(
+      { address: seller },
+
+      {
+        numberOfSells: user["numberOfSells"] + 1,
+        rcdyReceived:
+          user["rcdyReceived"] + web3.utils.fromWei(price.toString()),
+      }
+    );
+  }
+
+  async updateETHPayment(market) {
+    console.log("the market is", market);
+    const buyer = market["buyer"];
+    const seller = market["seller"];
+    const price = market["soldFor"];
+    const marketId = market["marketId"];
+
+    let user = await userDatabase.findOne({ address: buyer });
+
+    if (!user) {
+      const newUser = new userDatabase({
+        address: buyer,
+        numberOfItemsBuys: 1,
+        ethSpent: web3.utils.fromWei(price.toString()),
+        marketIdsBought: [marketId],
+      });
+      await newUser.save();
+      console.log("New user saved:", buyer);
+    } else {
+      await userDatabase.findOneAndUpdate(
+        { address: buyer },
+        {
+          numberOfItemsBuys: user["numberOfItemsBuys"] + 1,
+          ethSpent: user["ethSpent"] + web3.utils.fromWei(price.toString()),
+          $push: { marketIdsBought: marketId },
+        }
+      );
+    }
+
+    user = await userDatabase.findOne({ address: seller });
+    await userDatabase.findOneAndUpdate(
+      { address: seller },
+
+      {
+        numberOfSells: user["numberOfSells"] + 1,
+        ethReceived: user["ethReceived"] + web3.utils.fromWei(price.toString()),
+      }
+    );
   }
 }
 

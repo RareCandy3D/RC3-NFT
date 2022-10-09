@@ -1,60 +1,69 @@
 const Web3 = require("web3");
-const mallABI = require("../../addresses/mall_abi/RC3_Mall_Implementation.json");
-const creatorsABI = require("../../artifacts/contracts/RC3_Creators.sol/RC3_Creators.json");
-const addresses = require("../../addresses/index.js");
+require("dotenv").config();
+const BlockModel = require("../models/block.model");
 const CreatorsEventSync = require("../helpers/CreatorsEventSync");
 const AuctionEventSync = require("../helpers/AuctionEventSync");
 const MarketEventSync = require("../helpers/MarketEventSync");
 
-class Main {
-  constructor() {
-    this.lastBlock = 22825845; // bst testnet read from
-  }
+const initContractBlock = 23557638; //bsc testnet deployment block for RC3_Mall contract
 
+class Main {
   async subscribe() {
     //connect to RPC
     const web3 = new Web3(
-      new Web3.providers.WebsocketProvider(process.env.BSC_TEST)
+      new Web3.providers.HttpProvider(process.env.BSC_TEST)
     );
 
-    //create web3 contract instance
-    const mall = new web3.eth.Contract(mallABI.abi, addresses.kovan.mall);
-    const creators = new web3.eth.Contract(
-      creatorsABI.abi,
-      addresses.kovan.creators
-    );
-
-    const latest_block = await web3.eth.getBlockNumber();
+    const latest_block = (await web3.eth.getBlockNumber()) - 5;
 
     try {
+      let fromBlock, toBlock;
+      let lastBlock = await BlockModel.findOne({ id: initContractBlock });
+
+      if (!lastBlock) {
+        const newBlock = new BlockModel({
+          blockId: initContractBlock,
+          lastBlock: initContractBlock,
+        });
+        await newBlock.save();
+      }
+
+      lastBlock = await BlockModel.findOne({ id: initContractBlock });
+
+      // gap 5000 blocks - limit of getPastEvents
+      if (latest_block - lastBlock["lastBlock"] > 5000) {
+        fromBlock = lastBlock["lastBlock"] + 1;
+        toBlock = lastBlock["lastBlock"] + 5000;
+      } else {
+        fromBlock = lastBlock["lastBlock"] + 1;
+        toBlock = Math.min(lastBlock["lastBlock"] + 5000, latest_block);
+      }
+
+      console.log(
+        `listening for events from block: ${fromBlock}, to block: ${toBlock}`
+      );
+
       // watch for creator events
-      await new CreatorsEventSync(
-        web3,
-        creators,
-        latest_block,
-        this.lastBlock
-      ).sync();
+      await new CreatorsEventSync(toBlock, fromBlock).sync();
 
       // watch for auction events
-      await new AuctionEventSync(
-        web3,
-        mall,
-        latest_block,
-        this.lastBlock
-      ).sync();
+      await new AuctionEventSync(toBlock, fromBlock).sync();
 
       // watch for market sale events
-      await new MarketEventSync(
-        web3,
-        mall,
-        latest_block,
-        this.lastBlock
-      ).sync();
+      await new MarketEventSync(toBlock, fromBlock).sync();
 
       //update latest checked block
-      this.lastBlock = latest_block;
+      await BlockModel.findOneAndUpdate(
+        { id: initContractBlock },
+        {
+          lastBlock: toBlock,
+        }
+      );
+
+      console.log(
+        `done listening for events from block: ${fromBlock}, to block: ${toBlock}`
+      );
     } catch (e) {
-      log.info(`Error inserting new market logs: ${e}`);
       console.log(`Error inserting new market logs: ${e}`);
     }
   }

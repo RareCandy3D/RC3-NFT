@@ -8,7 +8,8 @@
     "lint": "prettier --list-different 'contracts/**/*.sol'",
     "test": "npx hardhat test test/RCDY_Router.js",
     "dev": "nodemon scripts/index.js",
-    "start": "node scripts/index.js"
+    "start": "node scripts/",
+    "watch": "nodemon scripts/index.js"
   },
   "repository": {
     "type": "git",
@@ -31,6 +32,7 @@
     "hardhat": "^2.8.3"
   },
   "dependencies": {
+    "@ethersproject/bignumber": "^5.7.0",
     "@nomiclabs/hardhat-etherscan": "^3.0.0",
     "@openzeppelin/contracts": "^4.6.0",
     "@openzeppelin/hardhat-defender": "^1.7.0",
@@ -51,8 +53,9 @@
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "mysql": "^2.18.1",
+    "nodemon": "^2.0.20",
     "typescript": "^4.7.4",
     "util": "^0.12.4",
-    "web3": "^1.7.3"
+    "web3": "^1.8.0"
   }
 }

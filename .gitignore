@@ -9,6 +9,5 @@ production.env
 cache
 artifacts
 scripts/upgradeV2.js
-scripts/deployUpgrades.js
-addresses
-db
+scripts/deployBSCTest.js
+contracts/test

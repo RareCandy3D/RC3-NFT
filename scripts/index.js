@@ -68,7 +68,7 @@ app.get("/api/", async (req, res) => {
   await mongoConnect();
   setInterval(async () => {
     await main.subscribe();
-  }, 10000); //5 mins
+  }, 180000); // 3 mins
 })();
 
 //ping heroku server every 50 mins

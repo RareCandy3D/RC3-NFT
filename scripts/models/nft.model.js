@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const nftCollectionSchema = new mongoose.Schema({
+const rc3CreatorsNFTchema = new mongoose.Schema({
   address: {
     //NFT address
     type: String,
@@ -8,12 +8,16 @@ const nftCollectionSchema = new mongoose.Schema({
   },
   collectionId: {
     //collection id
-    type: Number,
+    type: String,
+    required: true,
   },
   name: {
     // collection name
     type: String,
-    required: true,
+  },
+  image: {
+    // collection image
+    type: String,
   },
   floorPrice: {
     //minimum amount sold for
@@ -24,57 +28,43 @@ const nftCollectionSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  supply: {
+    //supply of nft
+    type: Number,
+    required: true,
+  },
   numberOfTimesTraded: {
     //how many completed instant trades and auctions
     type: Number,
     default: 0,
-    required: true,
+  },
+  royalty: {
+    //1% = 100 units
+    type: Number,
+    default: 0,
   },
   timeLastTraded: {
     //the time when this NFT token id last traded
-    type: Number,
-    required: true,
+    type: Date,
+    default: new Date(0),
   },
-  properties: {
-    category: {
-      //art, fashion, music, etc
-      type: String,
-    },
-    nature: {
-      //physical, digital, phygital
-      type: String,
-    },
-    unlockableContentUrl: {
-      // URL link to unlockable
-      type: String,
-    },
-    unlockableContentDescription: {
-      // describes the unlockable content
-      type: String,
-    },
-  },
-});
 
-const nftSchema = new mongoose.Schema({
-  address: {
-    // nft address
+  category: {
+    //art, fashion, music, etc
     type: String,
   },
-  name: {
-    // token name
+  nature: {
+    //physical, digital, phygital
     type: String,
   },
-  symbol: {
-    // token sumbol
+  unlockableContentUrl: {
+    // URL link to unlockable
     type: String,
   },
-  uri: {
-    // token uri
+  unlockableContentDescription: {
+    // describes the unlockable content
     type: String,
   },
 });
 
-module.exports = {
-  collection: mongoose.model("Collection", nftCollectionSchema),
-  nft: mongoose.model("Nft", nftSchema),
-};
+module.exports = mongoose.model("Collection", rc3CreatorsNFTchema);

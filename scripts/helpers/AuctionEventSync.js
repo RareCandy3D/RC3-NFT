@@ -1,12 +1,14 @@
+const Web3 = require("web3");
 const log = require("../../config/log4js");
-const UserModel = require("../models/user.model");
-const { AuctionModel, DirectModel } = require("../models/mall.model");
-const { CollectionModel, NftModel } = require("../models/nft.model");
+const userDatabase = require("../models/user.model");
+const auctionDatabase = require("../models/mall.model");
+const collectionDatabase = require("../models/nft.model");
+const web3 = new Web3(new Web3.providers.HttpProvider(process.env.BSC_TEST));
+const { RC3MallAddr, RC3CAddr, RC3MallABI } = require("../contracts");
 
 class AuctionEventSync {
-  constructor(web3, mall, currentBlock, lastBlockChecked) {
-    this.web3 = web3;
-    this.mall = mall;
+  constructor(currentBlock, lastBlockChecked) {
+    this.mall = new web3.eth.Contract(RC3MallABI, RC3MallAddr);
     this.currentBlock = currentBlock;
     this.lastBlockChecked = lastBlockChecked;
   }
@@ -20,14 +22,20 @@ class AuctionEventSync {
           toBlock: this.currentBlock,
         }
       );
-      await updateAuctionCreatedDB(auction_created_events);
+
+      if (auction_created_events.length !== 0) {
+        await this.updateAuctionCreatedDB(auction_created_events);
+      }
 
       //bid auction trade
       const auction_bid_events = await this.mall.getPastEvents("NewBid", {
         fromBlock: this.lastBlockChecked,
         toBlock: this.currentBlock,
       });
-      await updateNewBidDB(auction_bid_events);
+
+      if (auction_bid_events.length !== 0) {
+        await this.updateNewBidDB(auction_bid_events);
+      }
 
       //updated auction trade time
       const auction_updated_events = await this.mall.getPastEvents(
@@ -37,7 +45,10 @@ class AuctionEventSync {
           toBlock: this.currentBlock,
         }
       );
-      await updateAuctionUpdatedDB(auction_updated_events);
+
+      if (auction_updated_events.length !== 0) {
+        await this.updateAuctionUpdatedDB(auction_updated_events);
+      }
 
       //close auction trade positive
       const auction_resulted_events = await this.mall.getPastEvents(
@@ -47,7 +58,10 @@ class AuctionEventSync {
           toBlock: this.currentBlock,
         }
       );
-      await updateAuctionResultedDB(auction_resulted_events);
+
+      if (auction_resulted_events.length !== 0) {
+        await this.updateAuctionResultedDB(auction_resulted_events);
+      }
 
       //close auction trade negative
       const auction_cancelled_events = await this.mall.getPastEvents(
@@ -57,7 +71,10 @@ class AuctionEventSync {
           toBlock: this.currentBlock,
         }
       );
-      await updateAuctionCancelledDB(auction_cancelled_events);
+
+      if (auction_cancelled_events.length !== 0) {
+        await this.updateAuctionCancelledDB(auction_cancelled_events);
+      }
     } catch (e) {
       log.info(`Error Inserting action logs: ${e}`);
       console.log(`Error Inserting auction logs: ${e}`);
@@ -65,157 +82,228 @@ class AuctionEventSync {
   }
 
   async updateAuctionCreatedDB(data_events) {
-    for (i = 0; i < data_events.length; i++) {
-      let seller = data_events[i]["returnValues"]["seller"];
-      let nft = data_events[i]["returnValues"]["nft"];
-      let auctionId = data_events[i]["returnValues"]["auctionId"];
-      let tokenId = data_events[i]["returnValues"]["tokenId"];
-      let floorPrice = data_events[i]["returnValues"]["floorPrice"];
-      let amount = data_events[i]["returnValues"]["amount"];
-      let startPeriod = data_events[i]["returnValues"]["startPeriod"];
-      let endPeriod = data_events[i]["returnValues"]["endPeriod"];
-      let tokenType = data_events[i]["returnValues"]["tokenType"];
+    for (let i = 0; i < data_events.length; i++) {
+      const seller = data_events[i]["returnValues"]["seller"];
+      const nft = data_events[i]["returnValues"]["nft"];
+      const auctionId = data_events[i]["returnValues"]["auctionId"];
+      const tokenId = data_events[i]["returnValues"]["tokenId"];
+      const floorPrice = data_events[i]["returnValues"]["floorPrice"];
+      const amount = data_events[i]["returnValues"]["amount"];
+      const startPeriod = data_events[i]["returnValues"]["startPeriod"];
+      const endPeriod = data_events[i]["returnValues"]["endPeriod"];
+      const tokenType = data_events[i]["returnValues"]["tokenType"];
 
-      try {
-        const data = new AuctionModel({
-          auctionId: auctionId,
-          nftId: tokenId,
-          nftAddress: nft,
-          seller: seller,
-          floorPrice: floorPrice,
-          startTime: startPeriod,
-          endTime: endPeriod,
-          amount: tokenType === 0 ? 1 : amount,
+      const sTime = new Date(0);
+      const eTime = new Date(0);
+      sTime.setUTCSeconds(startPeriod);
+      eTime.setUTCSeconds(endPeriod);
+
+      const data = new auctionDatabase.auctionDatabase({
+        auctionId: auctionId,
+        nftId: tokenId.toString(),
+        nftAddress: nft,
+        seller: seller,
+        floorPrice: floorPrice,
+        startTime: sTime,
+        endTime: eTime,
+        amount: tokenType === 0 ? 1 : amount,
+      });
+      await data.save();
+
+      let user = await userDatabase.findOne({ address: seller });
+      if (!user) {
+        const newUser = new userDatabase({
+          address: seller,
+          auctionIdsCreated: [auctionId],
         });
-        await data.save();
-
-        await UserModel.updateOne(
+        await newUser.save();
+        console.log("New user saved:", seller);
+      } else {
+        await userDatabase.findOneAndUpdate(
           { address: seller },
           {
             $push: { auctionIdsCreated: auctionId },
           }
         );
-      } catch (e) {
-        log.info(`Error Inserting creator logs: ${e}`);
-        console.log(`Error Inserting creator logs: ${e}`);
       }
+
+      console.log(
+        `Found NewAuction event: auctionID = ${auctionId}, txHash = ${data_events[i]["transactionHash"]}`
+      );
     }
   }
 
   async updateNewBidDB(data_events) {
-    for (i = 0; i < data_events.length; i++) {
-      let bidder = data_events[i]["returnValues"]["bidder"];
-      let price = data_events[i]["returnValues"]["price"];
-      let auctionId = data_events[i]["returnValues"]["auctionId"];
+    for (let i = 0; i < data_events.length; i++) {
+      const bidder = data_events[i]["returnValues"]["bidder"];
+      const price = data_events[i]["returnValues"]["price"];
+      const auctionId = data_events[i]["returnValues"]["auctionId"];
 
-      try {
-        const auction = await AuctionModel.find({ auctionId: auctionId });
+      const auction = await auctionDatabase.auctionDatabase.findOne({
+        auctionId: auctionId,
+      });
 
-        await AuctionModel.updateOne(
-          { auctionId: data.auctionId },
-          { buyer: bidder, soldFor: price }
-        );
+      await auctionDatabase.auctionDatabase.findOneAndUpdate(
+        { auctionId: auctionId },
+        { buyer: bidder, soldFor: price }
+      );
 
-        await CollectionModel.updateOne(
-          { collectionId: auction.collectionId },
+      const query = {
+        $and: [
           {
-            timeLastTraded: new Date.now(),
-          }
-        );
-
-        await UserModel.updateOne(
-          { address: bidder },
+            collectionId: { $eq: auction["nftId"] },
+          },
           {
-            $push: { auctionIdsBidded: auctionId },
-          }
-        );
-      } catch (e) {
-        log.info(`Error Inserting creator logs: ${e}`);
-        console.log(`Error Inserting creator logs: ${e}`);
-      }
+            address: { $eq: RC3CAddr },
+          },
+        ],
+      };
+
+      await collectionDatabase.findOneAndUpdate(query, {
+        timeLastTraded: Date.now(),
+      });
+
+      await userDatabase.findOneAndUpdate(
+        { address: bidder },
+        {
+          $push: { auctionIdsBidded: auctionId },
+        }
+      );
+
+      console.log(
+        `Found NewBid event: auctionID = ${auctionId}, txHash = ${data_events[i]["transactionHash"]}`
+      );
     }
   }
 
   async updateAuctionUpdatedDB(data_events) {
-    for (i = 0; i < data_events.length; i++) {
-      let bidder = data_events[i]["returnValues"]["bidder"];
-      let auctionId = data_events[i]["returnValues"]["auctionId"];
-      let newEndPeriod = data_events[i]["returnValues"]["newEndPeriod"];
+    for (let i = 0; i < data_events.length; i++) {
+      const auctionId = data_events[i]["returnValues"]["auctionId"];
+      const newEndPeriod = data_events[i]["returnValues"]["newEndPeriod"];
 
-      try {
-        const auction = await AuctionModel.find({ auctionId: auctionId });
+      const eTime = new Date(0); // The 0 there is the key, which sets the date to the epoch
+      eTime.setUTCSeconds(newEndPeriod);
 
-        //update auction
-        await AuctionModel.updateOne(
-          { auctionId: auctionId },
-          { endTime: newEndPeriod }
-        );
-      } catch (e) {
-        log.info(`Error Inserting creator logs: ${e}`);
-        console.log(`Error Inserting creator logs: ${e}`);
-      }
+      //update auction
+      await auctionDatabase.auctionDatabase.findOneAndUpdate(
+        { auctionId: auctionId },
+        { endTime: eTime }
+      );
+
+      console.log(
+        `Found AuctionUpdated event: auctionID = ${auctionId}, txHash = ${data_events[i]["transactionHash"]}`
+      );
     }
   }
 
   async updateAuctionResultedDB(data_events) {
-    for (i = 0; i < data_events.length; i++) {
-      let bidder = data_events[i]["returnValues"]["bidder"];
-      let auctionId = data_events[i]["returnValues"]["auctionId"];
+    for (let i = 0; i < data_events.length; i++) {
+      const closedBy = data_events[i]["returnValues"]["caller"];
+      const seller = data_events[i]["returnValues"]["seller"];
+      const buyer = data_events[i]["returnValues"]["highestBidder"];
+      const auctionId = data_events[i]["returnValues"]["auctionId"];
+      const price = data_events[i]["returnValues"]["winPrice"];
 
-      try {
-        const auction = await AuctionModel.find({ auctionId: auctionId });
+      const auction = await auctionDatabase.auctionDatabase.findOne({
+        auctionId: auctionId,
+      });
 
-        if (!auction.isClosed) {
-          await AuctionModel.updateOne(
-            { auctionId: data.auctionId },
-            { $set: { isClosed: true } }
-          );
-        }
+      await auctionDatabase.auctionDatabase.findOneAndUpdate(
+        { auctionId: auctionId },
+        { isClosed: true }
+      );
 
-        await UserModel.updateOne(
-          { address: auction.buyer },
-
+      let user = await userDatabase.findOne({ address: buyer });
+      if (!user) {
+        const newUser = new userDatabase({
+          address: buyer,
+          numberOfItemsBuys: 1,
+          rcdySpent: web3.utils.fromWei(price.toString()),
+          auctionIdsBought: [auctionId],
+        });
+        await newUser.save();
+        console.log("New user saved:", buyer);
+      } else {
+        await userDatabase.findOneAndUpdate(
+          { address: buyer },
           {
-            numberOfItemsBuys: numberOfItemsBuys + 1,
-            amountSpent: amountSpent + auction.soldFor,
+            numberOfItemsBuys: user["numberOfItemsBuys"] + 1,
+            rcdySpent: user["rcdySpent"] + web3.utils.fromWei(price.toString()),
             $push: { auctionIdsBought: auctionId },
           }
         );
+      }
 
-        await UserModel.updateOne(
-          { address: auction.seller },
+      user = await userDatabase.findOne({ address: seller });
+      await userDatabase.findOneAndUpdate(
+        { address: seller },
+        {
+          numberOfSells: user["numberOfSells"] + 1,
+          rcdyReceived:
+            user["rcdyReceived"] + web3.utils.fromWei(price.toString()),
+        }
+      );
 
+      user = await userDatabase.findOne({ address: closedBy });
+      if (!user) {
+        await userDatabase.findOneAndUpdate(
+          { address: closedBy },
           {
-            numberOfSells: numberOfSells + 1,
-            amountReceived: amountReceived + auction.soldFor,
+            $push: { auctionsClosed: auctionId },
           }
         );
-      } catch (e) {
-        log.info(`Error Inserting creator logs: ${e}`);
-        console.log(`Error Inserting creator logs: ${e}`);
+      } else {
+        const newUser = new userDatabase({
+          address: closedBy,
+          auctionsClosed: [auctionId],
+        });
+        await newUser.save();
+        console.log("New user saved:", closedBy);
       }
+
+      const query = {
+        $and: [
+          {
+            collectionId: { $eq: auction["nftId"] },
+          },
+          {
+            address: { $eq: RC3CAddr },
+          },
+        ],
+      };
+
+      const collection = await collectionDatabase.findOne(query);
+
+      await collectionDatabase.findOneAndUpdate(query, {
+        numberOfTimesTraded: collection["numberOfTimesTraded"] + 1,
+      });
+
+      console.log(
+        `Found AuctionResulted event: auctionID = ${auctionId}, txHash = ${data_events[i]["transactionHash"]}`
+      );
     }
   }
 
   async updateAuctionCancelledDB(data_events) {
-    for (i = 0; i < data_events.length; i++) {
-      let caller = data_events[i]["returnValues"]["caller"];
-      let nft = data_events[i]["returnValues"]["nft"];
-      let auctionId = data_events[i]["returnValues"]["auctionId"];
+    for (let i = 0; i < data_events.length; i++) {
+      const closedBy = data_events[i]["returnValues"]["caller"];
+      const auctionId = data_events[i]["returnValues"]["auctionId"];
 
-      try {
-        const auction = await AuctionModel.find({ auctionId: auctionId });
+      await auctionDatabase.auctionDatabase.findOneAndUpdate(
+        { auctionId: auctionId },
+        { isClosed: true }
+      );
 
-        if (!auction.isClosed) {
-          await AuctionModel.updateOne(
-            { auctionId: auctionId },
-            { $set: { isClosed: true } }
-          );
+      await userDatabase.findOneAndUpdate(
+        { address: closedBy },
+        {
+          $push: { auctionsClosed: auctionId },
         }
-      } catch (e) {
-        log.info(`Error Inserting creator logs: ${e}`);
-        console.log(`Error Inserting creator logs: ${e}`);
-      }
+      );
+
+      console.log(
+        `Found AuctionCancelled event: auctionID = ${auctionId}, txHash = ${data_events[i]["transactionHash"]}`
+      );
     }
   }
 }

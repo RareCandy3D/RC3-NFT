@@ -3,12 +3,12 @@ const log = require("../../config/log4js");
 class Web3Helper {
   fromWei(value) {
     var value = value.toString();
-    return web3.utils.fromWei(value);
+    return this.web3.utils.fromWei(value);
   }
 
   toWei(value) {
     var value = value.toString();
-    return web3.utils.toWei(value);
+    return this.web3.utils.toWei(value);
   }
 }
 

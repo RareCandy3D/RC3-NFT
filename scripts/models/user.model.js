@@ -16,51 +16,65 @@ const userSchema = new mongoose.Schema({
   },
   image: {
     //user image link
-    type: Number,
-  },
-  numberOwned: {
-    //no of tokens owned
-    type: Number,
-  },
-  numberOfFollowing: {
-    //no of people user is following
     type: String,
   },
-  numberOfFollowers: {
-    //no of people following user
+  numberOfItemsBuys: {
+    // no of times this user bought by auction and instant trades
     type: Number,
-  },
-  numberOfLikes: {
-    //no of likes
-    type: Number,
-  },
-  likedTokens: {
-    // array of liked tokens
-    type: [Object], //token address and id
-  },
-  numberOfTokensCreated: {
-    // no of creations by this user
-    type: Number,
-  },
-  rc3CollectionIdsCreated: {
-    // array of rc3 collection ids created
-    type: [Number],
+    default: 0,
   },
   numberOfSells: {
     // no of times this user sold from auction and instant trades
     type: Number,
+    default: 0,
   },
-  numberOfItemsBuys: {
-    // no of times this user bought from auction and instant trades
+  rcdySpent: {
+    // amount of rcdy spent by this user on purchases from auctions and instant trades
     type: Number,
+    default: 0,
   },
-  amountSpent: {
-    // amount spent by this user on purchases from auctions and instant trades
+  rcdyReceived: {
+    // amount of rcdy received by this user on sells from auctions and instant trades
     type: Number,
+    default: 0,
   },
-  amountReceived: {
-    // amount received by this user on sells from auctions and instant trades
+  ethSpent: {
+    // amount of eth spent by this user on purchases from instant trades
     type: Number,
+    default: 0,
+  },
+  ethReceived: {
+    // amount of eth received by this user on sells from instant trades
+    type: Number,
+    default: 0,
+  },
+  numberOfTokensCreated: {
+    // no of creations by this user
+    type: Number,
+    default: 0,
+  },
+  numberOfLikes: {
+    //no of likes
+    type: Number,
+    default: 0,
+  },
+  numberOfFollowing: {
+    //no of people user is following
+    type: Number,
+    default: 0,
+  },
+  numberOfFollowers: {
+    //no of people following user
+    type: Number,
+    default: 0,
+  },
+  rc3CollectionIdsCreated: {
+    // array of rc3 collection ids created
+    type: [String],
+  },
+  auctionsClosed: {
+    // array of auctions closed by user
+    type: [Number],
   },
   auctionIdsCreated: {
     // array of auction ids created
@@ -81,6 +95,10 @@ const userSchema = new mongoose.Schema({
   marketIdsBought: {
     // array of direct trade ids bought
     type: [Number],
+  },
+  likedTokens: {
+    // array of liked tokens
+    type: [Object], //token address and id
   },
 });
 
