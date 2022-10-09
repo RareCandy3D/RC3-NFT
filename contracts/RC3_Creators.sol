@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
 contract RC3_Creators is ERC1155, AccessControlEnumerable {
-    bytes32[] public categories;
-    bytes32[3] public natures;
+    bytes32[] private _categories;
+    bytes32[3] private _natures;
 
     uint256 public serialNum;
     uint256 public constant creationFee = 0.01 ether;
@@ -62,13 +62,13 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
     constructor(address defaultAdmin) ERC1155("ipfs://f0") {
         _setupRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
 
-        categories.push(stringToBytes32("ART"));
-        categories.push(stringToBytes32("MUSIC"));
-        categories.push(stringToBytes32("FASHION"));
+        _categories.push(stringToBytes32("ART"));
+        _categories.push(stringToBytes32("MUSIC"));
+        _categories.push(stringToBytes32("FASHION"));
 
-        natures[0] = stringToBytes32("PHYSICAL");
-        natures[1] = stringToBytes32("DIGITAL");
-        natures[2] = stringToBytes32("PHYGITAL");
+        _natures[0] = stringToBytes32("PHYSICAL");
+        _natures[1] = stringToBytes32("DIGITAL");
+        _natures[2] = stringToBytes32("PHYGITAL");
     }
 
     //________________//
@@ -99,9 +99,9 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
 
     modifier onlyNonCreated(bytes32 category) {
         bool created = false;
-        uint256 len = categories.length;
+        uint256 len = _categories.length;
         for (uint256 i; i < len; i++) {
-            bytes32 cat = categories[i];
+            bytes32 cat = _categories[i];
             if (cat == category) {
                 created = true;
             }
@@ -127,8 +127,8 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
     }
 
     modifier physicalCreator(bytes32 nature) {
-        bytes32 nature0 = natures[0];
-        bytes32 nature2 = natures[2];
+        bytes32 nature0 = _natures[0];
+        bytes32 nature2 = _natures[2];
         if (nature == nature0 || nature == nature2) {
             bool outcome = canCreatePhysical[msg.sender];
             require(outcome, "Only Physical creator allowed");
@@ -180,7 +180,7 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
         onlyNonCreated(category)
         returns (string memory category_)
     {
-        categories.push(category);
+        _categories.push(category);
         category_ = bytes32ToString(category);
         emit NewCategory(msg.sender, bytes32ToString(category));
     }
@@ -348,6 +348,14 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
     // READ FUNCTIONS
     //----------------//
 
+    function natures() external view returns (bytes32[3] memory) {
+        return _natures;
+    }
+
+    function categories() external view returns (bytes32[] memory) {
+        return _categories;
+    }
+
     function creator(uint256 _id) public view returns (address creator_) {
         return _idToInfo[_id].creator;
     }
@@ -472,6 +480,9 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
         require(initialSupply <= maxSupply_, "SUPPLY_ERR");
 
         Info storage info = _idToInfo[_id];
+
+        require(info.creator == payable(address(0)), "ID_ALREADY_EXISTS");
+
         info.creator = payable(_msgSender());
         info.category = category;
         info.nature = nature;
@@ -511,7 +522,7 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
         bool natural = false;
 
         for (uint256 i; i < 3; i++) {
-            bytes32 nat = natures[i];
+            bytes32 nat = _natures[i];
             if (nat == nature) {
                 natural = true;
             }
@@ -521,10 +532,10 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
             revert("ONLY_VALID_NATURE");
         } else {
             bool categorized = false;
-            uint256 lenCat = categories.length;
+            uint256 lenCat = _categories.length;
 
             for (uint256 i; i < lenCat; i++) {
-                bytes32 cat = categories[i];
+                bytes32 cat = _categories[i];
                 if (cat == category) {
                     categorized = true;
                 }

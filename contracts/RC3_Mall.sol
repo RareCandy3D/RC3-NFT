@@ -179,7 +179,7 @@ contract RC3_Mall is RC3_Auction, OwnableUpgradeable {
         Market storage market = markets[_marketId];
 
         require(State.LISTED == market.state, "MARKET_NOT_LISTED");
-        require(msg.sender == market.seller, "UNAUTHORIZED_CALLER");
+        require(payable(msg.sender) == market.seller, "UNAUTHORIZED_CALLER");
         require(
             block.timestamp - market.listTimestamp >= waitPeriod,
             "COOL_DOWN_PERIOD"

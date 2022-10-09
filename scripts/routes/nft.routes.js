@@ -6,13 +6,10 @@ const fs = require("fs");
 const CIDTool = require("cid-tool");
 const log = require("../../config/log4js");
 const Web3 = require("web3");
-const _1155ABI = require("../../artifacts/contracts/RC3_1155.sol/RC3_1155.json");
-const _721ABI = require("../../artifacts/contracts/RC3_721.sol/RC3_721.json");
-const addresses = require("../../addresses/index.js");
 require("dotenv").config();
-
-const UserModel = require("../models/user.model");
-const { CollectionModel, NftModel } = require("../models/nft.model");
+const { RC3CAddr, RC3CABI } = require("../contracts/index");
+const userDatabase = require("../models/user.model");
+const collectionDatabase = require("../models/nft.model");
 
 const web3 = new Web3(
   new Web3.providers.WebsocketProvider(process.env.BSC_TEST)
@@ -36,11 +33,20 @@ nftRouter.post(
     var { error, value } = uploadSchema.validate(req.body);
     if (error) {
       output.message = error.message;
+      log.info(`Client Error creating re3Creators with ipfs logs: ${e}`);
       return res.status(400).json(output);
     }
 
     let { path, filename } = req.file;
-    let { name, description, nature, category } = req.body;
+    let {
+      name,
+      description,
+      nature,
+      category,
+      catalogueNo,
+      unlockableContentUrl,
+      unlockableContentDescription,
+    } = req.body;
 
     //pin image
     const readableStreamForFile = fs.createReadStream(path);
@@ -61,34 +67,51 @@ nftRouter.post(
     });
 
     try {
-      let pinFile = await client.add(readableStreamForFile, {
-        cidVersion: 0,
-      });
+      // let pinFile = await client.add(readableStreamForFile, {
+      //   cidVersion: 0,
+      // });
 
-      //build json
-      let pinJson = await client.add(
-        JSON.stringify({
-          name,
-          description,
-          image: `ipfs://${pinFile.path}`,
-          "catalogue number": "",
-          properties: {
-            category,
-            nature,
-            "unlockable content": "URL link to unlockable",
-            "unlockable content details":
-              "string explaining what the unlockable content grants you access to",
-          },
-        }),
-        {
-          cidVersion: 1,
-          hashAlg: "blake2b-208",
-        }
-      );
+      // //build json
+      // let pinJson = await client.add(
+      //   JSON.stringify({
+      //     name: name,
+      //     description: description,
+      //     image: `ipfs://${pinFile.path}`,
+      //     catalogueNumber: catalogueNo,
+      //     properties: {
+      //       category: category,
+      //       nature: nature,
+      //       unlockable: unlockableContentUrl,
+      //       description: unlockableContentDescription,
+      //     },
+      //   }),
+      //   {
+      //     cidVersion: 1,
+      //     hashAlg: "blake2b-208",
+      //   }
+      // );
 
-      var tokenId = CIDTool.format(pinJson.path, { base: "base16" }).split("");
-      tokenId.splice(0, 2, "0", "x", "0");
-      let newTokenId = tokenId.join("");
+      // var tokenId = CIDTool.format(pinJson.path, { base: "base16" }).split("");
+      // tokenId.splice(0, 2, "0", "x", "0");
+      // let newTokenId = tokenId.join("");
+
+      //update database
+      // const data = new collectionDatabase({
+      //   address: RC3CAddr,
+      //   collectionId: newTokenId.toString(),
+      //   name: name,
+      //   image: `ipfs://${pinFile.path}`,
+      //   typeOfNFT: "ERC1155",
+      //   supply: initialSupply,
+      //   royalty: royalty,
+      //   properties: {
+      //     category: category,
+      //     nature: nature,
+      //     unlockableContentUrl: unlockableContentUrl,
+      //     unlockableContentDescription: unlockableContentDescription,
+      //   },
+      // });
+      // await data.save();
 
       output.flag = true;
       output.message = "NFT asset uploaded successfully";
@@ -99,64 +122,41 @@ nftRouter.post(
     } catch (error) {
       fs.unlinkSync(path);
       output.message = error.message;
+      log.info(`Client Error creating re3Creators with ipfs logs: ${e}`);
       return res.status(400).json(output);
     }
   }
 );
 
-//get NFT
-nftRouter.get("/nft", async (req, res) => {
-  const address = req.params.address;
-  const tokenId = req.params.tokenId;
+//get rc3Creators NFT
+nftRouter.get("/rc3Creators/collections/:collectionId", async (req, res) => {
+  const collectionId = req.params.collectionId;
 
-  if (!address || !tokenId) {
+  if (!collectionId) {
     return res.status(400).json({
       error: "Missing required property from client",
     });
   }
   try {
-    let nft = {
-      name: "",
-      description: "",
-      image: "",
-      properties: {
-        category: "",
-        nature: "",
-        unlockableContentUrl: "",
-        unlockableContentDescription: "",
+    const data = await collectionDatabase.findOne(
+      {
+        $and: [
+          { collectionId: { $eq: collectionId.toString() } },
+          { address: { $eq: RC3CAddr } },
+        ],
       },
-    };
-    let uri;
+      { _id: 0, __v: 0 }
+    );
 
-    let tokenMulti = new web3.eth.Contract(_1155ABI.abi, address);
-
-    if (tokenMulti) {
-      let uri = await tokenMulti.methods.uri(tokenId).call();
-      nft = {
-        name: uri.name,
-        description: uri.description,
-        image: uri.image,
-        properties: uri.properties,
-      };
-    } else {
-      let tokenSingle = new web3.eth.Contract(_721ABI.abi, address);
-      uri = await tokenSingle.methods.tokenURI(tokenId).call();
-
-      if (uri) {
-        nft = {
-          name: uri.name,
-          description: uri.description,
-          image: uri.image,
-          properties: uri.properties,
-        };
-      } else {
-        return res.status(400).json({
-          error: "NFT not found",
-        });
-      }
+    if (!data) {
+      return res.status(404).json({
+        error: "Collection id not found",
+      });
     }
-    return res.status(200).json(nft);
+
+    return res.status(200).json(data);
   } catch (e) {
+    log.info(`Client Error getting NFT: ${e}`);
     res.status(400).json({ message: error.message });
   }
 });
@@ -168,15 +168,18 @@ nftRouter.get("/rc3Creators/creators", async (req, res) => {
     const query = {};
     const sort = { numberOfTokensCreated: -1 }; // sort in descending (-1) order by numberOfTokensCreated
 
-    const data = await UserModel.find(query).sort(sort).limit(10).skip(0);
+    const data = await userDatabase
+      .find(query, { _id: 0, __v: 0 })
+      .sort(sort)
+      .limit(10)
+      .skip(0);
 
     output.flag = true;
     output.message = "Creators fetched successfully";
     output.data = data;
     return res.status(200).json(output);
   } catch (e) {
-    log.info(`Error fetching creator's list: ${e}`);
-    console.log(`Error fetching creator's list: ${e}`);
+    log.info(`Client Error fetching creator's list: ${e}`);
     output.message = "Failed to fetch creator's list!";
     return res.status(400).json(output);
   }
@@ -186,65 +189,79 @@ nftRouter.get("/rc3Creators/creators", async (req, res) => {
 nftRouter.get("/rc3Creators/collections", async (req, res) => {
   try {
     const query = {
-      address: addresses.kovan.creators,
+      address: RC3CAddr,
     };
     const sort = { numberOfTimesTraded: -1, timeLastTraded: -1 }; // sort in descending (-1) order by numberOfTokensCreated
 
-    const data = await CollectionModel.find(query).sort(sort).limit(10).skip(0);
+    const data = await collectionDatabase
+      .find(query, { _id: 0, __v: 0 })
+      .sort(sort)
+      .limit(10)
+      .skip(0);
+
+    if (data.length === 0) {
+      return res.status(404).json({
+        error: "Collection id not found",
+      });
+    }
     return res.status(200).json(data);
   } catch (e) {
-    return res.status(400).json({ message: error.message });
-  }
-});
-
-//get all RC3_Originals
-nftRouter.get("/rc3Originals/collections", async (req, res) => {
-  try {
-    const query = {
-      address: addresses.kovan.originals,
-    };
-    const sort = { numberOfTimesTraded: -1, timeLastTraded: -1 };
-
-    const data = await CollectionModel.find(query).sort(sort).limit(10).skip(0);
-    return res.status(200).json(data);
-  } catch (e) {
-    return res.status(400).json({ message: error.message });
+    log.info(`Client Error getting re3Creators collection logs: ${e}`);
+    return res.status(400).json({ message: e.message });
   }
 });
 
 //get RC3 by categories
-nftRouter.get("/rc3Creators/categories", async (req, res) => {
+nftRouter.get("/rc3Creators/categories/:category", async (req, res) => {
   try {
     const query = {
-      address: addresses.kovan.creators,
-      properties: {
-        category: req.params.category,
-      },
+      address: RC3CAddr,
+      category: req.params.category,
     };
     const sort = { numberOfTimesTraded: -1, timeLastTraded: -1 };
 
-    const data = await CollectionModel.find(query).sort(sort).limit(10).skip(0);
+    const data = await collectionDatabase
+      .find(query, { _id: 0, __v: 0 })
+      .sort(sort)
+      .limit(10)
+      .skip(0);
+
+    if (data.length === 0) {
+      return res.status(404).json({
+        error: "Category not found",
+      });
+    }
     return res.status(200).json(data);
   } catch (e) {
-    return res.status(400).json({ message: error.message });
+    log.info(`Client Error getting re3Creators by categories: ${e}`);
+    return res.status(400).json({ message: e.message });
   }
 });
 
 //get RC3 by natures
-nftRouter.get("/rc3Creators/natures", async (req, res) => {
+nftRouter.get("/rc3Creators/natures/:nature", async (req, res) => {
   try {
     const query = {
-      address: addresses.kovan.creators,
-      properties: {
-        nature: req.params.nature,
-      },
+      address: RC3CAddr,
+      nature: req.params.nature,
     };
     const sort = { numberOfTimesTraded: -1, timeLastTraded: -1 };
 
-    const data = await CollectionModel.find(query).sort(sort).limit(10).skip(0);
+    const data = await collectionDatabase
+      .find(query, { _id: 0, __v: 0 })
+      .sort(sort)
+      .limit(10)
+      .skip(0);
+
+    if (data.length === 0) {
+      return res.status(404).json({
+        error: "Nature not found",
+      });
+    }
     return res.status(200).json(data);
   } catch (e) {
-    return res.status(400).json({ message: error.message });
+    log.info(`Client Error getting re3Creators by natures: ${e}`);
+    return res.status(400).json({ message: e.message });
   }
 });
 
@@ -252,11 +269,16 @@ nftRouter.get("/rc3Creators/natures", async (req, res) => {
 nftRouter.get("/hotNFTs", async (req, res) => {
   try {
     const query = {};
-    const sort = { timeLastTraded: -1 };
-    const data = await CollectionModel.find(query).sort(sort).limit(10).skip(0);
+    const sort = { numberOfTimesTraded: -1, timeLastTraded: -1 };
+    const data = await collectionDatabase
+      .find(query, { _id: 0, __v: 0 })
+      .sort(sort)
+      .limit(10)
+      .skip(0);
     return res.status(200).json(data);
   } catch (e) {
-    return res.status(400).json({ message: error.message });
+    log.info(`Client Error getting hot nifties: ${e}`);
+    return res.status(400).json({ message: e.message });
   }
 });
 
