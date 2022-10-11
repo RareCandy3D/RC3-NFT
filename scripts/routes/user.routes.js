@@ -9,8 +9,24 @@ userRouter.get("/:address", async (req, res) => {
     const query = {
       address: req.params.address,
     };
-
     const data = await UserModel.findOne(query, { _id: 0, __v: 0 });
+    return res.status(200).json(data);
+  } catch (e) {
+    log.info(`Client Error getting user data logs: ${e}`);
+    return res.status(400).json({ message: error.message });
+  }
+});
+
+//get all users
+userRouter.get("/", async (req, res) => {
+  try {
+    const data = await UserModel.find({}, { _id: 0, __v: 0 });
+
+    if (data.length === 0) {
+      return res.status(404).json({
+        error: "Users not found",
+      });
+    }
     return res.status(200).json(data);
   } catch (e) {
     log.info(`Client Error getting user data logs: ${e}`);

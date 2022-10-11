@@ -129,7 +129,24 @@ nftRouter.post(
 );
 
 //get rc3Creators NFT
-nftRouter.get("/rc3Creators/collections/:collectionId", async (req, res) => {
+nftRouter.get("/rc3Creators", async (req, res) => {
+  try {
+    const data = await collectionDatabase.find({}, { _id: 0, __v: 0 });
+
+    if (data.length === 0) {
+      return res.status(404).json({
+        error: "No collection found",
+      });
+    }
+    return res.status(200).json(data);
+  } catch (e) {
+    log.info(`Client Error getting NFT: ${e}`);
+    res.status(400).json({ message: error.message });
+  }
+});
+
+//get rc3Creators NFT by collection id
+nftRouter.get("/rc3Creators/collection/:collectionId", async (req, res) => {
   const collectionId = req.params.collectionId;
 
   if (!collectionId) {
@@ -165,7 +182,7 @@ nftRouter.get("/rc3Creators/collections/:collectionId", async (req, res) => {
 nftRouter.get("/rc3Creators/creators", async (req, res) => {
   let output = { flag: false, message: "", data: {} };
   try {
-    const query = {};
+    const query = { numberOfTokensCreated: { $gte: 1 } };
     const sort = { numberOfTokensCreated: -1 }; // sort in descending (-1) order by numberOfTokensCreated
 
     const data = await userDatabase
@@ -182,32 +199,6 @@ nftRouter.get("/rc3Creators/creators", async (req, res) => {
     log.info(`Client Error fetching creator's list: ${e}`);
     output.message = "Failed to fetch creator's list!";
     return res.status(400).json(output);
-  }
-});
-
-//get all RC3_Creators collections
-nftRouter.get("/rc3Creators/collections", async (req, res) => {
-  try {
-    const query = {
-      address: RC3CAddr,
-    };
-    const sort = { numberOfTimesTraded: -1, timeLastTraded: -1 }; // sort in descending (-1) order by numberOfTokensCreated
-
-    const data = await collectionDatabase
-      .find(query, { _id: 0, __v: 0 })
-      .sort(sort)
-      .limit(10)
-      .skip(0);
-
-    if (data.length === 0) {
-      return res.status(404).json({
-        error: "Collection id not found",
-      });
-    }
-    return res.status(200).json(data);
-  } catch (e) {
-    log.info(`Client Error getting re3Creators collection logs: ${e}`);
-    return res.status(400).json({ message: e.message });
   }
 });
 

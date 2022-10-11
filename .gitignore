@@ -8,6 +8,6 @@ log/
 production.env
 cache
 artifacts
-scripts/upgradeV2.js
+/scripts/upgradeV2.js
 scripts/deployBSCTest.js
 contracts/test
