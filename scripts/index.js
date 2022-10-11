@@ -5,6 +5,7 @@ if (dev) {
   require("dotenv").config({ path: "production.env" });
 }
 
+const https = require("https");
 const mongoose = require("mongoose");
 const express = require("express");
 const app = express();
@@ -20,6 +21,7 @@ const { mongoConnect } = require("./services/mongo");
 const main = new Main();
 
 const PingServer = require("./helpers/classes/ping-server");
+const fs = require("fs");
 
 const allowedOrigins = ["https://rarecandy.xyz", "http://localhost:3000"];
 
@@ -76,7 +78,15 @@ new PingServer().ping();
 
 const port = process.env.PORT || 3000;
 
-app.listen(port, () => {
-  log.info(`🚀 Listening to server on port ${port}`);
-  console.log(`Listening on port ${port}`);
-});
+// https
+//   .createServer(
+//     {
+//       key: fs.readFileSync("key.pem"),
+//       cert: fs.readFileSync("cert.pem"),
+//     },
+app
+  // )
+  .listen(port, () => {
+    log.info(`🚀 Listening to server on port ${port}`);
+    console.log(`Listening on port ${port}`);
+  });
