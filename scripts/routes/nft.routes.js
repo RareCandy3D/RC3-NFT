@@ -67,51 +67,51 @@ nftRouter.post(
     });
 
     try {
-      // let pinFile = await client.add(readableStreamForFile, {
-      //   cidVersion: 0,
-      // });
+      let pinFile = await client.add(readableStreamForFile, {
+        cidVersion: 0,
+      });
 
-      // //build json
-      // let pinJson = await client.add(
-      //   JSON.stringify({
-      //     name: name,
-      //     description: description,
-      //     image: `ipfs://${pinFile.path}`,
-      //     catalogueNumber: catalogueNo,
-      //     properties: {
-      //       category: category,
-      //       nature: nature,
-      //       unlockable: unlockableContentUrl,
-      //       description: unlockableContentDescription,
-      //     },
-      //   }),
-      //   {
-      //     cidVersion: 1,
-      //     hashAlg: "blake2b-208",
-      //   }
-      // );
+      //build json
+      let pinJson = await client.add(
+        JSON.stringify({
+          name: name,
+          description: description,
+          image: `ipfs://${pinFile.path}`,
+          catalogueNumber: catalogueNo,
+          properties: {
+            category: category,
+            nature: nature,
+            unlockable: unlockableContentUrl,
+            description: unlockableContentDescription,
+          },
+        }),
+        {
+          cidVersion: 1,
+          hashAlg: "blake2b-208",
+        }
+      );
 
-      // var tokenId = CIDTool.format(pinJson.path, { base: "base16" }).split("");
-      // tokenId.splice(0, 2, "0", "x", "0");
-      // let newTokenId = tokenId.join("");
+      var tokenId = CIDTool.format(pinJson.path, { base: "base16" }).split("");
+      tokenId.splice(0, 2, "0", "x", "0");
+      let newTokenId = tokenId.join("");
 
       //update database
-      // const data = new collectionDatabase({
-      //   address: RC3CAddr,
-      //   collectionId: newTokenId.toString(),
-      //   name: name,
-      //   image: `ipfs://${pinFile.path}`,
-      //   typeOfNFT: "ERC1155",
-      //   supply: initialSupply,
-      //   royalty: royalty,
-      //   properties: {
-      //     category: category,
-      //     nature: nature,
-      //     unlockableContentUrl: unlockableContentUrl,
-      //     unlockableContentDescription: unlockableContentDescription,
-      //   },
-      // });
-      // await data.save();
+      const data = new collectionDatabase({
+        address: RC3CAddr,
+        collectionId: newTokenId.toString(),
+        name: name,
+        image: `ipfs://${pinFile.path}`,
+        typeOfNFT: "ERC1155",
+        supply: initialSupply,
+        royalty: royalty,
+        properties: {
+          category: category,
+          nature: nature,
+          unlockableContentUrl: unlockableContentUrl,
+          unlockableContentDescription: unlockableContentDescription,
+        },
+      });
+      await data.save();
 
       output.flag = true;
       output.message = "NFT asset uploaded successfully";
@@ -272,5 +272,126 @@ nftRouter.get("/hotNFTs", async (req, res) => {
     return res.status(400).json({ message: e.message });
   }
 });
+
+//like and unlike collection
+nftRouter.post("/likeAction", async (req, res) => {
+  const data = req.body;
+  if (!data.address || !data.collectionId || !data.userAddress) {
+    return res.status(400).json({
+      error: "Missing required property from client",
+    });
+  }
+  try {
+    const find = await collectionDatabase.find({
+      address: data.address,
+      collectionId: data.collectionId,
+    });
+
+    if (find.length === 1) {
+      let isLiking = false;
+
+      for (let i = 0; i < find[0]["peopleLiking"].length; i++) {
+        if (find[0]["peopleLiking"][i] === data.userAddress) {
+          isLiking = true;
+        }
+      }
+
+      if (!isLiking) {
+        await userDatabase.findOneAndUpdate(
+          {
+            address: data.userAddress,
+          },
+          {
+            $inc: { numberOfLikes: 1 },
+            $push: { likedCollections: data.collectionId },
+          }
+        );
+
+        await collectionDatabase.findOneAndUpdate(
+          {
+            address: data.address,
+            collectionId: data.collectionId,
+          },
+          {
+            $inc: { numberOfLikes: 1 },
+            $push: { peopleLiking: data.userAddress },
+          }
+        );
+        return res
+          .status(200)
+          .json({ success: "Successfully liked collection" });
+      } else {
+        await userDatabase.findOneAndUpdate(
+          {
+            address: data.userAddress,
+          },
+          {
+            $inc: { numberOfLikes: -1 },
+            $pull: {
+              likedCollections: data.collectionId,
+            },
+          }
+        );
+
+        await collectionDatabase.findOneAndUpdate(
+          {
+            address: data.address,
+            collectionId: data.collectionId,
+          },
+          {
+            $inc: { numberOfLikes: -1 },
+            $pull: {
+              peopleLiking: data.userAddress,
+            },
+          }
+        );
+
+        return res
+          .status(200)
+          .json({ success: "Successfully unliked collection" });
+      }
+    } else {
+      return res.status(400).json({
+        error: "Invalid address property from client",
+      });
+    }
+  } catch (e) {
+    log.info(`Client Error updating collection likes logs: ${e}`);
+    return res.status(400).json({ message: e.message });
+  }
+});
+
+//get rc3Creators NFT by RCDY and ETH asset price
+// nftRouter.get("/rc3Creators/collection/price/:asset", async (req, res) => {
+//   const asset = req.params.asset;
+
+//   if (!collectionId) {
+//     return res.status(400).json({
+//       error: "Missing required property from client",
+//     });
+//   }
+//   try {
+//     const data = await collectionDatabase.findOne(
+//       {
+//         $and: [
+//           { collectionId: { $eq: collectionId.toString() } },
+//           { address: { $eq: RC3CAddr } },
+//         ],
+//       },
+//       { _id: 0, __v: 0 }
+//     );
+
+//     if (!data) {
+//       return res.status(404).json({
+//         error: "Collection id not found",
+//       });
+//     }
+
+//     return res.status(200).json(data);
+//   } catch (e) {
+//     log.info(`Client Error getting NFT: ${e}`);
+//     res.status(400).json({ message: error.message });
+//   }
+// });
 
 module.exports = nftRouter;
