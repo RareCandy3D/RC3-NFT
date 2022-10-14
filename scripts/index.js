@@ -23,7 +23,11 @@ const main = new Main();
 const PingServer = require("./helpers/classes/ping-server");
 const fs = require("fs");
 
-const allowedOrigins = ["https://rarecandy.xyz", "http://localhost:3000"];
+const allowedOrigins = [
+  "https://rarecandy.xyz",
+  "http://localhost:3000",
+  "http://localhost:3001",
+];
 
 app.use(morgan("combined"));
 app.use(bodyParser.json({ limit: "200mb" }));

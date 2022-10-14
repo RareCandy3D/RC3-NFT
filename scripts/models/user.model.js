@@ -68,6 +68,18 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  peopleFollowing: {
+    // array of people who follow user
+    type: [String],
+  },
+  likedCollections: {
+    // array of collections user likes
+    type: [String],
+  },
+  userFollowing: {
+    // array of people who user follows
+    type: [String],
+  },
   rc3CollectionIdsCreated: {
     // array of rc3 collection ids created
     type: [String],
@@ -95,10 +107,6 @@ const userSchema = new mongoose.Schema({
   marketIdsBought: {
     // array of direct trade ids bought
     type: [Number],
-  },
-  likedTokens: {
-    // array of liked tokens
-    type: [Object], //token address and id
   },
 });
 

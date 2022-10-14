@@ -48,7 +48,6 @@ const rc3CreatorsNFTchema = new mongoose.Schema({
     type: Date,
     default: new Date(0),
   },
-
   category: {
     //art, fashion, music, etc
     type: String,
@@ -64,6 +63,15 @@ const rc3CreatorsNFTchema = new mongoose.Schema({
   unlockableContentDescription: {
     // describes the unlockable content
     type: String,
+  },
+  numberOfLikes: {
+    //no of likes
+    type: Number,
+    default: 0,
+  },
+  peopleLiking: {
+    // array of users who like collection
+    type: [String],
   },
 });
 
