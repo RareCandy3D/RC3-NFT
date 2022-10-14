@@ -34,6 +34,25 @@ userRouter.get("/", async (req, res) => {
   }
 });
 
+//get if user is registered data
+userRouter.get("/status/:address", async (req, res) => {
+  let data = { flag: false, message: "User is not registered" };
+  try {
+    const query = {
+      address: req.params.address,
+    };
+    const find = await UserModel.findOne(query);
+    if (find) {
+      data.flag = true;
+      data.message = "User is registered";
+    }
+    return res.status(200).json(data);
+  } catch (e) {
+    log.info(`Client Error getting user registration logs: ${e}`);
+    return res.status(400).json({ message: error.message });
+  }
+});
+
 //register new user address
 userRouter.post("/", async (req, res) => {
   const data = req.body;
@@ -43,7 +62,7 @@ userRouter.post("/", async (req, res) => {
     });
   }
   try {
-    const find = await UserModel.find({
+    const find = await UserModel.findOne({
       address: data.address,
     });
 
