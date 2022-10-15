@@ -10,6 +10,7 @@ require("dotenv").config();
 const { RC3CAddr, RC3CABI } = require("../contracts/index");
 const userDatabase = require("../models/user.model");
 const collectionDatabase = require("../models/nft.model");
+const bigInt = require("big-integer");
 
 const web3 = new Web3(
   new Web3.providers.WebsocketProvider(process.env.BSC_TEST)
@@ -21,6 +22,11 @@ const uploadSchema = Joi.object({
   description: Joi.string().required(),
   nature: Joi.string().valid("PHYSICAL", "DIGITAL", "PHYGITAL").required(),
   category: Joi.string().required(),
+  royalty: Joi.number(),
+  initialSupply: Joi.number(),
+  catalogueNo: Joi.string(),
+  unlockableContentUrl: Joi.string(),
+  unlockableContentDescription: Joi.string(),
 });
 
 //create new RC3_Creators token with ipfs
@@ -44,6 +50,8 @@ nftRouter.post(
       nature,
       category,
       catalogueNo,
+      royalty,
+      initialSupply,
       unlockableContentUrl,
       unlockableContentDescription,
     } = req.body;
@@ -95,7 +103,7 @@ nftRouter.post(
       tokenId.splice(0, 2, "0", "x", "0");
       let newTokenId = tokenId.join("");
 
-      //update database
+      // update database
       const data = new collectionDatabase({
         address: RC3CAddr,
         collectionId: newTokenId.toString(),
