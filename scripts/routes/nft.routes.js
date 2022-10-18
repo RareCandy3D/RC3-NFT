@@ -115,7 +115,7 @@ nftRouter.post(
     } catch (error) {
       fs.unlinkSync(path);
       output.message = error.message;
-      log.info(`Client Error creating re3Creators with ipfs logs: ${e}`);
+      log.info(`Client Error creating re3Creators with ipfs logs: ${error}`);
       return res.status(400).json(output);
     }
   }
@@ -209,7 +209,7 @@ nftRouter.post("/rc3Creators/create2", async (req, res) => {
     return res.status(200).json(output);
   } catch (error) {
     output.message = error.message;
-    log.info(`Client Error storing re3Creators in database logs: ${e}`);
+    log.info(`Client Error storing re3Creators in database logs: ${error}`);
     return res.status(400).json(output);
   }
 });

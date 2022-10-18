@@ -12,3 +12,5 @@ artifacts
 scripts/deployBSCTest.js
 contracts/test
 /uploads
+cert.pem
+key.pem
