@@ -29,6 +29,8 @@ const allowedOrigins = [
   "http://localhost:3001",
 ];
 
+app.use(helmet());
+
 app.use(morgan("combined"));
 app.use(bodyParser.json({ limit: "200mb" }));
 app.use(
@@ -60,7 +62,6 @@ app.use(
     ],
   })
 );
-app.use(helmet());
 
 app.use("/api/mall", require("./routes/mall.routes"));
 app.use("/api/nft", require("./routes/nft.routes"));
