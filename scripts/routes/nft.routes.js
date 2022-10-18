@@ -10,10 +10,14 @@ require("dotenv").config();
 const { RC3CAddr, RC3CABI } = require("../contracts/index");
 const userDatabase = require("../models/user.model");
 const collectionDatabase = require("../models/nft.model");
+const bigInt = require("big-integer");
+var decimal = require("hexadecimal-to-decimal");
 
 const web3 = new Web3(
   new Web3.providers.WebsocketProvider(process.env.BSC_TEST)
 );
+
+const creators = new web3.eth.Contract(RC3CABI, RC3CAddr);
 
 const postUploads = multer({ dest: "uploads/post_uploads" });
 const uploadSchema = Joi.object({
@@ -21,11 +25,14 @@ const uploadSchema = Joi.object({
   description: Joi.string().required(),
   nature: Joi.string().valid("PHYSICAL", "DIGITAL", "PHYGITAL").required(),
   category: Joi.string().required(),
+  catalogueNo: Joi.string(),
+  unlockableContentUrl: Joi.string(),
+  unlockableContentDescription: Joi.string(),
 });
 
 //create new RC3_Creators token with ipfs
 nftRouter.post(
-  "/rc3Creators/create",
+  "/rc3Creators/create1",
   postUploads.single("media"),
   async (req, res) => {
     let output = { flag: false, message: "", data: {} };
@@ -33,11 +40,12 @@ nftRouter.post(
     var { error, value } = uploadSchema.validate(req.body);
     if (error) {
       output.message = error.message;
-      log.info(`Client Error creating re3Creators with ipfs logs: ${e}`);
+      log.info(`Client Error creating re3Creators with ipfs logs: ${error}`);
       return res.status(400).json(output);
     }
 
     let { path, filename } = req.file;
+
     let {
       name,
       description,
@@ -95,27 +103,12 @@ nftRouter.post(
       tokenId.splice(0, 2, "0", "x", "0");
       let newTokenId = tokenId.join("");
 
-      //update database
-      const data = new collectionDatabase({
-        address: RC3CAddr,
-        collectionId: newTokenId.toString(),
-        name: name,
-        image: `ipfs://${pinFile.path}`,
-        typeOfNFT: "ERC1155",
-        supply: initialSupply,
-        royalty: royalty,
-        properties: {
-          category: category,
-          nature: nature,
-          unlockableContentUrl: unlockableContentUrl,
-          unlockableContentDescription: unlockableContentDescription,
-        },
-      });
-      await data.save();
-
       output.flag = true;
       output.message = "NFT asset uploaded successfully";
-      output.data = newTokenId;
+      output.data = {
+        collectionId: decimal.decimal(newTokenId.toString()),
+        image: `ipfs://${pinFile.path}`,
+      };
 
       fs.unlinkSync(path);
       return res.status(200).json(output);
@@ -127,6 +120,99 @@ nftRouter.post(
     }
   }
 );
+
+nftRouter.post("/rc3Creators/create2", async (req, res) => {
+  let output = { flag: false, message: "", data: {} };
+
+  let {
+    name,
+    image,
+    convertedInt,
+    initialSupply,
+    royalty,
+    category,
+    nature,
+    unlockableContentUrl,
+    unlockableContentDescription,
+  } = req.body;
+
+  const data = {
+    address: RC3CAddr,
+    name: name,
+    supply: initialSupply,
+    royalty: royalty,
+    collectionId: convertedInt.toString(),
+    image: image,
+    typeOfNFT: "ERC1155",
+    properties: {
+      category: category,
+      nature: nature,
+      unlockable: unlockableContentUrl,
+      description: unlockableContentDescription,
+    },
+  };
+
+  try {
+    const find = await collectionDatabase.findOne({
+      address: RC3CAddr,
+      collectionId: data.collectionId,
+    });
+
+    if (!find) {
+      // update database
+      const collection = new collectionDatabase({
+        address: RC3CAddr,
+        collectionId: convertedInt.toString(),
+        name: name,
+        supply: initialSupply,
+        royalty: royalty,
+        image: image,
+        typeOfNFT: "ERC1155",
+        properties: {
+          category: category,
+          nature: nature,
+          unlockable: unlockableContentUrl,
+          description: unlockableContentDescription,
+        },
+      });
+      await collection.save();
+    } else {
+      await collectionDatabase.findOneAndUpdate(
+        {
+          address: RC3CAddr,
+          collectionId: convertedInt.toString(),
+        },
+        {
+          name: name,
+          supply: initialSupply,
+          royalty: royalty,
+          image: image,
+          typeOfNFT: "ERC1155",
+          properties: {
+            category: category,
+            nature: nature,
+            unlockable: unlockableContentUrl,
+            description: unlockableContentDescription,
+          },
+        }
+      );
+    }
+    output.flag = true;
+    output.message = "NFT stored in database successfully";
+    output.data = await collectionDatabase.findOne(
+      {
+        address: RC3CAddr,
+        collectionId: data.collectionId,
+      },
+      { _id: 0, __v: 0 }
+    );
+    return res.status(200).json(output);
+  } catch (error) {
+    output.message = error.message;
+    log.info(`Client Error storing re3Creators in database logs: ${e}`);
+    return res.status(400).json(output);
+  }
+});
 
 //get rc3Creators NFT
 nftRouter.get("/rc3Creators", async (req, res) => {
@@ -361,27 +447,21 @@ nftRouter.post("/likeAction", async (req, res) => {
   }
 });
 
-//get rc3Creators NFT by RCDY and ETH asset price
+// get rc3Creators NFT by RCDY and ETH asset price
 // nftRouter.get("/rc3Creators/collection/price/:asset", async (req, res) => {
 //   const asset = req.params.asset;
 
-//   if (!collectionId) {
+//   if (!asset) {
 //     return res.status(400).json({
 //       error: "Missing required property from client",
 //     });
 //   }
 //   try {
-//     const data = await collectionDatabase.findOne(
-//       {
-//         $and: [
-//           { collectionId: { $eq: collectionId.toString() } },
-//           { address: { $eq: RC3CAddr } },
-//         ],
-//       },
-//       { _id: 0, __v: 0 }
-//     );
+//     const data = await collectionDatabase
+//       .find({ asset }, { _id: 0, __v: 0 })
+//       .sort({ floorPrice: 1 });
 
-//     if (!data) {
+//     if (data.length === 0) {
 //       return res.status(404).json({
 //         error: "Collection id not found",
 //       });

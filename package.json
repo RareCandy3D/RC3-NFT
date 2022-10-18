@@ -46,6 +46,7 @@
     "fs": "^0.0.1-security",
     "hardhat-contract-sizer": "^2.5.1",
     "helmet": "^5.1.0",
+    "hexadecimal-to-decimal": "^1.0.2",
     "ipfs-http-client": "^57.0.3",
     "joi": "^17.6.0",
     "log4js": "^6.5.2",
