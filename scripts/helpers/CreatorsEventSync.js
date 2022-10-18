@@ -10,17 +10,36 @@ class CreatorsEventSync {
     this.creators = new web3.eth.Contract(RC3CABI, RC3CAddr);
     this.currentBlock = currentBlock;
     this.lastBlockChecked = lastBlockChecked;
+    this.origin = "0x0000000000000000000000000000000000000000";
   }
 
   async sync() {
     try {
       //create new rc3 creators
-      const data_events = await this.creators.getPastEvents("NewToken", {
+      let data_events = await this.creators.getPastEvents("NewToken", {
         fromBlock: this.lastBlockChecked,
         toBlock: this.currentBlock,
       });
       if (data_events.length > 0) {
         await this.updateNewTokenCreatedDB(data_events);
+      }
+
+      // new rc3 creators mint
+      data_events = await this.creators.getPastEvents("TransferSingle", {
+        fromBlock: this.lastBlockChecked,
+        toBlock: this.currentBlock,
+      });
+      if (data_events.length > 0) {
+        await this.updateNewMintSingleDB(data_events);
+      }
+
+      // new rc3 creators batch mint
+      data_events = await this.creators.getPastEvents("TransferBatch", {
+        fromBlock: this.lastBlockChecked,
+        toBlock: this.currentBlock,
+      });
+      if (data_events.length > 0) {
+        await this.updateNewMintMultipleDB(data_events);
       }
     } catch (e) {
       log.info(`Error Inserting action logs: ${e}`);
@@ -34,10 +53,8 @@ class CreatorsEventSync {
       const { creator, initialSupply, maxSupply, id } = returnValues;
 
       let data = await collectionDatabase.findOne({
-        $and: [
-          { collectionId: { $eq: id.toString() } },
-          { address: { $eq: RC3CAddr } },
-        ],
+        collectionId: id.toString(),
+        address: RC3CAddr,
       });
 
       if (!data) {
@@ -97,6 +114,64 @@ class CreatorsEventSync {
 
       console.log(
         `Found NewToken event: creator=${creator}, initialSupply=${initialSupply}, maxSupply=${maxSupply}, id=${id}, txHash=${transactionHash}`
+      );
+    }
+  }
+
+  async updateNewMintSingleDB(data_events) {
+    for (const event of data_events) {
+      const { returnValues, transactionHash } = event;
+      const { operator, from, to, id, value } = returnValues;
+
+      if (from === this.origin) {
+        let data = await collectionDatabase.findOne({
+          collectionId: id.toString(),
+          address: RC3CAddr,
+        });
+
+        await collectionDatabase.findByIdAndUpdate(
+          {
+            collectionId: id.toString(),
+            address: RC3CAddr,
+          },
+          {
+            supply: data["supply"] + value,
+          }
+        );
+      }
+
+      console.log(
+        `Found NewSingleMint event: creator=${operator}, to=${to}, id=${id}, txHash=${transactionHash}`
+      );
+    }
+  }
+
+  async updateNewMintMultipleDB(data_events) {
+    for (const event of data_events) {
+      const { returnValues, transactionHash } = event;
+      const { operator, from, to, ids, values } = returnValues;
+
+      if (from === this.origin) {
+        for (let i = 0; i < ids.length; i++) {
+          let data = await collectionDatabase.findOne({
+            collectionId: ids[i].toString(),
+            address: RC3CAddr,
+          });
+
+          await collectionDatabase.findByIdAndUpdate(
+            {
+              collectionId: ids[i].toString(),
+              address: RC3CAddr,
+            },
+            {
+              supply: data["supply"] + values[i],
+            }
+          );
+        }
+      }
+
+      console.log(
+        `Found NewMultipleMint event: creator=${operator}, to=${to}, id=${ids}, txHash=${transactionHash}`
       );
     }
   }

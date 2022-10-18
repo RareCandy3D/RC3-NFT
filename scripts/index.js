@@ -24,7 +24,7 @@ const PingServer = require("./helpers/classes/ping-server");
 const fs = require("fs");
 
 const allowedOrigins = [
-  "https://rarecandy.xyz",
+  "https://app.rarecandy.xyz",
   "http://localhost:3000",
   "http://localhost:3001",
 ];
