@@ -25,8 +25,6 @@ const uploadSchema = Joi.object({
   description: Joi.string().required(),
   nature: Joi.string().valid("PHYSICAL", "DIGITAL", "PHYGITAL").required(),
   category: Joi.string().required(),
-  royalty: Joi.number(),
-  initialSupply: Joi.number(),
   catalogueNo: Joi.string(),
   unlockableContentUrl: Joi.string(),
   unlockableContentDescription: Joi.string(),
@@ -54,8 +52,6 @@ nftRouter.post(
       nature,
       category,
       catalogueNo,
-      royalty,
-      initialSupply,
       unlockableContentUrl,
       unlockableContentDescription,
     } = req.body;
@@ -106,25 +102,6 @@ nftRouter.post(
       var tokenId = CIDTool.format(pinJson.path, { base: "base16" }).split("");
       tokenId.splice(0, 2, "0", "x", "0");
       let newTokenId = tokenId.join("");
-
-      // update database
-      const data = new collectionDatabase({
-        address: RC3CAddr,
-        collectionId: newTokenId.toString(),
-        name: name,
-        image: `ipfs://${pinFile.path}`,
-        typeOfNFT: "ERC1155",
-        supply: initialSupply,
-        royalty: royalty,
-        properties: {
-          category: category,
-          nature: nature,
-          unlockableContentUrl: unlockableContentUrl,
-          unlockableContentDescription: unlockableContentDescription,
-        },
-      });
-      await data.save();
-
 
       output.flag = true;
       output.message = "NFT asset uploaded successfully";
