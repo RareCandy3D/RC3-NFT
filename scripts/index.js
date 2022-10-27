@@ -5,32 +5,27 @@ if (dev) {
   require("dotenv").config({ path: "production.env" });
 }
 
-const https = require("https");
-const mongoose = require("mongoose");
+// const https = require("https");
 const express = require("express");
+const { Session } = require("express-session");
 const app = express();
-var morgan = require("morgan");
+const morgan = require("morgan");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const helmet = require("helmet");
-
 const log = require("../config/log4js");
 const Main = require("./services/main");
 const { mongoConnect } = require("./services/mongo");
-
 const main = new Main();
-
 const PingServer = require("./helpers/classes/ping-server");
-const fs = require("fs");
+// const fs = require("fs");
 
 const allowedOrigins = [
   "https://app.rarecandy.xyz",
   "http://localhost:3000",
   "http://localhost:3001",
 ];
-
 app.use(helmet());
-
 app.use(morgan("combined"));
 app.use(bodyParser.json({ limit: "200mb" }));
 app.use(
@@ -63,6 +58,16 @@ app.use(
   })
 );
 
+app.use(
+  Session({
+    name: "siwe-quickstart",
+    secret: "siwe-quickstart-secret",
+    resave: true,
+    saveUninitialized: true,
+    cookie: { secure: false, sameSite: true },
+  })
+);
+
 app.use("/api/mall", require("./routes/mall.routes"));
 app.use("/api/nft", require("./routes/nft.routes"));
 app.use("/api/user", require("./routes/user.routes"));
@@ -73,9 +78,11 @@ app.get("/api/", async (req, res) => {
 
 (async function init() {
   await mongoConnect();
+
+  // sync events every 3 mins
   setInterval(async () => {
     await main.subscribe();
-  }, 180000); // 3 mins
+  }, 180000);
 })();
 
 //ping heroku server every 50 mins

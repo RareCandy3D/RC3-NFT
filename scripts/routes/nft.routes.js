@@ -10,13 +10,11 @@ require("dotenv").config();
 const { RC3CAddr, RC3CABI } = require("../contracts/index");
 const userDatabase = require("../models/user.model");
 const collectionDatabase = require("../models/nft.model");
-const bigInt = require("big-integer");
-var decimal = require("hexadecimal-to-decimal");
+const mallDatabase = require("../models/mall.model");
+let decimal = require("hexadecimal-to-decimal");
+const request = require("request");
 
-const web3 = new Web3(
-  new Web3.providers.WebsocketProvider(process.env.BSC_TEST)
-);
-
+const web3 = new Web3(new Web3.providers.HttpProvider(process.env.BSC_TEST));
 const creators = new web3.eth.Contract(RC3CABI, RC3CAddr);
 
 const postUploads = multer({ dest: "uploads/post_uploads" });
@@ -44,7 +42,7 @@ nftRouter.post(
       return res.status(400).json(output);
     }
 
-    let { path, filename } = req.file;
+    let path = req.file.path;
 
     let {
       name,
@@ -110,12 +108,12 @@ nftRouter.post(
         image: `ipfs://${pinFile.path}`,
       };
 
-      fs.unlinkSync(path);
+      // fs.unlinkSync(path);
       return res.status(200).json(output);
-    } catch (error) {
+    } catch (e) {
       fs.unlinkSync(path);
-      output.message = error.message;
-      log.info(`Client Error creating re3Creators with ipfs logs: ${error}`);
+      output.message = e.message;
+      log.info(`Client Error creating re3Creators with ipfs logs: ${e}`);
       return res.status(400).json(output);
     }
   }
@@ -207,9 +205,9 @@ nftRouter.post("/rc3Creators/create2", async (req, res) => {
       { _id: 0, __v: 0 }
     );
     return res.status(200).json(output);
-  } catch (error) {
-    output.message = error.message;
-    log.info(`Client Error storing re3Creators in database logs: ${error}`);
+  } catch (e) {
+    output.message = e.message;
+    log.info(`Client Error storing re3Creators in database logs: ${e}`);
     return res.status(400).json(output);
   }
 });
@@ -225,6 +223,56 @@ nftRouter.get("/rc3Creators", async (req, res) => {
       });
     }
     return res.status(200).json(data);
+  } catch (e) {
+    log.info(`Client Error getting NFT: ${e}`);
+    res.status(400).json({ message: e.message });
+  }
+});
+
+nftRouter.get("/rc3Creators/image/:collectionId", async (req, res) => {
+  const collectionId = req.params.collectionId;
+
+  if (!collectionId) {
+    return res.status(400).json({
+      error: "Missing required property from client",
+    });
+  }
+
+  try {
+    const data = await collectionDatabase.findOne(
+      {
+        collectionId: collectionId.toString(),
+        address: RC3CAddr,
+      },
+      { _id: 0, __v: 0 }
+    );
+
+    if (!data) {
+      return res.status(404).json({
+        error: "Collection id not found",
+      });
+    }
+
+    const url = data["image"];
+
+    if (url === "") {
+      return res.status(404).json({
+        error: "Collection image not found",
+      });
+    }
+
+    request(
+      {
+        url: url,
+        encoding: null,
+      },
+      (err, resp, buffer) => {
+        if (!err && resp.statusCode === 200) {
+          res.set("Content-Type", "image/jpeg");
+          res.send(resp.body);
+        }
+      }
+    );
   } catch (e) {
     log.info(`Client Error getting NFT: ${e}`);
     res.status(400).json({ message: error.message });
@@ -447,31 +495,84 @@ nftRouter.post("/likeAction", async (req, res) => {
   }
 });
 
+//can create PHYSICAL and PHYGITAL
+nftRouter.get("/rc3Creators/create1/:userAddress", async (req, res) => {
+  const userAddress = req.params.userAddress;
+  try {
+    let data = { flag: false, message: "Not Authorized" };
+    data.flag = await creators.methods.canCreatePhysical(userAddress).call();
+
+    if (data.flag) {
+      data.message = "Authorized";
+    }
+
+    return res.status(200).json(data);
+  } catch (e) {
+    log.info(`Client Error getting physical and phygital create access: ${e}`);
+    return res.status(400).json({ message: e.message });
+  }
+});
+
+//can mint nft
+nftRouter.get(
+  "/rc3Creators/mint/:userAddress/:collectionId",
+  async (req, res) => {
+    const userAddress = req.params.userAddress;
+    const collectionId = req.params.collectionId;
+    try {
+      let data = { flag: false, message: "Not Authorized" };
+      data.flag = await creators.methods
+        .canMint(collectionId, userAddress)
+        .call();
+
+      if (data.flag) {
+        data.message = "Authorized";
+      }
+
+      return res.status(200).json(data);
+    } catch (e) {
+      log.info(`Client Error getting mint access: ${e}`);
+      return res.status(400).json({ message: e.message });
+    }
+  }
+);
+
 // get rc3Creators NFT by RCDY and ETH asset price
-// nftRouter.get("/rc3Creators/collection/price/:asset", async (req, res) => {
-//   const asset = req.params.asset;
+nftRouter.get("/rc3Creators/collection/price/:asset", async (req, res) => {
+  const asset = req.params.asset;
+  try {
+    let arr;
+    const directRCDYData = await mallDatabase.directDatabase
+      .find({ tradeToken: asset, isClosed: false }, { _id: 0, __v: 0 })
+      .sort({ floorPrice: 1 });
 
-//   if (!asset) {
-//     return res.status(400).json({
-//       error: "Missing required property from client",
-//     });
-//   }
-//   try {
-//     const data = await collectionDatabase
-//       .find({ asset }, { _id: 0, __v: 0 })
-//       .sort({ floorPrice: 1 });
+    if (asset === "ETH") {
+      arr = directRCDYData;
+    } else if (asset === "RCDY") {
+      const auctionRCDYData = await mallDatabase.auctionDatabase
+        .find({ isClosed: false }, { _id: 0, __v: 0 })
+        .sort({ floorPrice: 1 });
+      arr = directRCDYData.concat(auctionRCDYData);
+    } else {
+      return res.status(400).json({
+        error: "Missing required property from client",
+      });
+    }
 
-//     if (data.length === 0) {
-//       return res.status(404).json({
-//         error: "Collection id not found",
-//       });
-//     }
+    arr.sort((a, b) => {
+      return b["floorPrice"] - a["floorPrice"];
+    });
 
-//     return res.status(200).json(data);
-//   } catch (e) {
-//     log.info(`Client Error getting NFT: ${e}`);
-//     res.status(400).json({ message: error.message });
-//   }
-// });
+    if (arr.length === 0) {
+      return res.status(404).json({
+        error: "Nothing in this list",
+      });
+    }
+    return res.status(200).json(arr);
+  } catch (e) {
+    log.info(`Client Error getting NFT: ${e}`);
+    res.status(400).json({ message: e.message });
+  }
+});
 
 module.exports = nftRouter;

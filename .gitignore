@@ -11,6 +11,6 @@ artifacts
 /scripts/upgradeV2.js
 scripts/deployBSCTest.js
 contracts/test
-/uploads
+uploads
 cert.pem
 key.pem
