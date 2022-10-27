@@ -1,13 +1,6 @@
-const dev = process.env.NODE_ENV == "production" ? false : true;
-if (dev) {
-  require("dotenv").config();
-} else {
-  require("dotenv").config({ path: "production.env" });
-}
-
-// const https = require("https");
+require("dotenv").config();
 const express = require("express");
-const { Session } = require("express-session");
+// const { Session } = require("express-session");
 const app = express();
 const morgan = require("morgan");
 const bodyParser = require("body-parser");
@@ -18,7 +11,6 @@ const Main = require("./services/main");
 const { mongoConnect } = require("./services/mongo");
 const main = new Main();
 const PingServer = require("./helpers/classes/ping-server");
-// const fs = require("fs");
 
 const allowedOrigins = [
   "https://app.rarecandy.xyz",
@@ -58,15 +50,16 @@ app.use(
   })
 );
 
-app.use(
-  Session({
-    name: "siwe-quickstart",
-    secret: "siwe-quickstart-secret",
-    resave: true,
-    saveUninitialized: true,
-    cookie: { secure: false, sameSite: true },
-  })
-);
+// app.use(
+//   Session({
+//     name: "racecandy3D",
+//     secret: "racecandy3D-freestyle-secret",
+//     resave: true,
+//     saveUninitialized: true,
+//     proxy: true,
+//     cookie: { secure: true, sameSite: true },
+//   })
+// );
 
 app.use("/api/mall", require("./routes/mall.routes"));
 app.use("/api/nft", require("./routes/nft.routes"));
@@ -90,15 +83,7 @@ new PingServer().ping();
 
 const port = process.env.PORT || 3000;
 
-// https
-//   .createServer(
-//     {
-//       key: fs.readFileSync("key.pem"),
-//       cert: fs.readFileSync("cert.pem"),
-//     },
-app
-  // )
-  .listen(port, () => {
-    log.info(`🚀 Listening to server on port ${port}`);
-    console.log(`Listening on port ${port}`);
-  });
+app.listen(port, () => {
+  log.info(`🚀 Listening to server on port ${port}`);
+  console.log(`Listening on port ${port}`);
+});
