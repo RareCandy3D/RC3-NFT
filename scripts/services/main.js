@@ -64,7 +64,7 @@ class Main {
         `done listening for events from block: ${fromBlock}, to block: ${toBlock}`
       );
     } catch (e) {
-      console.log(`Error inserting new market logs: ${e}`);
+      console.log(`Error inserting logs: ${e}`);
     }
   }
 }
