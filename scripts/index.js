@@ -68,10 +68,11 @@ app.use("/api/user", require("./routes/user.routes"));
 
 (async function init() {
   await mongoConnect();
+  await main.subscribe();
   // sync events every 3 mins
   setInterval(async () => {
     await main.subscribe();
-  }, 180000);
+  }, 1800000);
 })();
 
 //ping heroku server every 50 mins

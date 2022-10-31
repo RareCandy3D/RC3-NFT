@@ -4,7 +4,7 @@ const userSchema = new mongoose.Schema({
   address: {
     // address of a user
     type: String,
-    required: true,
+    // required: true,
   },
   username: {
     // user name
@@ -70,6 +70,10 @@ const userSchema = new mongoose.Schema({
   },
   peopleFollowing: {
     // array of people who follow user
+    type: [String],
+  },
+  mintableCollectionIds: {
+    // array of collections that can be minted by user
     type: [String],
   },
   likedCollections: {
