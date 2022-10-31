@@ -119,6 +119,7 @@ nftRouter.post(
   }
 );
 
+//updates database with newly created info
 nftRouter.post("/rc3Creators/create2", async (req, res) => {
   let output = { flag: false, message: "", data: {} };
 
@@ -229,6 +230,7 @@ nftRouter.get("/rc3Creators", async (req, res) => {
   }
 });
 
+//get image url by id
 nftRouter.get("/rc3Creators/image/:collectionId", async (req, res) => {
   const collectionId = req.params.collectionId;
 
@@ -513,29 +515,23 @@ nftRouter.get("/rc3Creators/create1/:userAddress", async (req, res) => {
   }
 });
 
-//can mint nft
-nftRouter.get(
-  "/rc3Creators/mint/:userAddress/:collectionId",
-  async (req, res) => {
-    const userAddress = req.params.userAddress;
-    const collectionId = req.params.collectionId;
-    try {
-      let data = { flag: false, message: "Not Authorized" };
-      data.flag = await creators.methods
-        .canMint(collectionId, userAddress)
-        .call();
+//get all mintable by user
+nftRouter.get("/rc3Creators/mint/:userAddress/", async (req, res) => {
+  const userAddress = req.params.userAddress;
+  try {
+    const data = await userDatabase.findOne(
+      {
+        address: userAddress,
+      },
+      { _id: 0, __v: 0 }
+    );
 
-      if (data.flag) {
-        data.message = "Authorized";
-      }
-
-      return res.status(200).json(data);
-    } catch (e) {
-      log.info(`Client Error getting mint access: ${e}`);
-      return res.status(400).json({ message: e.message });
-    }
+    return res.status(200).json(data["mintableCollectionIds"]);
+  } catch (e) {
+    log.info(`Client Error getting mint access: ${e}`);
+    return res.status(400).json({ message: e.message });
   }
-);
+});
 
 // get rc3Creators NFT by RCDY and ETH asset price
 nftRouter.get("/rc3Creators/collection/price/:asset", async (req, res) => {

@@ -41,6 +41,24 @@ class CreatorsEventSync {
       if (data_events.length > 0) {
         await this.updateNewMintMultipleDB(data_events);
       }
+
+      // new rc3 creators minter role set
+      data_events = await this.creators.getPastEvents("MinterSet", {
+        fromBlock: this.lastBlockChecked,
+        toBlock: this.currentBlock,
+      });
+      if (data_events.length > 0) {
+        await this.updateNewMinterRoleDB(data_events);
+      }
+
+      // new rc3 royalty updated
+      data_events = await this.creators.getPastEvents("RoyaltyInfoUpdated", {
+        fromBlock: this.lastBlockChecked,
+        toBlock: this.currentBlock,
+      });
+      if (data_events.length > 0) {
+        await this.updateRoyaltyDB(data_events);
+      }
     } catch (e) {
       log.info(`Error Inserting action logs: ${e}`);
       console.log(`Error Inserting creator logs: ${e}`);
@@ -52,10 +70,13 @@ class CreatorsEventSync {
       const { returnValues, transactionHash } = event;
       const { creator, initialSupply, maxSupply, id } = returnValues;
 
-      let data = await collectionDatabase.findOne({
-        collectionId: id.toString(),
-        address: RC3CAddr,
-      });
+      let data = await collectionDatabase.findOne(
+        {
+          address: RC3CAddr,
+          collectionId: id.toString(),
+        },
+        { _id: 0, __v: 0 }
+      );
 
       if (!data) {
         const info = await this.creators.methods.getInfo(id).call();
@@ -82,8 +103,8 @@ class CreatorsEventSync {
         }
 
         data = new collectionDatabase({
-          collectionId: id.toString(),
           address: RC3CAddr,
+          collectionId: id.toString(),
           typeOfNFT: "ERC1155",
           supply: initialSupply,
           category: cat,
@@ -99,7 +120,10 @@ class CreatorsEventSync {
           { address: creator },
           {
             numberOfTokensCreated: user["numberOfTokensCreated"] + 1,
-            $push: { rc3CollectionIdsCreated: id.toString() },
+            $push: {
+              rc3CollectionIdsCreated: id.toString(),
+              mintableCollectionIds: id.toString(),
+            },
           }
         );
       } else {
@@ -107,13 +131,15 @@ class CreatorsEventSync {
           address: creator,
           numberOfTokensCreated: 1,
           rc3CollectionIdsCreated: [id.toString()],
+          mintableCollectionIds: [id.toString()],
         });
         await newUser.save();
         console.log("New user saved:", creator);
       }
 
       console.log(
-        `Found NewToken event: creator=${creator}, initialSupply=${initialSupply}, maxSupply=${maxSupply}, id=${id}, txHash=${transactionHash}`
+        `Found NewToken event: creator=${creator}, initialSupply=${initialSupply}, 
+        maxSupply=${maxSupply}, id=${id}, txHash=${transactionHash}`
       );
     }
   }
@@ -125,15 +151,12 @@ class CreatorsEventSync {
 
       if (from === this.origin) {
         let data = await collectionDatabase.findOne({
-          collectionId: id.toString(),
           address: RC3CAddr,
+          collectionId: id.toString(),
         });
 
         await collectionDatabase.findByIdAndUpdate(
-          {
-            collectionId: id.toString(),
-            address: RC3CAddr,
-          },
+          { address: RC3CAddr, collectionId: id.toString() },
           {
             supply: data["supply"] + value,
           }
@@ -141,7 +164,8 @@ class CreatorsEventSync {
       }
 
       console.log(
-        `Found NewSingleMint event: creator=${operator}, to=${to}, id=${id}, txHash=${transactionHash}`
+        `Found NewSingleMint event: creator=${operator}, \n
+        to=${to}, id=${id}, txHash=${transactionHash}`
       );
     }
   }
@@ -154,15 +178,12 @@ class CreatorsEventSync {
       if (from === this.origin) {
         for (let i = 0; i < ids.length; i++) {
           let data = await collectionDatabase.findOne({
-            collectionId: ids[i].toString(),
             address: RC3CAddr,
+            collectionId: ids[i].toString(),
           });
 
           await collectionDatabase.findByIdAndUpdate(
-            {
-              collectionId: ids[i].toString(),
-              address: RC3CAddr,
-            },
+            { address: RC3CAddr, collectionId: ids[i].toString() },
             {
               supply: data["supply"] + values[i],
             }
@@ -171,7 +192,84 @@ class CreatorsEventSync {
       }
 
       console.log(
-        `Found NewMultipleMint event: creator=${operator}, to=${to}, id=${ids}, txHash=${transactionHash}`
+        `Found NewMultipleMint event: creator=${operator},\n 
+        to=${to}, id=${ids}, txHash=${transactionHash}`
+      );
+    }
+  }
+
+  async updateNewMinterRoleDB(data_events) {
+    for (const event of data_events) {
+      const { returnValues, transactionHash } = event;
+      const { caller, id, minter, canMint } = returnValues;
+
+      let data = await collectionDatabase.findOne({
+        address: RC3CAddr,
+        collectionId: id.toString(),
+      });
+      if (data) {
+        if (canMint) {
+          await userDatabase.findByIdAndUpdate(
+            {
+              address: minter,
+            },
+            {
+              $push: { mintableCollectionIds: id.toString() },
+            },
+            { upsert: true }
+          );
+        } else {
+          await userDatabase.findByIdAndUpdate(
+            {
+              address: minter,
+            },
+            {
+              $pull: { mintableCollectionIds: id.toString() },
+            }
+          );
+        }
+      }
+      console.log(
+        `Found MinterSet event: caller=${caller}, id=${id},\n 
+        minter=${minter}, canMint=${canMint}, txHash=${transactionHash}`
+      );
+    }
+  }
+
+  async updateRoyaltyDB(data_events) {
+    for (const event of data_events) {
+      const { returnValues, transactionHash } = event;
+      const { oldCreator, newCreator, id, royalty, recipient, shares } =
+        returnValues;
+
+      let data = await collectionDatabase.findOne({
+        address: RC3CAddr,
+        collectionId: id.toString(),
+      });
+      if (data && oldCreator !== newCreator) {
+        await userDatabase.findByIdAndUpdate(
+          {
+            address: newCreator,
+          },
+          {
+            $push: { mintableCollectionIds: id.toString() },
+          },
+          { upsert: true }
+        );
+
+        await userDatabase.findByIdAndUpdate(
+          {
+            address: oldCreator,
+          },
+          {
+            $pull: { mintableCollectionIds: id.toString() },
+          }
+        );
+      }
+      console.log(
+        `Found RoyaltyInfoUpdated event: oldCreator=${oldCreator},\n
+        newCreator=${newCreator}, id=${id}, royalty=${royalty},\n
+        recipients=${recipients}, shares=${shares}, txHash=${transactionHash}`
       );
     }
   }
