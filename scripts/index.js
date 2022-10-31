@@ -68,7 +68,6 @@ app.use("/api/user", require("./routes/user.routes"));
 
 (async function init() {
   await mongoConnect();
-  await main.subscribe();
   // sync events every 3 mins
   setInterval(async () => {
     await main.subscribe();
