@@ -1,3 +1,10 @@
+const dev = process.env.NODE_ENV == "production" ? false : true;
+if (dev) {
+  require("dotenv").config();
+} else {
+  require("dotenv").config({ path: "production.env" });
+}
+
 const express = require("express");
 const app = express();
 const session = require("express-session");
@@ -71,7 +78,7 @@ app.use("/api/user", require("./routes/user.routes"));
   // sync events every 3 mins
   setInterval(async () => {
     await main.subscribe();
-  }, 1800000);
+  }, 180000);
 })();
 
 //ping heroku server every 50 mins
