@@ -73,6 +73,15 @@ app.use("/api/mall", require("./routes/mall.routes"));
 app.use("/api/nft", require("./routes/nft.routes"));
 app.use("/api/user", require("./routes/user.routes"));
 
+app.get("/api", async (req, res) => {
+
+  res.status(200).json({
+    environment: process.env.NODE_ENV,
+    port: process.env.PORT,
+    timestamp: new Date(),
+  });
+});
+
 (async function init() {
   await mongoConnect();
   // sync events every 3 mins
