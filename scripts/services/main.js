@@ -5,7 +5,7 @@ const CreatorsEventSync = require("../helpers/CreatorsEventSync");
 const AuctionEventSync = require("../helpers/AuctionEventSync");
 const MarketEventSync = require("../helpers/MarketEventSync");
 
-const initContractBlock = 23557638; //bsc testnet deployment block for RC3_Mall contract
+const initContractBlock = 29150406; //mumbai testnet deployment block for RC3_Mall contract
 
 class Main {
   async subscribe() {
