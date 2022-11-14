@@ -37,16 +37,12 @@ module.exports = {
   },
 
   networks: {
-    kovan: {
-      url: process.env.KOVAN_URL,
+    georli: {
+      url: process.env.GEORLI_URL,
       accounts: [process.env.PRIVATE_KEY],
     },
-    rinkeby: {
-      url: process.env.RINKEBY_URL,
-      accounts: [process.env.PRIVATE_KEY],
-    },
-    bscTest: {
-      url: process.env.BSC_TEST,
+    mumbai: {
+      url: process.env.MUMBAI_URL,
       accounts: [process.env.PRIVATE_KEY],
     },
     hardhat: {
@@ -59,8 +55,12 @@ module.exports = {
   },
 
   etherscan: {
-    // apiKey: process.env.ETHERSCAN_API_KEY,
-    apiKey: { bscTestnet: process.env.BSC_KEY },
+    apiKey: {
+      polygon: process.env.POLYGONSCAN_API_KEY,
+      polygonMumbai: process.env.POLYGONSCAN_API_KEY,
+      bsc: process.env.BSC_KEY,
+      mainnet: process.env.ETHERSCAN_API_KEY,
+    },
   },
 
   defender: {

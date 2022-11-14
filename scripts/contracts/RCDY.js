@@ -1,4 +1,4 @@
-const RCDYAddr = "0x378cd12990004356B3025a1BB7b57abecC870a46";
+const RCDYAddr = "0x98b850a402B975F065ab98Abc1bdc6b79445af42";
 
 const RCDYABI = [
   {

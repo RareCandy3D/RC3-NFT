@@ -1,4 +1,4 @@
-const RC3CAddr = "0x5bF78b986Faf3Ee0abBE73190e4a993816220263";
+const RC3CAddr = "0x3cD6bB22F1ae56dc4B4DA9E694a843bf2102ec15";
 
 const RC3CABI = [
   {
