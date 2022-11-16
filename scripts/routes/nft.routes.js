@@ -14,7 +14,7 @@ const mallDatabase = require("../models/mall.model");
 let decimal = require("hexadecimal-to-decimal");
 const request = require("request");
 
-const web3 = new Web3(new Web3.providers.HttpProvider(process.env.BSC_TEST));
+const web3 = new Web3(new Web3.providers.HttpProvider(process.env.MUMBAI_URL));
 const creators = new web3.eth.Contract(RC3CABI, RC3CAddr);
 
 const postUploads = multer({ dest: "uploads/post_uploads" });

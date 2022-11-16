@@ -5,20 +5,21 @@ const CreatorsEventSync = require("../helpers/CreatorsEventSync");
 const AuctionEventSync = require("../helpers/AuctionEventSync");
 const MarketEventSync = require("../helpers/MarketEventSync");
 
-const initContractBlock = 29150406; //mumbai testnet deployment block for RC3_Mall contract
+const initContractBlock = 29180000; //mumbai testnet deployment block for RC3_Mall contract
+const range = 3500; // 5000
 
 class Main {
   async subscribe() {
     //connect to RPC
     const web3 = new Web3(
-      new Web3.providers.HttpProvider(process.env.BSC_TEST)
+      new Web3.providers.HttpProvider(process.env.MUMBAI_URL)
     );
 
     const latest_block = (await web3.eth.getBlockNumber()) - 5;
 
     try {
-      let fromBlock, toBlock;
-      let lastBlock = await BlockModel.findOne({ id: initContractBlock });
+      let toBlock;
+      let lastBlock = await BlockModel.findOne({ blockId: initContractBlock });
 
       if (!lastBlock) {
         const newBlock = new BlockModel({
@@ -26,17 +27,16 @@ class Main {
           lastBlock: initContractBlock,
         });
         await newBlock.save();
+        lastBlock = await BlockModel.findOne({ blockId: initContractBlock });
       }
 
-      lastBlock = await BlockModel.findOne({ id: initContractBlock });
+      let fromBlock = lastBlock["lastBlock"] + 1;
 
-      // gap 5000 blocks - limit of getPastEvents
-      if (latest_block - lastBlock["lastBlock"] > 5000) {
-        fromBlock = lastBlock["lastBlock"] + 1;
-        toBlock = lastBlock["lastBlock"] + 5000;
+      // gap range blocks - limit of getPastEvents
+      if (latest_block - lastBlock["lastBlock"] > range) {
+        toBlock = lastBlock["lastBlock"] + range;
       } else {
-        fromBlock = lastBlock["lastBlock"] + 1;
-        toBlock = Math.min(lastBlock["lastBlock"] + 5000, latest_block);
+        toBlock = Math.min(lastBlock["lastBlock"] + range, latest_block);
       }
 
       console.log(
@@ -54,7 +54,7 @@ class Main {
 
       //update latest checked block
       await BlockModel.findOneAndUpdate(
-        { id: initContractBlock },
+        { blockId: initContractBlock },
         {
           lastBlock: toBlock,
         }
