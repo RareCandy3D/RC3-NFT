@@ -2,7 +2,7 @@ const log = require("../../config/log4js");
 const userDatabase = require("../models/user.model");
 const collectionDatabase = require("../models/nft.model");
 const Web3 = require("web3");
-const web3 = new Web3(new Web3.providers.HttpProvider(process.env.BSC_TEST));
+const web3 = new Web3(new Web3.providers.HttpProvider(process.env.MUMBAI_URL));
 const { RC3CAddr, RC3CABI } = require("../contracts");
 
 class CreatorsEventSync {
