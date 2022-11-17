@@ -93,19 +93,14 @@ class AuctionEventSync {
       const endPeriod = data_events[i]["returnValues"]["endPeriod"];
       const tokenType = data_events[i]["returnValues"]["tokenType"];
 
-      const sTime = new Date(0);
-      const eTime = new Date(0);
-      sTime.setUTCSeconds(startPeriod);
-      eTime.setUTCSeconds(endPeriod);
-
       const data = new auctionDatabase.auctionDatabase({
         auctionId: auctionId,
         nftId: tokenId.toString(),
         nftAddress: nft,
         seller: seller,
         floorPrice: floorPrice,
-        startTime: sTime,
-        endTime: eTime,
+        startTime: startPeriod * 1000,
+        endTime: endPeriod * 1000,
         amount: tokenType === 0 ? 1 : amount,
       });
       await data.save();
