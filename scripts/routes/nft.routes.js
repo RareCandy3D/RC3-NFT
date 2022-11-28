@@ -13,6 +13,7 @@ const collectionDatabase = require("../models/nft.model");
 const mallDatabase = require("../models/mall.model");
 let decimal = require("hexadecimal-to-decimal");
 const request = require("request");
+const crypto = require("crypto");
 
 const web3 = new Web3(new Web3.providers.HttpProvider(process.env.MUMBAI_URL));
 const creators = new web3.eth.Contract(RC3CABI, RC3CAddr);
@@ -26,6 +27,13 @@ const uploadSchema = Joi.object({
   catalogueNo: Joi.string(),
   unlockableContentUrl: Joi.string(),
   unlockableContentDescription: Joi.string(),
+});
+
+//generate catalogue no
+nftRouter.get("/rc3Creators/catalogueNo", async (req, res) => {
+  let base = "rc3-";
+  let id = crypto.randomUUID();
+  return res.status(200).json({ catalogueNo: base.concat(id) });
 });
 
 //create new RC3_Creators token with ipfs
@@ -568,6 +576,22 @@ nftRouter.get("/rc3Creators/collection/price/:asset", async (req, res) => {
   } catch (e) {
     log.info(`Client Error getting NFT: ${e}`);
     res.status(400).json({ message: e.message });
+  }
+});
+
+nftRouter.get("/rc3Creators/search/:param", async (req, res) => {
+  const param = req.params.param;
+  try {
+    const data = await collectionDatabase
+      .find({ $text: { $search: param } }, { _id: 0, __v: 0 })
+      .skip(0)
+      .limit(10);
+
+    if (data.length !== 0) {
+      return res.status(200).json(data);
+    }
+  } catch (e) {
+    return res.status(400).json({ message: e.message });
   }
 });
 
