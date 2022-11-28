@@ -73,6 +73,6 @@ const rc3CreatorsNFTchema = new mongoose.Schema({
     // array of users who like collection
     type: [String],
   },
-});
+}).index({ "$**": "text" });
 
 module.exports = mongoose.model("Collection", rc3CreatorsNFTchema);
