@@ -15,6 +15,10 @@ const rc3CreatorsNFTchema = new mongoose.Schema({
     // collection name
     type: String,
   },
+  description: {
+    // collection name
+    type: String,
+  },
   image: {
     // collection image
     type: String,
