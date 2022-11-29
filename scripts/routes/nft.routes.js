@@ -44,6 +44,7 @@ nftRouter.post(
     let output = { flag: false, message: "", data: {} };
 
     var { error, value } = uploadSchema.validate(req.body);
+
     if (error) {
       output.message = error.message;
       log.info(`Client Error creating re3Creators with ipfs logs: ${error}`);
@@ -51,6 +52,8 @@ nftRouter.post(
     }
 
     let path = req.file.path;
+
+    console.log("datasss", req.body);
 
     let {
       name,
@@ -64,9 +67,7 @@ nftRouter.post(
 
     //pin image
     const readableStreamForFile = fs.createReadStream(path);
-
     const { create } = await import("ipfs-http-client");
-
     const client = create({
       host: "ipfs.infura.io",
       port: 5001,
@@ -141,9 +142,13 @@ nftRouter.post("/rc3Creators/create2", async (req, res) => {
     nature,
     unlockableContentUrl,
     unlockableContentDescription,
+    description,
   } = req.body;
 
+  console.log(req.body, "recreate two >>>>");
+
   const data = {
+    description,
     address: RC3CAddr,
     name: name,
     supply: initialSupply,
@@ -168,6 +173,7 @@ nftRouter.post("/rc3Creators/create2", async (req, res) => {
     if (!find) {
       // update database
       const collection = new collectionDatabase({
+        description,
         address: RC3CAddr,
         collectionId: convertedInt.toString(),
         name: name,
@@ -175,6 +181,7 @@ nftRouter.post("/rc3Creators/create2", async (req, res) => {
         royalty: royalty,
         image: image,
         typeOfNFT: "ERC1155",
+
         properties: {
           category: category,
           nature: nature,
@@ -190,6 +197,7 @@ nftRouter.post("/rc3Creators/create2", async (req, res) => {
           collectionId: convertedInt.toString(),
         },
         {
+          description,
           name: name,
           supply: initialSupply,
           royalty: royalty,
