@@ -82,7 +82,123 @@ userRouter.get("/:address", async (req, res) => {
     return res.status(200).json(data);
   } catch (e) {
     log.info(`Client Error getting user data logs: ${e}`);
-    return res.status(400).json({ message: error.message });
+    return res.status(400).json({ message: e.message });
+  }
+});
+
+//get user dashboard
+userRouter.get("/dashboard/:address", async (req, res) => {
+  let result = { sales: 0, buys: 0, owned: 0, created: 0 };
+  try {
+    const query = {
+      address: req.params.address,
+    };
+    if (!query.address) {
+      return res.status(400).json({
+        error: "Missing required property from client",
+      });
+    }
+    let data = await UserModel.findOne(query);
+
+    if (!data) {
+      const newUser = new UserModel(query);
+      await newUser.save();
+      data = await UserModel.findOne(query);
+    }
+
+    result.sales = data["numberOfSells"];
+    result.buys = data["numberOfItemsBuys"];
+    result.created = data["numberOfTokensCreated"];
+
+    const len = data["balances"].length;
+
+    if (len > 0) {
+      for (let i = 0; i < len; i++) {
+        result.owned += data["balances"][i].balance;
+      }
+    }
+    return res.status(200).json(result);
+  } catch (e) {
+    log.info(`Client Error getting user data logs: ${e}`);
+    return res.status(400).json({ message: e.message });
+  }
+});
+
+//get user balance by collections
+userRouter.get("/dashboard/owned/:address", async (req, res) => {
+  let result = [];
+  try {
+    const query = {
+      address: req.params.address,
+    };
+    if (!query.address) {
+      return res.status(400).json({
+        error: "Missing required property from client",
+      });
+    }
+    let data = await UserModel.findOne(query, { _id: 0, __v: 0 });
+
+    if (!data) {
+      const newUser = new UserModel(query);
+      await newUser.save();
+      data = await UserModel.findOne(query);
+    }
+
+    const feed = data["balances"];
+    feed.map((res) => {
+      let form = {
+        collectionId: res.collectionId,
+        address: res.address,
+        balance: res.balance,
+      };
+
+      result.push(form);
+    });
+
+    return res.status(200).json(result);
+  } catch (e) {
+    log.info(`Client Error getting user data logs: ${e}`);
+    return res.status(400).json({ message: e.message });
+  }
+});
+
+//get user created collections
+userRouter.get("/dashboard/created/:address", async (req, res) => {
+  try {
+    const query = {
+      address: req.params.address,
+    };
+    if (!query.address) {
+      return res.status(400).json({
+        error: "Missing required property from client",
+      });
+    }
+    const data = await UserModel.findOne(query, { _id: 0, __v: 0 });
+    const results = { created: data["rc3CollectionIdsCreated"] };
+    return res.status(200).json(results);
+  } catch (e) {
+    log.info(`Client Error getting user data logs: ${e}`);
+    return res.status(400).json({ message: e.message });
+  }
+});
+
+//get user mintable collections
+userRouter.get("/dashboard/mintable/:address", async (req, res) => {
+  try {
+    const query = {
+      address: req.params.address,
+    };
+    if (!query.address) {
+      return res.status(400).json({
+        error: "Missing required property from client",
+      });
+    }
+    const data = await UserModel.findOne(query, { _id: 0, __v: 0 });
+    const results = { mintable: data["mintableCollectionIds"] };
+    return res.status(200).json(results);
+  } catch (e) {
+    log.info(`Client Error getting user data logs: ${e}`);
+    return res.status(400).json({ message: e.message });
   }
 });
 

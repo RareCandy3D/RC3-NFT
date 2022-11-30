@@ -161,7 +161,7 @@ class MarketEventSync {
       const newUser = new userDatabase({
         address: buyer,
         numberOfItemsBuys: 1,
-        rcdySpent: web3.utils.fromWei(price.toString()),
+        rcdySpent: web3.utils.toWei(price.toString()),
         marketIdsBought: [marketId],
       });
       await newUser.save();
@@ -171,7 +171,7 @@ class MarketEventSync {
         { address: buyer },
         {
           numberOfItemsBuys: user["numberOfItemsBuys"] + 1,
-          rcdySpent: user["rcdySpent"] + web3.utils.fromWei(price.toString()),
+          rcdySpent: user["rcdySpent"] + web3.utils.toWei(price.toString()),
           $push: { marketIdsBought: marketId },
         }
       );
@@ -183,8 +183,7 @@ class MarketEventSync {
 
       {
         numberOfSells: user["numberOfSells"] + 1,
-        rcdyReceived:
-          user["rcdyReceived"] + web3.utils.fromWei(price.toString()),
+        rcdyReceived: user["rcdyReceived"] + web3.utils.toWei(price.toString()),
       }
     );
   }
@@ -202,7 +201,7 @@ class MarketEventSync {
       const newUser = new userDatabase({
         address: buyer,
         numberOfItemsBuys: 1,
-        ethSpent: web3.utils.fromWei(price.toString()),
+        ethSpent: web3.utils.toWei(price.toString()),
         marketIdsBought: [marketId],
       });
       await newUser.save();
@@ -212,7 +211,7 @@ class MarketEventSync {
         { address: buyer },
         {
           numberOfItemsBuys: user["numberOfItemsBuys"] + 1,
-          ethSpent: user["ethSpent"] + web3.utils.fromWei(price.toString()),
+          ethSpent: user["ethSpent"] + web3.utils.toWei(price.toString()),
           $push: { marketIdsBought: marketId },
         }
       );
@@ -224,7 +223,7 @@ class MarketEventSync {
 
       {
         numberOfSells: user["numberOfSells"] + 1,
-        ethReceived: user["ethReceived"] + web3.utils.fromWei(price.toString()),
+        ethReceived: user["ethReceived"] + web3.utils.toWei(price.toString()),
       }
     );
   }
