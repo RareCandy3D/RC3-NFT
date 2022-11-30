@@ -213,7 +213,7 @@ class AuctionEventSync {
         const newUser = new userDatabase({
           address: buyer,
           numberOfItemsBuys: 1,
-          rcdySpent: web3.utils.fromWei(price.toString()),
+          rcdySpent: web3.utils.toWei(price.toString()),
           auctionIdsBought: [auctionId],
         });
         await newUser.save();
@@ -223,7 +223,7 @@ class AuctionEventSync {
           { address: buyer },
           {
             numberOfItemsBuys: user["numberOfItemsBuys"] + 1,
-            rcdySpent: user["rcdySpent"] + web3.utils.fromWei(price.toString()),
+            rcdySpent: user["rcdySpent"] + web3.utils.toWei(price.toString()),
             $push: { auctionIdsBought: auctionId },
           }
         );
@@ -235,7 +235,7 @@ class AuctionEventSync {
         {
           numberOfSells: user["numberOfSells"] + 1,
           rcdyReceived:
-            user["rcdyReceived"] + web3.utils.fromWei(price.toString()),
+            user["rcdyReceived"] + web3.utils.toWei(price.toString()),
         }
       );
 

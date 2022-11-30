@@ -30,7 +30,7 @@ class CreatorsEventSync {
         toBlock: this.currentBlock,
       });
       if (data_events.length > 0) {
-        await this.updateNewMintSingleDB(data_events);
+        await this.updateNewTransferSingleDB(data_events);
       }
 
       // new rc3 creators batch mint
@@ -39,7 +39,7 @@ class CreatorsEventSync {
         toBlock: this.currentBlock,
       });
       if (data_events.length > 0) {
-        await this.updateNewMintMultipleDB(data_events);
+        await this.updateNewTransferMultipleDB(data_events);
       }
 
       // new rc3 creators minter role set
@@ -111,10 +111,13 @@ class CreatorsEventSync {
           nature: nat,
         });
         await data.save();
-        console.log("New collection saved:", data);
+        console.log("New collection saved", id.toString());
       }
 
-      const user = await userDatabase.findOne({ address: creator });
+      const user = await userDatabase.findOne(
+        { address: creator },
+        { _id: 0, __v: 0 }
+      );
       if (user) {
         await userDatabase.findOneAndUpdate(
           { address: creator },
@@ -144,56 +147,240 @@ class CreatorsEventSync {
     }
   }
 
-  async updateNewMintSingleDB(data_events) {
+  async updateNewTransferSingleDB(data_events) {
     for (const event of data_events) {
       const { returnValues, transactionHash } = event;
       const { operator, from, to, id, value } = returnValues;
 
       if (from === this.origin) {
-        let data = await collectionDatabase.findOne({
-          address: RC3CAddr,
-          collectionId: id.toString(),
-        });
+        let data = await collectionDatabase.findOne(
+          {
+            address: RC3CAddr,
+            collectionId: id.toString(),
+          },
+          { _id: 0, __v: 0 }
+        );
 
-        await collectionDatabase.findByIdAndUpdate(
+        if (!data) {
+          data = new collectionDatabase({
+            address: RC3CAddr,
+            collectionId: id.toString(),
+            typeOfNFT: "ERC1155",
+          });
+          await data.save();
+          console.log("New collection saved", id.toString());
+
+          data = await collectionDatabase.findOne(
+            {
+              address: RC3CAddr,
+              collectionId: id.toString(),
+            },
+            { _id: 0, __v: 0 }
+          );
+        }
+
+        await collectionDatabase.findOneAndUpdate(
           { address: RC3CAddr, collectionId: id.toString() },
           {
             supply: data["supply"] + value,
           }
         );
+      } else {
+        const userFrom = await userDatabase.findOne(
+          { address: from },
+          { _id: 0, __v: 0 }
+        );
+        const arrFrom = userFrom["balances"];
+
+        for (let i = 0; i < arrFrom.length; i++) {
+          if (arrFrom[i].collectionId === id.toString()) {
+            await userDatabase.findOneAndUpdate(
+              {
+                address: from,
+              },
+              {
+                $set: {
+                  "balances.i.balance": arrFrom[i].balance - value,
+                },
+              }
+            );
+            return;
+          }
+        }
+      }
+
+      let userTo = await userDatabase.findOne(
+        { address: to },
+        { _id: 0, __v: 0 }
+      );
+
+      if (!userTo) {
+        userTo = new userDatabase({
+          address: to,
+        });
+        await userTo.save();
+        console.log("New user saved", to);
+        userTo = await userDatabase.findOne(
+          { address: to },
+          { _id: 0, __v: 0 }
+        );
+      }
+
+      const len = userTo["balances"].length;
+      let is = false;
+
+      if (len > 0) {
+        for (let j = 0; j < len; j++) {
+          if (userTo["balances"][j].collectionId === id.toString()) {
+            is = true;
+            await userDatabase.findOneAndUpdate(
+              {
+                address: to,
+              },
+              {
+                $set: {
+                  "balances.j.balance": userTo["balances"][j].balance + value,
+                },
+              }
+            );
+            return;
+          }
+        }
+      }
+
+      if (!is) {
+        await userDatabase.findOneAndUpdate(
+          {
+            address: to,
+          },
+          {
+            $push: {
+              balances: {
+                address: RC3CAddr,
+                collectionId: id.toString(),
+                balance: value,
+              },
+            },
+          }
+        );
       }
 
       console.log(
-        `Found NewSingleMint event: creator=${operator}, \n
+        `Found NewSingleTransfer event: creator=${operator}, from=${from}, \n
         to=${to}, id=${id}, txHash=${transactionHash}`
       );
     }
   }
 
-  async updateNewMintMultipleDB(data_events) {
+  async updateNewTransferMultipleDB(data_events) {
     for (const event of data_events) {
       const { returnValues, transactionHash } = event;
       const { operator, from, to, ids, values } = returnValues;
 
       if (from === this.origin) {
         for (let i = 0; i < ids.length; i++) {
-          let data = await collectionDatabase.findOne({
-            address: RC3CAddr,
-            collectionId: ids[i].toString(),
-          });
+          let data = await collectionDatabase.findOne(
+            {
+              address: RC3CAddr,
+              collectionId: ids[i].toString(),
+            },
+            { _id: 0, __v: 0 }
+          );
 
-          await collectionDatabase.findByIdAndUpdate(
+          await collectionDatabase.findOneAndUpdate(
             { address: RC3CAddr, collectionId: ids[i].toString() },
             {
               supply: data["supply"] + values[i],
             }
           );
         }
+      } else {
+        const userFrom = await userDatabase.findOne(
+          { address: from },
+          { _id: 0, __v: 0 }
+        );
+        const arrFrom = userFrom["balances"];
+
+        for (let j = 0; j < arrFrom.length; j++) {
+          for (let k = 0; k < ids.length; k++) {
+            if (arrFrom[j].collectionId === ids[k].toString()) {
+              await userDatabase.findOneAndUpdate(
+                {
+                  address: from,
+                },
+                {
+                  $set: {
+                    "balances.j.balance": arrFrom[j].balance - values[k],
+                  },
+                }
+              );
+              return;
+            }
+          }
+        }
+      }
+
+      let userTo = await userDatabase.findOne(
+        { address: to },
+        { _id: 0, __v: 0 }
+      );
+
+      if (!userTo) {
+        const newUser = new userDatabase({
+          address: to,
+        });
+        await newUser.save();
+        userTo = await userDatabase.findOne(
+          { address: to },
+          { _id: 0, __v: 0 }
+        );
+      }
+
+      const len = userTo["balances"].length;
+      let is = false;
+      if (len > 0) {
+        for (let l = 0; l < len; l++) {
+          for (let m = 0; m < ids.length; m++) {
+            if (userTo["balances"][l].collectionId === ids[m].toString()) {
+              is = true;
+              await userDatabase.findOneAndUpdate(
+                {
+                  address: to,
+                },
+                {
+                  $set: {
+                    "balances.l.balance": arrFrom[l].balance + values[m],
+                  },
+                }
+              );
+              return;
+            }
+          }
+        }
+      }
+
+      if (!is) {
+        for (let n = 0; n < ids.length; n++) {
+          await userDatabase.findOneAndUpdate(
+            {
+              address: to,
+            },
+            {
+              $push: {
+                balances: {
+                  address: RC3CAddr,
+                  collectionId: ids[n].toString(),
+                  balance: values[n],
+                },
+              },
+            }
+          );
+        }
       }
 
       console.log(
-        `Found NewMultipleMint event: creator=${operator},\n 
-        to=${to}, id=${ids}, txHash=${transactionHash}`
+        `Found NewMultipleTransfer event: creator=${operator},\n 
+        from= ${from}, to=${to}, id=${ids}, values=${values} txHash=${transactionHash}`
       );
     }
   }
@@ -203,13 +390,16 @@ class CreatorsEventSync {
       const { returnValues, transactionHash } = event;
       const { caller, id, minter, canMint } = returnValues;
 
-      let data = await collectionDatabase.findOne({
-        address: RC3CAddr,
-        collectionId: id.toString(),
-      });
+      let data = await collectionDatabase.findOne(
+        {
+          address: RC3CAddr,
+          collectionId: id.toString(),
+        },
+        { _id: 0, __v: 0 }
+      );
       if (data) {
         if (canMint) {
-          await userDatabase.findByIdAndUpdate(
+          await userDatabase.findOneAndUpdate(
             {
               address: minter,
             },
@@ -219,7 +409,7 @@ class CreatorsEventSync {
             { upsert: true }
           );
         } else {
-          await userDatabase.findByIdAndUpdate(
+          await userDatabase.findOneAndUpdate(
             {
               address: minter,
             },
@@ -242,12 +432,15 @@ class CreatorsEventSync {
       const { oldCreator, newCreator, id, royalty, recipient, shares } =
         returnValues;
 
-      let data = await collectionDatabase.findOne({
-        address: RC3CAddr,
-        collectionId: id.toString(),
-      });
+      let data = await collectionDatabase.findOne(
+        {
+          address: RC3CAddr,
+          collectionId: id.toString(),
+        },
+        { _id: 0, __v: 0 }
+      );
       if (data && oldCreator !== newCreator) {
-        await userDatabase.findByIdAndUpdate(
+        await userDatabase.findOneAndUpdate(
           {
             address: newCreator,
           },
@@ -257,7 +450,7 @@ class CreatorsEventSync {
           { upsert: true }
         );
 
-        await userDatabase.findByIdAndUpdate(
+        await userDatabase.findOneAndUpdate(
           {
             address: oldCreator,
           },

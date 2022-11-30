@@ -112,6 +112,14 @@ const userSchema = new mongoose.Schema({
     // array of direct trade ids bought
     type: [Number],
   },
+  balances: [
+    //array carrying balances of user in different collections
+    {
+      collectionId: String,
+      address: String,
+      balance: Number,
+    },
+  ],
 });
 
 module.exports = mongoose.model("User", userSchema);
