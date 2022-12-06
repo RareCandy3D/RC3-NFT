@@ -1622,8 +1622,8 @@
       ]
     },
     "/Users/hendobox/Desktop/factory/BlockchainDev/projects/RC3-NFT/contracts/RC3_Creators.sol": {
-      "lastModificationDate": 1665351114553,
-      "contentHash": "d40ded86d766af6e9ceb5ba4607c082f",
+      "lastModificationDate": 1669851711610,
+      "contentHash": "64667ce48c6efdbcdd4aecc3280ee638",
       "sourceName": "contracts/RC3_Creators.sol",
       "solcConfig": {
         "version": "0.8.6",

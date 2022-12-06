@@ -104,12 +104,20 @@ const userSchema = new mongoose.Schema({
     // array of auction ids bidded
     type: [Number],
   },
+  auctionIdsSold: {
+    // array of auction ids sold
+    type: [Number],
+  },
   marketIdsCreated: {
     // array of direct trade ids created
     type: [Number],
   },
   marketIdsBought: {
     // array of direct trade ids bought
+    type: [Number],
+  },
+  marketIdsSold: {
+    // array of market ids sold
     type: [Number],
   },
   balances: [

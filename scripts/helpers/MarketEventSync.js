@@ -5,6 +5,7 @@ const directDatabase = require("../models/mall.model");
 const collectionDatabase = require("../models/nft.model");
 const web3 = new Web3(new Web3.providers.HttpProvider(process.env.MUMBAI_URL));
 const { RC3MallAddr, RC3CAddr, RC3MallABI } = require("../contracts");
+let BN = web3.utils.BN;
 
 class MarketEventSync {
   constructor(currentBlock, lastBlockChecked) {
@@ -160,22 +161,22 @@ class MarketEventSync {
     if (!user) {
       const newUser = new userDatabase({
         address: buyer,
-        numberOfItemsBuys: 1,
-        rcdySpent: web3.utils.toWei(price.toString()),
-        marketIdsBought: [marketId],
       });
       await newUser.save();
       console.log("New user saved:", buyer);
-    } else {
-      await userDatabase.findOneAndUpdate(
-        { address: buyer },
-        {
-          numberOfItemsBuys: user["numberOfItemsBuys"] + 1,
-          rcdySpent: user["rcdySpent"] + web3.utils.toWei(price.toString()),
-          $push: { marketIdsBought: marketId },
-        }
-      );
+      user = await userDatabase.findOne({ address: buyer });
     }
+
+    await userDatabase.findOneAndUpdate(
+      { address: buyer },
+      {
+        numberOfItemsBuys: user["numberOfItemsBuys"] + 1,
+        rcdySpent: new BN(user["rcdySpent"].toString()).add(
+          new BN(price.toString())
+        ), //user["rcdySpent"] + web3.utils.toWei(price.toString()),
+        $push: { marketIdsBought: marketId },
+      }
+    );
 
     user = await userDatabase.findOne({ address: seller });
     await userDatabase.findOneAndUpdate(
@@ -183,7 +184,10 @@ class MarketEventSync {
 
       {
         numberOfSells: user["numberOfSells"] + 1,
-        rcdyReceived: user["rcdyReceived"] + web3.utils.toWei(price.toString()),
+        rcdyReceived: new BN(user["rcdyReceived"].toString()).add(
+          new BN(price.toString())
+        ), //user["rcdyReceived"] + web3.utils.toWei(price.toString()),
+        $push: { marketIdsSold: marketId },
       }
     );
   }
@@ -200,22 +204,21 @@ class MarketEventSync {
     if (!user) {
       const newUser = new userDatabase({
         address: buyer,
-        numberOfItemsBuys: 1,
-        ethSpent: web3.utils.toWei(price.toString()),
-        marketIdsBought: [marketId],
       });
       await newUser.save();
       console.log("New user saved:", buyer);
-    } else {
-      await userDatabase.findOneAndUpdate(
-        { address: buyer },
-        {
-          numberOfItemsBuys: user["numberOfItemsBuys"] + 1,
-          ethSpent: user["ethSpent"] + web3.utils.toWei(price.toString()),
-          $push: { marketIdsBought: marketId },
-        }
-      );
+      user = await userDatabase.findOne({ address: buyer });
     }
+    await userDatabase.findOneAndUpdate(
+      { address: buyer },
+      {
+        numberOfItemsBuys: user["numberOfItemsBuys"] + 1,
+        ethSpent: new BN(user["ethSpent"].toString()).add(
+          new BN(price.toString())
+        ), //user["ethSpent"] + web3.utils.toWei(price.toString()),
+        $push: { marketIdsBought: marketId },
+      }
+    );
 
     user = await userDatabase.findOne({ address: seller });
     await userDatabase.findOneAndUpdate(
@@ -224,6 +227,7 @@ class MarketEventSync {
       {
         numberOfSells: user["numberOfSells"] + 1,
         ethReceived: user["ethReceived"] + web3.utils.toWei(price.toString()),
+        $push: { marketIdsSold: marketId },
       }
     );
   }

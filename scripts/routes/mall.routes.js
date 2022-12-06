@@ -28,8 +28,8 @@ mallRouter.get("/auction/active", async (req, res) => {
       .find(
         {
           $and: [
-            { startTime: { $lte: time.getTime() / 1000 } },
-            { endTime: { $gte: time.getTime() / 1000 } },
+            { startTime: { $lte: time.getTime() } },
+            { endTime: { $gte: time.getTime() } },
           ],
         },
         { _id: 0, __v: 0 }
@@ -37,12 +37,6 @@ mallRouter.get("/auction/active", async (req, res) => {
       .sort({ auctionId: -1 })
       .limit(10)
       .skip(0);
-
-    if (data.length === 0) {
-      return res.status(404).json({
-        error: "No active auction not found",
-      });
-    }
     return res.status(200).json(data);
   } catch (e) {
     log.info(`Client Error getting active auctions logs: ${e}`);
@@ -57,7 +51,7 @@ mallRouter.get("/auction/upcoming", async (req, res) => {
     const data = await database.auctionDatabase
       .find(
         {
-          startTime: { $gte: time.getTime() },
+          startTime: { $gt: time.getTime() },
         },
         { _id: 0, __v: 0 }
       )
