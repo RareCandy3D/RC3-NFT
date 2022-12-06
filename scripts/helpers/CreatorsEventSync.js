@@ -336,12 +336,12 @@ class CreatorsEventSync {
         );
       }
 
-      const len = userTo["balances"].length;
+      const arrTo = userTo["balances"];
       let is = false;
       if (len > 0) {
-        for (let l = 0; l < len; l++) {
+        for (let l = 0; l < arrTo.length; l++) {
           for (let m = 0; m < ids.length; m++) {
-            if (userTo["balances"][l].collectionId === ids[m].toString()) {
+            if (arrTo[l].collectionId === ids[m].toString()) {
               is = true;
               await userDatabase.findOneAndUpdate(
                 {
@@ -349,7 +349,7 @@ class CreatorsEventSync {
                 },
                 {
                   $set: {
-                    "balances.l.balance": arrFrom[l].balance + values[m],
+                    "balances.l.balance": arrTo[l].balance + values[m],
                   },
                 }
               );

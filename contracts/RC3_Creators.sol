@@ -59,7 +59,10 @@ contract RC3_Creators is ERC1155, AccessControlEnumerable {
     );
     event PhysicalCreatorSet(address indexed addr, bool canCreatePhysical);
 
-    constructor(address defaultAdmin) ERC1155("ipfs://f0") {
+    constructor(address defaultAdmin, address payable feeCollector)
+        ERC1155("ipfs://f0")
+    {
+        feeReceipient = feeCollector;
         _setupRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
 
         _categories.push(stringToBytes32("ART"));

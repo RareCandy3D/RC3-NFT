@@ -1,5 +1,6 @@
 require("dotenv").config();
 const admin = "0xf923d0f9f2d61dC7D538241305cB62c7f4BF8D3A";
+const feeCollector = admin; // change this value
 
 async function main() {
   const FEE_DATA = {
@@ -22,7 +23,7 @@ async function main() {
   await rcdy.deployed();
   console.log("Mock RCDY deployed to:", rcdy.address); // replace wit mainnet address on production
 
-  const creators = await RC3_Creators.deploy(admin);
+  const creators = await RC3_Creators.deploy(admin, feeCollector);
   await creators.deployed();
   console.log("RC3_Creators deployed to:", creators.address);
 

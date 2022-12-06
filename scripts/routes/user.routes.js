@@ -88,7 +88,7 @@ userRouter.get("/:address", async (req, res) => {
 
 //get user dashboard
 userRouter.get("/dashboard/:address", async (req, res) => {
-  let result = { sales: 0, buys: 0, owned: 0, created: 0 };
+  let result = { sales: 0, buys: 0, owned: 0, created: 0, bids: 0 };
   try {
     const query = {
       address: req.params.address,
@@ -109,6 +109,7 @@ userRouter.get("/dashboard/:address", async (req, res) => {
     result.sales = data["numberOfSells"];
     result.buys = data["numberOfItemsBuys"];
     result.created = data["numberOfTokensCreated"];
+    result.bids = data["auctionIdsBidded"].length;
 
     const len = data["balances"].length;
 
@@ -198,6 +199,74 @@ userRouter.get("/dashboard/mintable/:address", async (req, res) => {
     return res.status(200).json(results);
   } catch (e) {
     log.info(`Client Error getting user data logs: ${e}`);
+    return res.status(400).json({ message: e.message });
+  }
+});
+
+//get user buys
+userRouter.get("/dashboard/buys/:address", async (req, res) => {
+  try {
+    const query = {
+      address: req.params.address,
+    };
+    if (!query.address) {
+      return res.status(400).json({
+        error: "Missing required property from client",
+      });
+    }
+    const data = await UserModel.findOne(query, { _id: 0, __v: 0 });
+    const result = {
+      auction: data["auctionIdsBought"],
+      market: data["marketIdsBought"],
+    };
+    return res.status(200).json(result);
+  } catch (e) {
+    log.info(`Client Error getting user buys: ${e}`);
+    return res.status(400).json({ message: e.message });
+  }
+});
+
+//get user bids
+userRouter.get("/dashboard/bids/:address", async (req, res) => {
+  try {
+    const query = {
+      address: req.params.address,
+    };
+    if (!query.address) {
+      return res.status(400).json({
+        error: "Missing required property from client",
+      });
+    }
+    const data = await UserModel.findOne(query, { _id: 0, __v: 0 });
+    const result = {
+      bids: data["auctionIdsBidded"],
+    };
+    return res.status(200).json(result);
+  } catch (e) {
+    log.info(`Client Error getting user buys: ${e}`);
+    return res.status(400).json({ message: e.message });
+  }
+});
+
+//get user sells
+userRouter.get("/dashboard/sells/:address", async (req, res) => {
+  try {
+    const query = {
+      address: req.params.address,
+    };
+    if (!query.address) {
+      return res.status(400).json({
+        error: "Missing required property from client",
+      });
+    }
+    const data = await UserModel.findOne(query, { _id: 0, __v: 0 });
+    const result = {
+      auction: data["auctionIdsSold"],
+      market: data["marketIdsSold"],
+    };
+    return res.status(200).json(result);
+  } catch (e) {
+    log.info(`Client Error getting user buys: ${e}`);
     return res.status(400).json({ message: e.message });
   }
 });

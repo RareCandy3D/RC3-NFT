@@ -5,6 +5,7 @@ const auctionDatabase = require("../models/mall.model");
 const collectionDatabase = require("../models/nft.model");
 const web3 = new Web3(new Web3.providers.HttpProvider(process.env.MUMBAI_URL));
 const { RC3MallAddr, RC3CAddr, RC3MallABI } = require("../contracts");
+let BN = web3.utils.BN;
 
 class AuctionEventSync {
   constructor(currentBlock, lastBlockChecked) {
@@ -106,21 +107,22 @@ class AuctionEventSync {
       await data.save();
 
       let user = await userDatabase.findOne({ address: seller });
+
       if (!user) {
         const newUser = new userDatabase({
           address: seller,
-          auctionIdsCreated: [auctionId],
         });
         await newUser.save();
         console.log("New user saved:", seller);
-      } else {
-        await userDatabase.findOneAndUpdate(
-          { address: seller },
-          {
-            $push: { auctionIdsCreated: auctionId },
-          }
-        );
+        user = await userDatabase.findOne({ address: seller });
       }
+
+      await userDatabase.findOneAndUpdate(
+        { address: seller },
+        {
+          $push: { auctionIdsCreated: auctionId },
+        }
+      );
 
       console.log(
         `Found NewAuction event: auctionID = ${auctionId}, txHash = ${data_events[i]["transactionHash"]}`
@@ -209,52 +211,56 @@ class AuctionEventSync {
       );
 
       let user = await userDatabase.findOne({ address: buyer });
+
       if (!user) {
         const newUser = new userDatabase({
           address: buyer,
-          numberOfItemsBuys: 1,
-          rcdySpent: web3.utils.toWei(price.toString()),
-          auctionIdsBought: [auctionId],
         });
         await newUser.save();
         console.log("New user saved:", buyer);
-      } else {
-        await userDatabase.findOneAndUpdate(
-          { address: buyer },
-          {
-            numberOfItemsBuys: user["numberOfItemsBuys"] + 1,
-            rcdySpent: user["rcdySpent"] + web3.utils.toWei(price.toString()),
-            $push: { auctionIdsBought: auctionId },
-          }
-        );
+        user = await userDatabase.findOne({ address: buyer });
       }
+
+      await userDatabase.findOneAndUpdate(
+        { address: buyer },
+        {
+          numberOfItemsBuys: user["numberOfItemsBuys"] + 1,
+          rcdySpent: new BN(user["rcdySpent"].toString()).add(
+            new BN(price.toString())
+          ), //user["rcdySpent"] + web3.utils.toWei(price.toString()),
+          $push: { auctionIdsBought: auctionId },
+        }
+      );
 
       user = await userDatabase.findOne({ address: seller });
       await userDatabase.findOneAndUpdate(
         { address: seller },
         {
           numberOfSells: user["numberOfSells"] + 1,
-          rcdyReceived:
-            user["rcdyReceived"] + web3.utils.toWei(price.toString()),
+          rcdyReceived: new BN(user["rcdyReceived"].toString()).add(
+            new BN(price.toString())
+          ),
+          //user["rcdyReceived"] + web3.utils.toWei(price.toString()),
+          $push: { auctionIdsSold: auctionId },
         }
       );
 
       user = await userDatabase.findOne({ address: closedBy });
       if (!user) {
-        await userDatabase.findOneAndUpdate(
-          { address: closedBy },
-          {
-            $push: { auctionsClosed: auctionId },
-          }
-        );
-      } else {
         const newUser = new userDatabase({
           address: closedBy,
-          auctionsClosed: [auctionId],
         });
         await newUser.save();
         console.log("New user saved:", closedBy);
+        user = await userDatabase.findOne({ address: closedBy });
       }
+
+      await userDatabase.findOneAndUpdate(
+        { address: closedBy },
+        {
+          $push: { auctionsClosed: auctionId },
+        }
+      );
 
       const query = {
         $and: [
